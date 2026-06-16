@@ -4,6 +4,7 @@ import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttribu
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.LandingPageRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ScheduledTasksRecord;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftRequestViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.service.LandingPageService;
 import com.richardbrenkus.shiftschedulermodernized.service.ScheduledTasksService;
 import com.richardbrenkus.shiftschedulermodernized.service.UserIndexPageService;
@@ -101,7 +102,7 @@ public class UserController {
         ShiftRequestForm shiftRequestForm = userService.getShiftRequestForm(username);
         model.addAttribute(ModelAttributeName.SHIFT_REQUEST_FORM, shiftRequestForm);
 
-        Optional<SubmittedShiftRequestRecord> submittedShiftRequestRecord = userService.getSubmittedShiftRequestRecord(username);
+        Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = userService.getSubmittedShiftRequestRecord(username);
         submittedShiftRequestRecord.ifPresentOrElse(
                 record -> {
                     model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, true);

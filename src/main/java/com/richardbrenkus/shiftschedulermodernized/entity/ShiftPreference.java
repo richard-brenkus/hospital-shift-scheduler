@@ -22,6 +22,7 @@ public class ShiftPreference {
     private Long id;
 
     private int shiftType;
+    private int shiftPriority;
 
     private boolean shiftUnwanted;
     private boolean anyDateSelectionAllowed;

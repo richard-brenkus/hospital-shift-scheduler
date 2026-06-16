@@ -17,6 +17,4 @@ public class ShiftRequestForm {
     private boolean datesNoUpdate;
     private int shiftCount;
     private int weekendCount;
-    private int priority;
-
 }

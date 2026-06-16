@@ -7,6 +7,7 @@ public record ShiftPreferenceViewRecord(
         int shiftType,
         List<LocalDate> datesYes,
         boolean anyDateSelectionAllowed,
-        boolean shiftUnwanted
+        boolean shiftUnwanted,
+        int shiftPriority
 ) {
 }

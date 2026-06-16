@@ -17,4 +17,5 @@ public class ShiftPreferenceForm {
     private boolean anyDateSelectionAllowed;
     private boolean datesYesUpdate;
     private List<LocalDate> datesYes = new ArrayList<>();
+    private int shiftPriority;
 }

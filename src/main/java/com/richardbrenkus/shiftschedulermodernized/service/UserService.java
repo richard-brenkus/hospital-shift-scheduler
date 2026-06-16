@@ -1,6 +1,7 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftRequestViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -9,6 +10,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static com.richardbrenkus.shiftschedulermodernized.config.ApplicationConstants.DATE_FORMATTER;
 
 @Service
 public class UserService {
@@ -47,12 +50,12 @@ public class UserService {
 
     }
 
-    public Optional<SubmittedShiftRequestRecord> getSubmittedShiftRequestRecord(String username) {
+    public Optional<ShiftRequestViewRecord> getSubmittedShiftRequestRecord(String username) {
         User user = userRepository.getUserByUsername(username);
-        if (user == null || user.getShiftRequest() == null || !user.getHasShiftRequest()) {
+        if (user == null || user.getShiftRequest() == null || !user.isShiftRequestActive()) {
             return Optional.empty();
         }
-        return Optional.of(new SubmittedShiftRequestRecord(user.getShiftRequest()));
+        return Optional.of(new ShiftRequestViewRecord(user.getShiftRequest()));
     }
 
     private String getShiftRequestDatesAsString(List<LocalDate> localDatesList) {

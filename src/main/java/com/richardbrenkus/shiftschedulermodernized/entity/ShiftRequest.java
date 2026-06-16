@@ -33,5 +33,4 @@ public class ShiftRequest {
 
     private int shiftCount;
     private int weekendCount;
-    private int priority;
 }
