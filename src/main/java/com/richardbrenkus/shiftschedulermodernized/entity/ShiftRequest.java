@@ -1,6 +1,8 @@
 package com.richardbrenkus.shiftschedulermodernized.entity;
 
 
+import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftPreferenceForm;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,4 +30,8 @@ public class ShiftRequest {
 
     @ElementCollection
     private List<LocalDate> datesNo = new ArrayList<>();
+
+    private int shiftCount;
+    private int weekendCount;
+    private int priority;
 }

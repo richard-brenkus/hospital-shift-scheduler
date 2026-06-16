@@ -3,7 +3,7 @@ package com.richardbrenkus.shiftschedulermodernized.entity;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import com.richardbrenkus.shiftschedulermodernized.enumerator.Role;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
@@ -52,7 +52,7 @@ public class User {
     private String title;
 
     private boolean enabled = true;
-    private boolean hasShiftRequest = false;
+    private boolean shiftRequestActive = false;
 
     @ElementCollection
     @CollectionTable(name = "user_allowed_shift_types", joinColumns = @JoinColumn(name = "user_id"))

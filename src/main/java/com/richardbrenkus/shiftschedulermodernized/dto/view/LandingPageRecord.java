@@ -1,4 +1,5 @@
 package com.richardbrenkus.shiftschedulermodernized.dto.view;
 
-public class LandingPageRecord {
-}
+public record LandingPageRecord (double userCountWithoutAdmin, double shiftRequestCount, String percentage) {
+    }
+

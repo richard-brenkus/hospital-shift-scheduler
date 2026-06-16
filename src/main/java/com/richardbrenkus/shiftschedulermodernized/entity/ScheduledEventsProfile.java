@@ -18,7 +18,7 @@ public class ScheduledEventsProfile {
     private Long id;
 
     private String taskType;
-    private Boolean isActive;
+    private boolean isTaskActive;
     private String finalSubmissionYearMonthDayHourMinuteCode;
     private String yearMonthDayHourMinuteCode;
 
@@ -26,6 +26,8 @@ public class ScheduledEventsProfile {
     private int day;
     private int hour;
     private int minute;
+    private int year;
+    private int month;
     private int frequencyInDays;
     private int repetitions;
     private String timeStamp;

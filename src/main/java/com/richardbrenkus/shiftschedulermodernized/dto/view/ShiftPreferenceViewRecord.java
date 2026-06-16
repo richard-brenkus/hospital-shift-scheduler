@@ -5,11 +5,8 @@ import java.util.List;
 
 public record ShiftPreferenceViewRecord(
         int shiftType,
-        int priority,
         List<LocalDate> datesYes,
-        int weekendCount,
-        int shiftCount,
-        boolean anyDate,
-        boolean noShift
+        boolean anyDateSelectionAllowed,
+        boolean shiftUnwanted
 ) {
 }
