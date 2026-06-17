@@ -1,7 +1,6 @@
 package com.richardbrenkus.shiftschedulermodernized.controller;
 
 import com.richardbrenkus.shiftschedulermodernized.dto.view.MonthlyScheduleExportData;
-import com.richardbrenkus.shiftschedulermodernized.entity.ScheduleEntry;
 import com.richardbrenkus.shiftschedulermodernized.service.MonthlyScheduleService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Controller;

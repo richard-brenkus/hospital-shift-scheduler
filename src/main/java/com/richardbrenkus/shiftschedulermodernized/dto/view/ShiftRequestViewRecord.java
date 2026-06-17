@@ -1,11 +1,14 @@
 package com.richardbrenkus.shiftschedulermodernized.dto.view;
 
 
+import lombok.Builder;
+
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
+@Builder
 public record ShiftRequestViewRecord(
         Long shiftRequestId,
         ZonedDateTime creationDate,

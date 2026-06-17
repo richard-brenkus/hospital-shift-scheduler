@@ -3,6 +3,7 @@ package com.richardbrenkus.shiftschedulermodernized.service;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftRequestViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
+import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -17,9 +18,11 @@ import static com.richardbrenkus.shiftschedulermodernized.config.ApplicationCons
 public class UserService {
 
     private final UserRepository userRepository;
+    private final ShiftRequestMapper shiftRequestMapper;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, ShiftRequestMapper shiftRequestMapper) {
         this.userRepository = userRepository;
+        this.shiftRequestMapper = shiftRequestMapper;
     }
 
     public String getDisplayNameByUserName(String userName) {
@@ -32,30 +35,25 @@ public class UserService {
     }
 
     public ShiftRequestForm getShiftRequestForm(String username){
-        ShiftRequestForm shiftRequestForm = ShiftRequestFormFactory.createEmptyShiftRequestForm();
+        ShiftRequestForm shiftRequestForm = new ShiftRequestForm();
         User currentUser = userRepository.getUserByUsername(username);
 
-        if (currentUser.getHasShiftRequest()) {
-            shiftRequestForm = new ShiftRequestForm(currentUser.getShiftRequest());
+        if (currentUser.isShiftRequestActive()) {
+            shiftRequestForm = shiftRequestMapper.entityToForm(currentUser.getShiftRequest());
         }
 
-        shiftRequestForm.setShiftType1(currentUser.getShiftType1());
-        shiftRequestForm.setShiftType2(currentUser.getShiftType2());
-        shiftRequestForm.setShiftType3(currentUser.getShiftType3());
-        shiftRequestForm.setShiftType4(currentUser.getShiftType4());
-        shiftRequestForm.setShiftType5(currentUser.getShiftType5());
-        shiftRequestForm.setShiftType6(currentUser.getShiftType6());
+        shiftRequestForm.setAllowedShiftTypes(currentUser.getAllowedShiftTypes());
 
         return shiftRequestForm;
 
     }
 
-    public Optional<ShiftRequestViewRecord> getSubmittedShiftRequestRecord(String username) {
+    public Optional<ShiftRequestViewRecord> getShiftRequestViewRecord(String username) {
         User user = userRepository.getUserByUsername(username);
         if (user == null || user.getShiftRequest() == null || !user.isShiftRequestActive()) {
             return Optional.empty();
         }
-        return Optional.of(new ShiftRequestViewRecord(user.getShiftRequest()));
+        return Optional.of(shiftRequestMapper.entityToViewRecord(user.getShiftRequest()));
     }
 
     private String getShiftRequestDatesAsString(List<LocalDate> localDatesList) {

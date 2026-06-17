@@ -1,6 +1,5 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
-import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeName;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.LandingPageRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;

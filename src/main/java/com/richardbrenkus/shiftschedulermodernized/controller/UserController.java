@@ -5,10 +5,7 @@ import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.LandingPageRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ScheduledTasksRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftRequestViewRecord;
-import com.richardbrenkus.shiftschedulermodernized.service.LandingPageService;
-import com.richardbrenkus.shiftschedulermodernized.service.ScheduledTasksService;
-import com.richardbrenkus.shiftschedulermodernized.service.UserIndexPageService;
-import com.richardbrenkus.shiftschedulermodernized.service.UserService;
+import com.richardbrenkus.shiftschedulermodernized.service.*;
 import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -69,7 +66,7 @@ public class UserController {
         model.addAttribute(ModelAttributeName.DISPLAY_NAME, userService.getDisplayNameByUserName(username));
 
         LandingPageRecord landingPageRecord = landingPageService.getLandingPageRecord();
-        model.addAttribute(ModelAttributeName.USER_COUNT, landingPageRecord.userCount());
+        model.addAttribute(ModelAttributeName.USER_COUNT, landingPageRecord.userCountWithoutAdmin());
         model.addAttribute(ModelAttributeName.SHIFT_REQUEST_COUNT, landingPageRecord.shiftRequestCount());
         model.addAttribute(ModelAttributeName.PERCENTAGE, landingPageRecord.percentage());
 
@@ -102,7 +99,7 @@ public class UserController {
         ShiftRequestForm shiftRequestForm = userService.getShiftRequestForm(username);
         model.addAttribute(ModelAttributeName.SHIFT_REQUEST_FORM, shiftRequestForm);
 
-        Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = userService.getSubmittedShiftRequestRecord(username);
+        Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = userService.getShiftRequestViewRecord(username);
         submittedShiftRequestRecord.ifPresentOrElse(
                 record -> {
                     model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, true);

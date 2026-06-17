@@ -2,7 +2,6 @@ package com.richardbrenkus.shiftschedulermodernized.service;
 
 import com.richardbrenkus.shiftschedulermodernized.dto.view.MonthlyScheduleExportData;
 import com.richardbrenkus.shiftschedulermodernized.entity.MonthlySchedule;
-import com.richardbrenkus.shiftschedulermodernized.entity.ScheduleEntry;
 import com.richardbrenkus.shiftschedulermodernized.repository.MonthlyScheduleRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -10,9 +9,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 
 @Service
 @Transactional

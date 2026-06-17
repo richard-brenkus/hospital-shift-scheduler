@@ -1,6 +1,5 @@
 package com.richardbrenkus.shiftschedulermodernized.entity;
 
-import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftPreferenceForm;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,10 +21,12 @@ public class ShiftPreference {
     private Long id;
 
     private int shiftType;
-    private int shiftPriority;
+    private int priority;
+    private int weekdayCount;
+    private int weekendCount;
 
-    private boolean shiftUnwanted;
-    private boolean anyDateSelectionAllowed;
+    private boolean noShiftRequested;
+    private boolean anyDateSelected;
 
     @ElementCollection
     private List<LocalDate> datesYes = new ArrayList<>();
@@ -33,10 +34,4 @@ public class ShiftPreference {
     @ManyToOne
     private ShiftRequest shiftRequest;
 
-    public ShiftPreference(ShiftPreferenceForm shiftPreferenceForm) {
-        this.shiftType = shiftPreferenceForm.getShiftType();
-        this.shiftUnwanted = shiftPreferenceForm.isShiftUnwanted();
-        this.anyDateSelectionAllowed = shiftPreferenceForm.isAnyDateSelectionAllowed();
-        this.datesYes = shiftPreferenceForm.getDatesYes();
-    }
 }
