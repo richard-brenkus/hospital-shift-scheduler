@@ -7,7 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface ShiftRequestRepository extends CrudRepository<ShiftRequest, Long> {
 
-    @Query("SELECT r FROM ShiftRequest r WHERE r.id = :id")
+    @Query("SELECT r FROM ShiftRequest r WHERE r.shiftRequestId = :id")
     ShiftRequest getShiftRequestByID(@Param("id") Long id);
 
 }

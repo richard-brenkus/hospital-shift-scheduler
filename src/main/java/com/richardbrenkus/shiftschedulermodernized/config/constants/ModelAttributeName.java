@@ -1,6 +1,9 @@
 package com.richardbrenkus.shiftschedulermodernized.config.constants;
 
-public class ModelAttributeName {
+public final class ModelAttributeName {
+
+    private ModelAttributeName() {
+    }
 
     // Scheduled tasks
     public static final String REMINDER_TASK_INFO = "reminderTaskInfo";
@@ -15,22 +18,30 @@ public class ModelAttributeName {
     public static final String REMINDER_TASK = "reminderTask";
     public static final String CLEANUP_TASK = "cleanupTask";
 
-    //User
+    // User
     public static final String DISPLAY_NAME = "displayName";
+    public static final String USERNAME_PASSED = "usernamePassed";
+    public static final String IS_ADMIN = "isAdmin";
     public static final String USER_COUNT = "userCount";
     public static final String SHIFT_REQUEST_COUNT = "shiftRequestCount";
     public static final String PERCENTAGE = "percentage";
 
-    //Shift request
+    // Shift request
     public static final String SHIFT_REQUEST_FORM = "shiftRequestForm";
     public static final String SUBMITTED_SHIFT_REQUEST_RECORD = "submittedShiftRequestRecord";
-    public static final String HAS_SHIFT_REQUEST = "hasShiftRequest";
-    public static final String IS_ADMIN = "isAdmin";
+    public static final String IS_SHIFT_REQUEST_ACTIVE = "isShiftRequestActive";
+
+    // Selection lists
+    public static final String WEEKDAY_COUNT_LIST = "weekdayCountList";
+    public static final String WEEKEND_COUNT_LIST = "weekendCountList";
+    public static final String PRIORITY_LIST = "priorityList";
+
+    // Validation flags
     public static final String CONFLICTING_DATES = "conflictingDates";
-    public static final String WEEKEND_LIST = "weekendList";
-    public static final String SHIFT_LIST = "shiftList";
-    public static final String USERNAME_PASSED = "usernamePassed";
-    public static final String PRIORITY_LIST = "ModelAttributeName.";
-
-
+    public static final String SHIFT_AND_WEEKEND_COUNT = "shiftAndWeekendCount";
+    public static final String INVALID_INPUT_CONDITION_1 = "invalidInputCondition1";
+    public static final String INVALID_INPUT_CONDITION_2 = "invalidInputCondition2";
+    public static final String NO_SHIFTS_ONLY_SELECTED = "noShiftsOnlySelected";
+    public static final String NO_DATES_ONLY = "noDatesOnly";
+    public static final String YES_DATES_ANY_DATE = "yesDatesAnyDate";
 }

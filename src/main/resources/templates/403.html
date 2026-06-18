@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <title>Access denied</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" th:href="@{/styles/main.css}"/>
+</head>
+
+<body>
+
+<div class="centered">
+    <h1 data-th-text="#{accessDenied.header}">Access denied</h1>
+
+    <p data-th-text="#{accessDenied.message}">
+        Sorry, you don't have permission!
+    </p>
+</div>
+
+<br>
+
+<div class="centered">
+    <form action="#" th:action="@{/}" method="get">
+        <button type="submit" class="standard-button" data-th-text="#{button.backToHomePage}">
+            Go back to index
+        </button>
+    </form>
+</div>
+
+<br>
+
+<div class="centered">
+    <form th:action="@{/logout}" method="post">
+        <button type="submit" class="standard-button" data-th-text="#{button.signout}">
+            Sign out
+        </button>
+    </form>
+</div>
+
+</body>
+</html>

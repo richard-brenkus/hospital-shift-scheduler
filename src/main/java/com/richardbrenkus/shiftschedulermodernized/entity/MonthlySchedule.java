@@ -18,7 +18,7 @@ public class MonthlySchedule {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long dateId;
 
     @Column(name = "month_year_id", nullable = false, unique = true)
     private String monthYearId; // e.g. "06/2026"

@@ -1,0 +1,358 @@
+body {
+    background-color: #87CEFA;
+    font-family: "Lato", sans-serif;
+}
+
+.table-with-lines,
+.table-no-lines {
+    margin-bottom: 1px;
+    border-collapse: collapse;
+    font-family: "Lato", sans-serif;
+    overflow-x: auto;
+    table-layout: fixed;
+    max-width: 100%;
+}
+
+.table-with-lines {
+    border: 2px solid black;
+}
+
+.table-no-lines {
+    border: none;
+}
+
+.table-full {
+    width: 100%;
+}
+
+.table-narrow {
+    width: 30%;
+    max-width: 100%;
+}
+
+th, td {
+    margin-bottom: 1px;
+    border: 2px solid black;
+    border-collapse: collapse;
+    padding: 5px;
+    text-align: center;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    min-width: 0;
+}
+
+.th-no-lines, .td-no-lines {
+    border: none;
+    padding: 5px;
+    text-align: center;
+}
+
+button {
+    background-color: #1F51FF;
+    border: none;
+    color: white;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: 0.3s;
+}
+
+.table-button {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+
+    padding: clamp(4px, 1vw, 12px) clamp(6px, 2vw, 20px);
+
+    font-size: clamp(0.7rem, 1vw, 1rem);
+
+    margin: 2px;
+
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+.standard-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    margin: 4px 2px;
+}
+
+button:hover {
+    opacity: 1;
+}
+
+td input:not([type="radio"]):not([type="checkbox"]),
+td select,
+td textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+    font-size: clamp(0.7rem, 1vw, 1rem);
+    padding: clamp(2px, 0.5vw, 6px);
+}
+
+select {
+    background-color: #1F51FF;
+    color: white;
+    text-align-last: center;
+    border-radius: 5px;
+}
+
+option {
+    position: relative;
+    text-align-last: center;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.sidebar {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: #87CEFA;
+    overflow-x: hidden;
+    transition: 0.5s;
+    padding-top: 60px;
+}
+
+.sidebar a {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 15px;
+    color: black;
+    display: block;
+    transition: 0.3s;
+}
+
+.sidebar a:hover {
+    color: #f1f1f1;
+}
+
+.sidebar .closebtn {
+    position: absolute;
+    top: 0;
+    right: 25px;
+    font-size: 36px;
+    margin-left: 50px;
+}
+
+.openbtn {
+    font-size: 15px;
+    cursor: pointer;
+    background-color: #0000CD;
+    color: white;
+    padding: 8px 15px;
+    margin: 4px 2px;
+    border: none;
+    opacity: 1;
+}
+
+.openbtn:hover {
+    background-color: #444;
+}
+
+.signoutbtn {
+    font-size: 15px;
+    cursor: pointer;
+    background-color: #87CEFA;
+    color: black;
+    padding: 8px 15px;
+    margin: 8px 15px;
+    border: none;
+    opacity: 1;
+}
+
+.signoutbtn:hover {
+    color: #f1f1f1;
+}
+
+#main {
+    transition: margin-left .5s;
+    padding: 16px;
+}
+
+th.linebreak {
+    width: 30%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    text-align: center;
+
+}
+
+.language-flags {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+img.flag {
+    width: 32px;
+    height: auto;
+}
+
+.col-4 {
+    width: 4%;
+}
+
+.col-5 {
+    width: 5%;
+}
+
+.col-7 {
+    width: 7%;
+}
+
+.col-10 {
+    width: 10%;
+}
+
+.col-12-5 {
+    width: 12.5%;
+}
+
+.col-15 {
+    width: 15%;
+}
+
+.col-16 {
+    width: 16%;
+}
+
+.col-18 {
+    width: 18%;
+}
+
+.col-20 {
+    width: 20%;
+}
+
+.col-21 {
+    width: 21%;
+}
+
+.col-22 {
+    width: 22%;
+}
+
+.col-25 {
+    width: 25%;
+}
+
+.col-28 {
+    width: 28%;
+}
+
+.col-30 {
+    width: 30%;
+}
+
+.col-33 {
+    width: 33%;
+}
+
+.col-34 {
+    width: 34%;
+}
+
+.col-50 {
+    width: 50%;
+}
+
+.col-56 {
+    width: 56%;
+}
+
+.left-aligned {
+    text-align: left;
+}
+
+.right-aligned {
+    text-align: right;
+}
+
+.centered {
+    text-align: center;
+}
+
+.centered table,
+.centered form {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.holiday-cell {
+    background-color: #90EE90;
+}
+
+.error-red {
+    background-color: #FF0000;
+}
+
+.electric-blue {
+    background-color: #7DF9FF;
+}
+
+.pink-lace {
+    background-color: #FEC8D8;
+}
+
+.pale-lavender {
+    background-color: #E0BBE4;
+}
+
+.purple-gray {
+    background-color: #957DAD;
+}
+
+.pastel-violet {
+    background-color: #D291BC;
+}
+
+.simple-rose-gold {
+    background-color: #FFDFD3;
+}
+
+.mainly-blue {
+    background-color: #B0B9E6;
+}
+
+.visually-hidden {
+    position: absolute;
+    left: -9999px;
+}
+
+.section-spacer-30{
+    height: 30px;
+}
+
+.section-spacer-30{
+    height: 60px;
+}
+
+.schedule-summary {
+    margin-bottom: 20px;
+}
+
+.button-row {
+    margin-bottom: 15px;
+}
+
+/* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+@media screen and (max-height: 450px) {
+    .sidebar {
+        padding-top: 15px;
+    }
+
+    .sidebar a {
+        font-size: 18px;
+    }
+}	
+
+			

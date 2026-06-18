@@ -3,10 +3,14 @@ package com.richardbrenkus.shiftschedulermodernized.service;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftPreferenceForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftRequestValidationResult;
+import com.richardbrenkus.shiftschedulermodernized.entity.ShiftPreference;
+import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
+import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.ShiftRequestRepository;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -45,6 +49,32 @@ public class ShiftRequestService {
         }
 
         return validateAllPreferences(form);
+    }
+
+    public void applyDefaultUserPriorities(ShiftRequestForm form) {
+        form.getPreferences().forEach(preference -> {
+            preference.setPriority(5);
+        });
+    }
+
+    @Transactional
+    public ShiftRequest submitShiftRequest(User user, ShiftRequestForm form) {
+        ShiftRequest existingRequest = user.getShiftRequest();
+
+        ShiftRequest shiftRequest;
+
+        if (existingRequest == null) {
+            shiftRequest = shiftRequestMapper.formToEntity(form);
+            //shiftRequest.setUser(user);
+            user.setShiftRequest(shiftRequest);
+            user.setShiftRequestActive(true);
+        } else {
+            shiftRequest = this.updateEntity(existingRequest, form);
+        }
+
+        user.setShiftRequestActive(true);
+
+        return shiftRequestRepository.save(shiftRequest);
     }
 
     private ShiftRequestValidationResult validateNoShiftsOnly(ShiftRequestForm form) {
@@ -189,6 +219,54 @@ public class ShiftRequestService {
     private List<LocalDate> emptyIfNull(List<LocalDate> dates) {
         return dates == null ? Collections.emptyList() : dates;
     }
+
+    public ShiftRequest updateEntity(ShiftRequest existingRequest, ShiftRequestForm form) {
+
+        if (form.isDatesNoUpdate()) {
+            existingRequest.setDatesNo(new ArrayList<>(emptyIfNull(form.getDatesNo())));
+        }
+
+        for (ShiftPreferenceForm preferenceForm : form.getPreferences()) {
+            ShiftPreference existingPreference =
+                    findPreferenceByShiftType(existingRequest, preferenceForm.getShiftType());
+
+            if (existingPreference == null) {
+                ShiftPreference newPreference = shiftRequestMapper.preferenceFormToEntity(preferenceForm);
+                existingRequest.getPreferences().add(newPreference);
+                continue;
+            }
+
+            updatePreference(existingPreference, preferenceForm);
+        }
+
+        return existingRequest;
+    }
+
+    private void updatePreference(ShiftPreference existingPreference,
+                                  ShiftPreferenceForm form) {
+
+        existingPreference.setPriority(form.getPriority());
+
+        if (form.isDatesYesUpdate()) {
+            existingPreference.setDatesYes(new ArrayList<>(emptyIfNull(form.getDatesYes())));
+            existingPreference.setNoShiftRequested(form.isNoShiftRequested());
+            existingPreference.setAnyDateSelected(form.isAnyDateSelected());
+            existingPreference.setWeekdayCount(form.getWeekdayCount());
+            existingPreference.setWeekendCount(form.getWeekendCount());
+        }
+    }
+
+    private ShiftPreference findPreferenceByShiftType(ShiftRequest request, int shiftType) {
+        return request.getPreferences()
+                .stream()
+                .filter(preference -> preference.getShiftType() == shiftType)
+                .findFirst()
+                .orElse(null);
+    }
+
+
+
+
 
 
 }

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <title>Login</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" th:href="@{/styles/main.css}"/>
+</head>
+
+<body>
+
+<div class="centered">
+    <h1 data-th-text="#{login.header}">Please Log In</h1>
+
+    <div class="language-flags">
+        <a th:href="@{/login(language=cz)}">
+            <img alt="CZ" class="flag" th:src="@{/images/cz.png}" title="Česky">
+        </a>
+        <a th:href="@{/login(language=en)}">
+            <img alt="US" class="flag" th:src="@{/images/us.png}" title="English">
+        </a>
+    </div>
+</div>
+
+<br>
+
+<div class="centered">
+    <p th:if="${param.error}" data-th-text="#{login.error}">
+        Invalid username and password.
+    </p>
+
+    <p th:if="${param.logout}" data-th-text="#{login.logout}">
+        You have been logged out.
+    </p>
+</div>
+
+<div class="centered">
+    <form action="#" th:action="@{/login}" method="post">
+        <table class="table-with-lines centered">
+            <tbody>
+            <tr>
+                <td>
+                    <label for="username" data-th-text="#{label.username}">Username</label>
+                </td>
+                <td>
+                    <input type="text"
+                           id="username"
+                           name="username"
+                           placeholder="Username"
+                           th:placeholder="#{label.username}"
+                           autocomplete="username"
+                           required
+                           autofocus/>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <label for="password" data-th-text="#{label.password}">Password</label>
+                </td>
+                <td>
+                    <input type="password"
+                           id="password"
+                           name="password"
+                           placeholder="Password"
+                           th:placeholder="#{label.password}"
+                           autocomplete="current-password"
+                           required/>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <br>
+
+        <button type="submit" class="standard-button" data-th-text="#{button.login}">
+            Log in
+        </button>
+    </form>
+</div>
+
+</body>
+</html>

@@ -17,15 +17,12 @@ import java.util.List;
 public class ShiftRequest {
 
     @Id
-    private Long id;
-
-    @OneToOne
-    private User user;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long shiftRequestId;
 
     @OneToMany(mappedBy = "shiftRequest", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ShiftPreference> preferences = new ArrayList<>();
 
     @ElementCollection
     private List<LocalDate> datesNo = new ArrayList<>();
-
 }

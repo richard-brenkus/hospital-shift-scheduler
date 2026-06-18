@@ -1,10 +1,12 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
+import com.richardbrenkus.shiftschedulermodernized.config.PasswordEncoderConfig;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftRequestViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -19,10 +21,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final ShiftRequestMapper shiftRequestMapper;
+    private final PasswordEncoderConfig encoder;
 
-    public UserService(UserRepository userRepository, ShiftRequestMapper shiftRequestMapper) {
+    public UserService(UserRepository userRepository, ShiftRequestMapper shiftRequestMapper, PasswordEncoderConfig encoder) {
         this.userRepository = userRepository;
         this.shiftRequestMapper = shiftRequestMapper;
+        this.encoder = encoder;
     }
 
     public String getDisplayNameByUserName(String userName) {
@@ -53,8 +57,24 @@ public class UserService {
         if (user == null || user.getShiftRequest() == null || !user.isShiftRequestActive()) {
             return Optional.empty();
         }
-        return Optional.of(shiftRequestMapper.entityToViewRecord(user.getShiftRequest()));
+        return Optional.of(shiftRequestMapper.entityToViewRecord(user.getShiftRequest(), user));
     }
+
+    public User getUserByUsername(String username) {
+        return userRepository.getUserByUsername(username);
+    }
+
+    public void changePassword(String username, String newPassword) {
+        User user = userRepository.getUserByUsername(username);
+
+        String newEncodedPassword = encoder.passwordEncoder().encode(newPassword);
+
+        user.setPassword(newEncodedPassword);
+        userRepository.save(user);
+    }
+
+
+
 
     private String getShiftRequestDatesAsString(List<LocalDate> localDatesList) {
 
@@ -70,6 +90,8 @@ public class UserService {
 
         return stringDates;
     }
+
+
 
 
 }

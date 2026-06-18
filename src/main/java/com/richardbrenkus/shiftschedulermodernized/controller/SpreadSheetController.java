@@ -27,7 +27,7 @@ public class SpreadSheetController {
         String headerValue = "attachment; filename=schedule_" + exportData.monthString() + "_" + exportData.yearString() + ".xlsx";
         response.setHeader(headerKey, headerValue);
 
-        ExcelSchedule excelSchedule = new ExcelSchedule(exportData.calendarObjects());
-        excelSchedule.export(response);
+        /*ExcelSchedule excelSchedule = new ExcelSchedule(exportData.calendarObjects());
+        excelSchedule.export(response);*/
     }
 }

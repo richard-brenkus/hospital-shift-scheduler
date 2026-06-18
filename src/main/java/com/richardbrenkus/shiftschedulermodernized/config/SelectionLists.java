@@ -11,7 +11,7 @@ public final class SelectionLists {
     public static final List<Integer> WEEKEND_COUNT_LIST =
             IntStream.rangeClosed(1, 8).boxed().toList();
 
-    public static final List<Integer> SHIFT_COUNT_LIST =
+    public static final List<Integer> WEEKDAY_COUNT_LIST =
             IntStream.rangeClosed(1, 10).boxed().toList();
 
     public static final List<Integer> PRIORITY_LIST =

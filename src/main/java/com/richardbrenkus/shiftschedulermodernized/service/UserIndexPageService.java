@@ -11,8 +11,8 @@ public class UserIndexPageService {
 
     public void populateUserIndexModel(Model model, String username, ShiftRequestForm shiftRequestForm, boolean isAdmin, String usernamePassed) {
         model.addAttribute(ModelAttributeName.SHIFT_REQUEST_FORM, shiftRequestForm);
-        model.addAttribute(ModelAttributeName.WEEKEND_LIST, SelectionLists.WEEKEND_COUNT_LIST);
-        model.addAttribute(ModelAttributeName.SHIFT_LIST, SelectionLists.SHIFT_COUNT_LIST);
+        model.addAttribute(ModelAttributeName.WEEKEND_COUNT_LIST, SelectionLists.WEEKEND_COUNT_LIST);
+        model.addAttribute(ModelAttributeName.WEEKDAY_COUNT_LIST, SelectionLists.WEEKDAY_COUNT_LIST);
         model.addAttribute(ModelAttributeName.PRIORITY_LIST, SelectionLists.PRIORITY_LIST);
         model.addAttribute(ModelAttributeName.IS_ADMIN, isAdmin);
         model.addAttribute(ModelAttributeName.USERNAME_PASSED, usernamePassed);
