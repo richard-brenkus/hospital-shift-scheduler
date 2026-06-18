@@ -23,15 +23,28 @@ public class ScheduledEventsProfile {
     private String yearMonthDayHourMinuteCode;
 
     private String dateTimeInput;
+
+    @Column(name = "event_counter")
+    private int counter;
+
+    @Column(name = "event_day")
     private int day;
-    private int hour;
-    private int minute;
-    private int year;
+
+    @Column(name = "event_month")
     private int month;
+
+    @Column(name = "event_year")
+    private int year;
+
+    @Column(name = "event_hour")
+    private int hour;
+
+    @Column(name = "event_minute")
+    private int minute;
+
     private int frequencyInDays;
     private int repetitions;
     private String timeStamp;
     private int finalSubmissionDay;
-    private int counter;
     private String timeString;
 }

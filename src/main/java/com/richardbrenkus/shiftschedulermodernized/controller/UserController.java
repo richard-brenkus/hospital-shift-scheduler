@@ -104,7 +104,10 @@ public class UserController {
         model.addAttribute(ModelAttributeName.WEEKDAY_COUNT_LIST, WEEKDAY_COUNT_LIST);
 
         ShiftRequestForm shiftRequestForm = userService.getShiftRequestForm(username);
-        model.addAttribute(ModelAttributeName.SHIFT_REQUEST_FORM, shiftRequestForm);
+        //model.addAttribute(ModelAttributeName.SHIFT_REQUEST_FORM, shiftRequestForm);
+
+        userIndexPageService.populateUserIndexModel(model, username, shiftRequestForm, false, username
+        );
 
         Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = userService.getShiftRequestViewRecord(username);
         submittedShiftRequestRecord.ifPresentOrElse(record -> {

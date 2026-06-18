@@ -46,6 +46,7 @@ public class UserService {
             shiftRequestForm = shiftRequestMapper.entityToForm(currentUser.getShiftRequest());
         }
 
+        System.out.println("Allowed shift types: " + currentUser.getAllowedShiftTypes().toString());
         shiftRequestForm.setAllowedShiftTypes(currentUser.getAllowedShiftTypes());
 
         return shiftRequestForm;
