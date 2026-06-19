@@ -97,17 +97,12 @@ public class UserController {
     public String userIndex(@CurrentSecurityContext(expression = "authentication?.name") String username, Model model) {
 
         model.addAttribute(ModelAttributeName.DISPLAY_NAME, userService.getDisplayNameByUserName(username));
-        model.addAttribute(ModelAttributeName.USERNAME_PASSED, username);
-        model.addAttribute(ModelAttributeName.IS_ADMIN, false);
         model.addAttribute(ModelAttributeName.CONFLICTING_DATES, false);
-        model.addAttribute(ModelAttributeName.WEEKEND_COUNT_LIST, WEEKEND_COUNT_LIST);
-        model.addAttribute(ModelAttributeName.WEEKDAY_COUNT_LIST, WEEKDAY_COUNT_LIST);
 
         ShiftRequestForm shiftRequestForm = userService.getShiftRequestForm(username);
-        //model.addAttribute(ModelAttributeName.SHIFT_REQUEST_FORM, shiftRequestForm);
 
-        userIndexPageService.populateUserIndexModel(model, username, shiftRequestForm, false, username
-        );
+        userIndexPageService.populateUserIndexModel(model, username, shiftRequestForm, false, username);
+        System.out.println("shiftRequestForm: " + shiftRequestForm.toString());
 
         Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = userService.getShiftRequestViewRecord(username);
         submittedShiftRequestRecord.ifPresentOrElse(record -> {

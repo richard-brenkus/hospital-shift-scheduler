@@ -6,9 +6,7 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -17,5 +15,5 @@ public class ShiftRequestForm {
     private List<LocalDate> datesNo = new ArrayList<>();
     private List<ShiftPreferenceForm> preferences = new ArrayList<>();
     private boolean datesNoUpdate;
-    private Set<Integer> allowedShiftTypes = new HashSet<>();
+    private List<Integer> allowedShiftTypes = new ArrayList<>();
 }

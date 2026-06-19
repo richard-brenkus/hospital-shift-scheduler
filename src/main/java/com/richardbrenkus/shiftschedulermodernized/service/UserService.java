@@ -1,6 +1,7 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
 import com.richardbrenkus.shiftschedulermodernized.config.PasswordEncoderConfig;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftPreferenceForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftRequestViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
@@ -42,15 +43,14 @@ public class UserService {
         ShiftRequestForm shiftRequestForm = new ShiftRequestForm();
         User currentUser = userRepository.getUserByUsername(username);
 
+        System.out.println("currentUser.isShiftRequestActive() = " + currentUser.isShiftRequestActive());
         if (currentUser.isShiftRequestActive()) {
             shiftRequestForm = shiftRequestMapper.entityToForm(currentUser.getShiftRequest());
         }
-
-        System.out.println("Allowed shift types: " + currentUser.getAllowedShiftTypes().toString());
-        shiftRequestForm.setAllowedShiftTypes(currentUser.getAllowedShiftTypes());
+        else
+            this.fillAllowedShiftTypes(currentUser, shiftRequestForm);
 
         return shiftRequestForm;
-
     }
 
     public Optional<ShiftRequestViewRecord> getShiftRequestViewRecord(String username) {
@@ -74,6 +74,15 @@ public class UserService {
         userRepository.save(user);
     }
 
+    private void fillAllowedShiftTypes(User currentUser, ShiftRequestForm shiftRequestForm) {
+        List<Integer> allowedShiftTypes = new ArrayList<>(currentUser.getAllowedShiftTypes());
+        for(Integer shiftType : allowedShiftTypes) {
+            ShiftPreferenceForm shiftPreferenceForm = new ShiftPreferenceForm();
+            shiftPreferenceForm.setShiftType(shiftType);
+            shiftRequestForm.getPreferences().add(shiftPreferenceForm);
+        }
+    }
+
 
 
 
@@ -91,6 +100,8 @@ public class UserService {
 
         return stringDates;
     }
+
+
 
 
 
