@@ -37,42 +37,27 @@
 
 <div class="centered">
     <form action="#" th:action="@{/login}" method="post">
-        <table class="table-with-lines centered">
-            <tbody>
-            <tr>
-                <td>
-                    <label for="username" data-th-text="#{label.username}">Username</label>
-                </td>
-                <td>
-                    <input type="text"
-                           id="username"
-                           name="username"
-                           placeholder="Username"
-                           th:placeholder="#{label.username}"
-                           autocomplete="username"
-                           required
-                           autofocus/>
-                </td>
-            </tr>
 
-            <tr>
-                <td>
-                    <label for="password" data-th-text="#{label.password}">Password</label>
-                </td>
-                <td>
-                    <input type="password"
-                           id="password"
-                           name="password"
-                           placeholder="Password"
-                           th:placeholder="#{label.password}"
-                           autocomplete="current-password"
-                           required/>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+        <label for="username"></label>
+        <input type="text"
+               id="username"
+               name="username"
+               th:placeholder="#{label.username}"
+               autocomplete="username"
+               required
+               autofocus/>
 
-        <br>
+        <br><br>
+
+        <label for="password"></label>
+        <input type="password"
+               id="password"
+               name="password"
+               th:placeholder="#{label.password}"
+               autocomplete="current-password"
+               required/>
+
+        <br><br>
 
         <button type="submit" class="standard-button" data-th-text="#{button.login}">
             Log in
