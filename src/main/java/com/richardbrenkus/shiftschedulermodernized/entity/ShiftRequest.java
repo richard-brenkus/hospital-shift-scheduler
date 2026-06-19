@@ -23,6 +23,10 @@ public class ShiftRequest {
     @OneToMany(mappedBy = "shiftRequest", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ShiftPreference> preferences = new ArrayList<>();
 
-    @ElementCollection
+    @CollectionTable(
+            name = "shift_request_dates_no",
+            joinColumns = @JoinColumn(name = "shift_request_id")
+    )
+    @Column(name = "date_no")
     private List<LocalDate> datesNo = new ArrayList<>();
 }

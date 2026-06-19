@@ -24,11 +24,52 @@
             return new Date(today.getFullYear(), today.getMonth() + 2, 0);
         }
 
+        function parseIsoDate(value) {
+            const parts = value.trim().split("-");
+            if (parts.length !== 3) {
+                return null;
+            }
+
+            const year = Number(parts[0]);
+            const month = Number(parts[1]) - 1;
+            const day = Number(parts[2]);
+
+            return new Date(year, month, day);
+        }
+
         $(function () {
-            $(".multi-date-picker").multiDatesPicker({
-                minDate: firstDayOfNextMonth(),
-                maxDate: lastDayOfNextMonth(),
-                stepMonths: 0
+            $(".multi-date-picker").each(function () {
+                const input = this;
+                const $input = $(input);
+
+                const rawValue = $input.val();
+
+                const existingDates = rawValue
+                    ? rawValue.split(",")
+                        .map(date => date.trim())
+                        .filter(Boolean)
+                        .map(parseIsoDate)
+                    : [];
+
+                // Important: remove raw prefilled value before plugin initialization
+                $input.val("");
+
+                // Important: remove stale datepicker state if present
+                if ($input.hasClass("hasDatepicker")) {
+                    $input.datepicker("destroy");
+                    $input.removeClass("hasDatepicker");
+                }
+
+                $input.multiDatesPicker({
+                    dateFormat: "yy-mm-dd",
+                    minDate: firstDayOfNextMonth(),
+                    maxDate: lastDayOfNextMonth(),
+                    stepMonths: 0
+                });
+
+                if (existingDates.length > 0) {
+                    $input.multiDatesPicker("addDates", existingDates);
+                }
             });
 
             $(".no-shift-radio").on("change", function () {
@@ -115,12 +156,14 @@
                             </td>
 
                             <td th:classappend="${#fields.hasErrors('preferences[' + iter.index + '].noShiftRequested')} ? ' error-red'">
-                                <input type="radio"
-                                       class="no-shift-radio"
-                                       th:data-preference-index="${iter.index}"
-                                       th:id="'noShift-' + ${iter.index} + '-true'"
-                                       th:field="*{preferences[__${iter.index}__].noShiftRequested}"
-                                       th:value="true"/>
+                                <label>
+                                    <input type="radio"
+                                           class="no-shift-radio"
+                                           th:data-preference-index="${iter.index}"
+                                           th:id="'noShift-' + ${iter.index} + '-true'"
+                                           th:field="*{preferences[__${iter.index}__].noShiftRequested}"
+                                           th:value="true"/>
+                                </label>
 
                                 <label th:for="'noShift-' + ${iter.index} + '-true'" data-th-text="#{label.noShiftRequested}">
                                     No shifts
@@ -128,12 +171,14 @@
                             </td>
 
                             <td th:classappend="${#fields.hasErrors('preferences[' + iter.index + '].noShiftRequested')} ? ' error-red'">
-                                <input type="radio"
-                                       class="no-shift-radio"
-                                       th:data-preference-index="${iter.index}"
-                                       th:id="'noShift-' + ${iter.index} + '-false'"
-                                       th:field="*{preferences[__${iter.index}__].noShiftRequested}"
-                                       th:value="false"/>
+                                <label>
+                                    <input type="radio"
+                                           class="no-shift-radio"
+                                           th:data-preference-index="${iter.index}"
+                                           th:id="'noShift-' + ${iter.index} + '-false'"
+                                           th:field="*{preferences[__${iter.index}__].noShiftRequested}"
+                                           th:value="false"/>
+                                </label>
 
                                 <label th:for="'noShift-' + ${iter.index} + '-false'" data-th-text="#{label.pickDates}">
                                     Pick dates
@@ -150,9 +195,6 @@
                                 <th data-th-text="#{label.weekdayCount}">Max. weekdays</th>
                                 <th data-th-text="#{label.weekendCount}">Max. weekends</th>
                                 <th data-th-text="#{label.anyDateSelected}">Any date</th>
-                                <th th:if="${isShiftRequestActive == true}" data-th-text="#{label.keepPreviousShiftTypes}">
-                                    Update YES dates
-                                </th>
                                 <th th:if="${isAdmin}" data-th-text="#{label.priority}">Priority</th>
                             </tr>
                             </thead>
@@ -160,59 +202,63 @@
                             <tbody>
                             <tr>
                                 <td th:classappend="${#fields.hasErrors('preferences[' + iter.index + '].datesYes')} ? ' error-red'">
-                                    <input type="text"
-                                           class="multi-date-picker"
-                                           th:id="'datepicker-yes-' + ${iter.index}"
-                                           th:attr="aria-label='Shift type ' + ${preference.shiftType} + ' dates YES'"
-                                           th:readonly="true"
-                                           th:field="*{preferences[__${iter.index}__].datesYes}">
+                                    <label>
+                                        <input type="text"
+                                               class="multi-date-picker"
+                                               th:id="'datepicker-yes-' + ${iter.index}"
+                                               th:attr="aria-label='Shift type ' + ${preference.shiftType} + ' dates YES'"
+                                               th:readonly="true"
+                                               th:field="*{preferences[__${iter.index}__].datesYes}">
+                                    </label>
                                 </td>
 
                                 <td th:classappend="${#fields.hasErrors('preferences[' + iter.index + '].weekdayCount')} ? ' error-red'">
-                                    <select th:attr="aria-label='Shift type ' + ${preference.shiftType} + ' weekday count'"
-                                            th:field="*{preferences[__${iter.index}__].weekdayCount}">
-                                        <option value="0">0</option>
-                                        <option th:each="weekdayCount : ${weekdayCountList}"
-                                                th:value="${weekdayCount}"
-                                                th:text="${weekdayCount}">
-                                            1
-                                        </option>
-                                    </select>
+                                    <label>
+                                        <select th:attr="aria-label='Shift type ' + ${preference.shiftType} + ' weekday count'"
+                                                th:field="*{preferences[__${iter.index}__].weekdayCount}">
+                                            <option value="0">0</option>
+                                            <option th:each="weekdayCount : ${weekdayCountList}"
+                                                    th:value="${weekdayCount}"
+                                                    th:text="${weekdayCount}">
+                                                1
+                                            </option>
+                                        </select>
+                                    </label>
                                 </td>
 
                                 <td th:classappend="${#fields.hasErrors('preferences[' + iter.index + '].weekendCount')} ? ' error-red'">
-                                    <select th:attr="aria-label='Shift type ' + ${preference.shiftType} + ' weekend count'"
-                                            th:field="*{preferences[__${iter.index}__].weekendCount}">
-                                        <option value="0">0</option>
-                                        <option th:each="weekendCount : ${weekendCountList}"
-                                                th:value="${weekendCount}"
-                                                th:text="${weekendCount}">
-                                            1
-                                        </option>
-                                    </select>
+                                    <label>
+                                        <select th:attr="aria-label='Shift type ' + ${preference.shiftType} + ' weekend count'"
+                                                th:field="*{preferences[__${iter.index}__].weekendCount}">
+                                            <option value="0">0</option>
+                                            <option th:each="weekendCount : ${weekendCountList}"
+                                                    th:value="${weekendCount}"
+                                                    th:text="${weekendCount}">
+                                                1
+                                            </option>
+                                        </select>
+                                    </label>
                                 </td>
 
                                 <td th:classappend="${#fields.hasErrors('preferences[' + iter.index + '].anyDateSelected')} ? ' error-red'">
-                                    <input type="checkbox"
-                                           th:attr="aria-label='Shift type ' + ${preference.shiftType} + ' any date selected'"
-                                           th:field="*{preferences[__${iter.index}__].anyDateSelected}"/>
-                                </td>
-
-                                <td th:if="${isShiftRequestActive == true}">
-                                    <input type="checkbox"
-                                           th:attr="aria-label='Shift type ' + ${preference.shiftType} + ' dates YES update'"
-                                           th:field="*{preferences[__${iter.index}__].datesYesUpdate}"/>
+                                    <label>
+                                        <input type="checkbox"
+                                               th:attr="aria-label='Shift type ' + ${preference.shiftType} + ' any date selected'"
+                                               th:field="*{preferences[__${iter.index}__].anyDateSelected}"/>
+                                    </label>
                                 </td>
 
                                 <td th:if="${isAdmin}">
-                                    <select th:attr="aria-label='Shift type ' + ${preference.shiftType} + ' priority'"
-                                            th:field="*{preferences[__${iter.index}__].priority}">
-                                        <option th:each="priority : ${priorityList}"
-                                                th:value="${priority}"
-                                                th:text="${priority}">
-                                            5
-                                        </option>
-                                    </select>
+                                    <label>
+                                        <select th:attr="aria-label='Shift type ' + ${preference.shiftType} + ' priority'"
+                                                th:field="*{preferences[__${iter.index}__].priority}">
+                                            <option th:each="priority : ${priorityList}"
+                                                    th:value="${priority}"
+                                                    th:text="${priority}">
+                                                5
+                                            </option>
+                                        </select>
+                                    </label>
                                 </td>
                             </tr>
                             </tbody>
@@ -230,9 +276,6 @@
                     <thead>
                     <tr>
                         <th data-th-text="#{label.datesNo}">Dates NO</th>
-                        <th th:if="${isShiftRequestActive == true}" data-th-text="#{label.keepPreviousNoDates}">
-                            Update NO dates
-                        </th>
                     </tr>
                     </thead>
 
@@ -247,11 +290,6 @@
                                    th:field="*{datesNo}">
                         </td>
 
-                        <td th:if="${isShiftRequestActive == true}">
-                            <input type="checkbox"
-                                   aria-label="Dates NO update"
-                                   th:field="*{datesNoUpdate}"/>
-                        </td>
                     </tr>
                     </tbody>
                 </table>

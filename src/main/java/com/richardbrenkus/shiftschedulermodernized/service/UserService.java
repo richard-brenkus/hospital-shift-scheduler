@@ -42,8 +42,7 @@ public class UserService {
         ShiftRequestForm shiftRequestForm = new ShiftRequestForm();
         User currentUser = userRepository.getUserByUsername(username);
 
-        System.out.println("currentUser.isShiftRequestActive() = " + currentUser.isShiftRequestActive());
-        if (currentUser.isShiftRequestActive()) {
+        if (currentUser.getShiftRequest() != null && currentUser.isShiftRequestActive()) {
             shiftRequestForm = shiftRequestMapper.entityToForm(currentUser.getShiftRequest());
         }
         else

@@ -23,11 +23,14 @@ public class ShiftRequestMapper {
 
     public ShiftRequest formToEntity(ShiftRequestForm form) {
         ShiftRequest shiftRequest = new ShiftRequest();
-        shiftRequest.setDatesNo(new ArrayList<>(form.getDatesNo()));
+
+        if(form.getDatesNo() != null)
+            shiftRequest.setDatesNo(new ArrayList<>(form.getDatesNo()));
         List<ShiftPreference> shiftPreferences = new ArrayList<>();
 
         for (ShiftPreferenceForm preferenceForm : form.getPreferences()) {
             ShiftPreference shiftPreference = preferenceFormToEntity(preferenceForm);
+            shiftPreference.setShiftRequest(shiftRequest);
             shiftPreferences.add(shiftPreference);
         }
 
@@ -39,7 +42,8 @@ public class ShiftRequestMapper {
 
     public ShiftRequestForm entityToForm(ShiftRequest shiftRequest) {
         ShiftRequestForm shiftRequestForm = new ShiftRequestForm();
-        shiftRequestForm.setDatesNo(new ArrayList<>(shiftRequest.getDatesNo()));
+        if(shiftRequest.getDatesNo() != null)
+            shiftRequestForm.setDatesNo(new ArrayList<>(shiftRequest.getDatesNo()));
         List<ShiftPreferenceForm> shiftPreferences = new ArrayList<>();
 
         for (ShiftPreference shiftPreference : shiftRequest.getPreferences()) {
@@ -89,6 +93,7 @@ public class ShiftRequestMapper {
     }
 
     public ShiftPreferenceForm preferenceEntityToForm(ShiftPreference entity) {
+
         return ShiftPreferenceForm.builder()
                 .shiftType(entity.getShiftType())
                 .noShiftRequested(entity.isNoShiftRequested())
@@ -98,6 +103,7 @@ public class ShiftRequestMapper {
                 .priority(entity.getPriority())
                 .datesYes(new ArrayList<>(entity.getDatesYes()))
                 .build();
+
     }
 
     private String formatDates(List<LocalDate> dates) {

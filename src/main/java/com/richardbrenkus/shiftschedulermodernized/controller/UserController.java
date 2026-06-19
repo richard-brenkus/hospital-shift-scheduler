@@ -22,9 +22,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Optional;
 
-import static com.richardbrenkus.shiftschedulermodernized.config.SelectionLists.WEEKDAY_COUNT_LIST;
-import static com.richardbrenkus.shiftschedulermodernized.config.SelectionLists.WEEKEND_COUNT_LIST;
-
 @Controller
 public class UserController {
 
@@ -102,7 +99,6 @@ public class UserController {
         ShiftRequestForm shiftRequestForm = userService.getShiftRequestForm(username);
 
         userIndexPageService.populateUserIndexModel(model, username, shiftRequestForm, false, username);
-        System.out.println("shiftRequestForm: " + shiftRequestForm.toString());
 
         Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = userService.getShiftRequestViewRecord(username);
         submittedShiftRequestRecord.ifPresentOrElse(record -> {
@@ -125,18 +121,24 @@ public class UserController {
             @RequestParam String usernamePassed) {
 
         String targetUsername = isAdmin ? usernamePassed : username;
-
         User user = userService.getUserByUsername(targetUsername);
 
         model.addAttribute(ModelAttributeName.DISPLAY_NAME, userService.getDisplayNameByUserName(targetUsername));
+        userIndexPageService.populateUserIndexModel(model, username, shiftRequestForm, isAdmin, usernamePassed);
 
+        Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = userService.getShiftRequestViewRecord(username);
+        submittedShiftRequestRecord.ifPresentOrElse(record -> {
+                    model.addAttribute(ModelAttributeName.IS_SHIFT_REQUEST_ACTIVE, true);
+                    model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, record);
+                },
+                () -> model.addAttribute(ModelAttributeName.IS_SHIFT_REQUEST_ACTIVE, false)
+        );
 
         if (!isAdmin) {
             shiftRequestService.applyDefaultUserPriorities(shiftRequestForm);
         }
 
-        ShiftRequestValidationResult validationResult =
-                shiftRequestService.validateShiftRequest(shiftRequestForm);
+        ShiftRequestValidationResult validationResult = shiftRequestService.validateShiftRequest(shiftRequestForm);
 
         if (!validationResult.isValid()) {
             if (validationResult.modelFlag() != null) {
@@ -146,9 +148,6 @@ public class UserController {
             for (String rejectedField : validationResult.rejectedFields()) {
                 bindingResult.rejectValue(rejectedField, "error." + rejectedField);
             }
-
-            userIndexPageService.populateUserIndexModel(model, username, shiftRequestForm, isAdmin, usernamePassed
-            );
 
             return "user/userIndex";
         }

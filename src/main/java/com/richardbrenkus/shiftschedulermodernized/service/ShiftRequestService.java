@@ -9,6 +9,7 @@ import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.ShiftRequestRepository;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,9 +53,7 @@ public class ShiftRequestService {
     }
 
     public void applyDefaultUserPriorities(ShiftRequestForm form) {
-        form.getPreferences().forEach(preference -> {
-            preference.setPriority(5);
-        });
+        form.getPreferences().forEach(preference -> preference.setPriority(5));
     }
 
     @Transactional
@@ -220,23 +219,22 @@ public class ShiftRequestService {
         return dates == null ? Collections.emptyList() : dates;
     }
 
-    public ShiftRequest updateEntity(ShiftRequest existingRequest, ShiftRequestForm form) {
+    public ShiftRequest updateEntity(ShiftRequest existingRequest, @NotNull ShiftRequestForm form) {
 
-        if (form.isDatesNoUpdate()) {
+        if (form.getDatesNo() != null)
             existingRequest.setDatesNo(new ArrayList<>(emptyIfNull(form.getDatesNo())));
-        }
 
         for (ShiftPreferenceForm preferenceForm : form.getPreferences()) {
-            ShiftPreference existingPreference =
-                    findPreferenceByShiftType(existingRequest, preferenceForm.getShiftType());
+            ShiftPreference existingPreference = findPreferenceByShiftType(existingRequest, preferenceForm.getShiftType());
 
             if (existingPreference == null) {
                 ShiftPreference newPreference = shiftRequestMapper.preferenceFormToEntity(preferenceForm);
+                newPreference.setShiftRequest(existingRequest);
                 existingRequest.getPreferences().add(newPreference);
                 continue;
             }
 
-            updatePreference(existingPreference, preferenceForm);
+            updatePreferenceIfChanged(existingPreference, preferenceForm);
         }
 
         return existingRequest;
@@ -247,13 +245,12 @@ public class ShiftRequestService {
 
         existingPreference.setPriority(form.getPriority());
 
-        if (form.isDatesYesUpdate()) {
-            existingPreference.setDatesYes(new ArrayList<>(emptyIfNull(form.getDatesYes())));
-            existingPreference.setNoShiftRequested(form.isNoShiftRequested());
-            existingPreference.setAnyDateSelected(form.isAnyDateSelected());
-            existingPreference.setWeekdayCount(form.getWeekdayCount());
-            existingPreference.setWeekendCount(form.getWeekendCount());
-        }
+        existingPreference.setDatesYes(new ArrayList<>(emptyIfNull(form.getDatesYes())));
+        existingPreference.setNoShiftRequested(form.isNoShiftRequested());
+        existingPreference.setAnyDateSelected(form.isAnyDateSelected());
+        existingPreference.setWeekdayCount(form.getWeekdayCount());
+        existingPreference.setWeekendCount(form.getWeekendCount());
+
     }
 
     private ShiftPreference findPreferenceByShiftType(ShiftRequest request, int shiftType) {
@@ -264,9 +261,37 @@ public class ShiftRequestService {
                 .orElse(null);
     }
 
+    private void updatePreferenceIfChanged(ShiftPreference existingPreference,
+                                           ShiftPreferenceForm preferenceForm) {
 
+        if (existingPreference.getShiftType() != preferenceForm.getShiftType()) {
+            existingPreference.setShiftType(preferenceForm.getShiftType());
+        }
 
+        if (existingPreference.isNoShiftRequested() != preferenceForm.isNoShiftRequested()) {
+            existingPreference.setNoShiftRequested(preferenceForm.isNoShiftRequested());
+        }
 
+        if (existingPreference.isAnyDateSelected() != preferenceForm.isAnyDateSelected()) {
+            existingPreference.setAnyDateSelected(preferenceForm.isAnyDateSelected());
+        }
+
+        if (existingPreference.getWeekdayCount() != preferenceForm.getWeekdayCount()) {
+            existingPreference.setWeekdayCount(preferenceForm.getWeekdayCount());
+        }
+
+        if (existingPreference.getWeekendCount() != preferenceForm.getWeekendCount()) {
+            existingPreference.setWeekendCount(preferenceForm.getWeekendCount());
+        }
+
+        if (existingPreference.getPriority() != preferenceForm.getPriority()) {
+            existingPreference.setPriority(preferenceForm.getPriority());
+        }
+
+        if (!Objects.equals(existingPreference.getDatesYes(), preferenceForm.getDatesYes())) {
+            existingPreference.setDatesYes(new ArrayList<>(preferenceForm.getDatesYes()));
+        }
+    }
 
 
 }

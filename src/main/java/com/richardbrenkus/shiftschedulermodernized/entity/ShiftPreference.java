@@ -31,7 +31,21 @@ public class ShiftPreference {
     @ElementCollection
     private List<LocalDate> datesYes = new ArrayList<>();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shift_request_id", nullable = false)
     private ShiftRequest shiftRequest;
+
+    public String toString(){
+        return "ShiftPreference{" +
+                "id=" + id +
+                ", shiftType=" + shiftType +
+                ", priority=" + priority +
+                ", weekdayCount=" + weekdayCount +
+                ", weekendCount=" + weekendCount +
+                ", noShiftRequested=" + noShiftRequested +
+                ", anyDateSelected=" + anyDateSelected +
+                ", datesYes=" + datesYes +
+                '}';
+    }
 
 }
