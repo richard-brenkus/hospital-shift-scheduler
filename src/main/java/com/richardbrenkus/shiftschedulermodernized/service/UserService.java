@@ -6,6 +6,7 @@ import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftRequestViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
+import com.richardbrenkus.shiftschedulermodernized.repository.ShiftRequestRepository;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -22,11 +23,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final ShiftRequestMapper shiftRequestMapper;
     private final PasswordEncoderConfig encoder;
+    private final ShiftRequestRepository shiftRequestRepository;
 
-    public UserService(UserRepository userRepository, ShiftRequestMapper shiftRequestMapper, PasswordEncoderConfig encoder) {
+    public UserService(UserRepository userRepository, ShiftRequestMapper shiftRequestMapper, PasswordEncoderConfig encoder, ShiftRequestRepository shiftRequestRepository) {
         this.userRepository = userRepository;
         this.shiftRequestMapper = shiftRequestMapper;
         this.encoder = encoder;
+        this.shiftRequestRepository = shiftRequestRepository;
     }
 
     public String getDisplayNameByUserName(String userName) {
@@ -71,6 +74,19 @@ public class UserService {
         user.setPassword(newEncodedPassword);
         userRepository.save(user);
     }
+
+    public void deleteShiftRequest(String username) {
+        User user = userRepository.getUserByUsername(username);
+
+        //shiftRequestRepository.delete(user.getShiftRequest());
+
+        user.setShiftRequestActive(false);
+        user.setShiftRequest(null);
+        userRepository.save(user);
+    }
+
+
+
 
     private void fillAllowedShiftTypes(User currentUser, ShiftRequestForm shiftRequestForm) {
         List<Integer> allowedShiftTypes = new ArrayList<>(currentUser.getAllowedShiftTypes());

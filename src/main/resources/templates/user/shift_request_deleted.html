@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+
+    <title>Shift request deleted</title>
+
+    <link rel="stylesheet" th:href="@{/styles/main.css}"/>
+
+    <meta http-equiv="refresh"
+          th:content="'3;url=' + ${redirectUrl}">
+</head>
+
+<body>
+
+<div class="centered">
+
+    <h1 data-th-text="#{shiftRequest.delete.success.header}">
+        Shift request deleted successfully
+    </h1>
+
+    <br>
+
+    <p data-th-text="#{shiftRequest.delete.success.message}">
+        The shift request has been deleted successfully.
+    </p>
+
+    <p data-th-text="#{shiftRequest.delete.success.redirect}">
+        You will be redirected shortly.
+    </p>
+
+    <br>
+
+    <form th:action="@{${redirectUrl}}" method="get">
+        <button type="submit"
+                class="standard-button"
+                data-th-text="#{button.backToHomePage}">
+            Go back
+        </button>
+    </form>
+
+</div>
+
+</body>
+</html>

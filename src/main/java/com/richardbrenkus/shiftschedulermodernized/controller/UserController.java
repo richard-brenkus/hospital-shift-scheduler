@@ -201,5 +201,43 @@ public class UserController {
         return "user/password_changed";
     }
 
+    @PostMapping("user/request_summary")
+    public String showRequest(Model model, @RequestParam(name = "usernamePassed") String username, @RequestParam(name = "isAdmin") Boolean isAdmin) {
+
+        User currentUser = userService.getUserByUsername(username);
+        model.addAttribute("isAdmin", isAdmin);
+
+        if (currentUser.getShiftRequest() == null || !currentUser.isShiftRequestActive()) {
+            //model.addAttribute("hasShiftRequest", false);
+            if (isAdmin)
+                return "redirect:/admin/adminIndex";
+            else return "redirect:/user/userIndex";
+        }
+
+        Optional<ShiftRequestViewRecord> shiftRequestViewRecord = userService.getShiftRequestViewRecord(username);
+
+        model.addAttribute("displayName", userService.getDisplayNameByUserName(username));
+        model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, userService.getShiftRequestViewRecord(username).orElse(null));
+        //model.addAttribute("hasShiftRequest", currentUser.getHasShiftRequest());
+
+        return "user/request_summary";
+    }
+
+    @PostMapping("/user/deactivate_request")
+    public String deactivateRequest(@RequestParam(name = "usernamePassed") String username,
+                                    @RequestParam(name = "isAdmin") Boolean isAdmin,
+                                    Model model) {
+
+        userService.deleteShiftRequest(username);
+
+        String redirectUrl = Boolean.TRUE.equals(isAdmin)
+                ? "/admin/adminIndex"
+                : "/user/userIndex";
+
+        model.addAttribute("redirectUrl", redirectUrl);
+
+        return "user/shift_request_deleted";
+    }
+
 
 }

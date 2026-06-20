@@ -66,5 +66,10 @@ public class User {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "shift_request_id")
     private ShiftRequest shiftRequest;
+
+    @Transient
+    public boolean hasShiftRequest() {
+        return shiftRequest != null;
+    }
 }
 
