@@ -16,14 +16,6 @@
         <span th:text="${submittedShiftRequestRecord != null ? submittedShiftRequestRecord.displayName : displayName}"></span>
     </h1>
 
-    <div class="language-flags">
-        <a th:href="@{/user/request_summary(language=cz)}">
-            <img alt="CZ" class="flag" th:src="@{/images/cz.png}" title="Česky">
-        </a>
-        <a th:href="@{/user/request_summary(language=en)}">
-            <img alt="US" class="flag" th:src="@{/images/us.png}" title="English">
-        </a>
-    </div>
 </div>
 
 <br>

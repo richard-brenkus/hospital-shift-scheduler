@@ -1,5 +1,6 @@
 body {
-    background-color: #87CEFA;
+    background-color: #2f3338;
+    color: #f2f2f2;
     font-family: "Lato", sans-serif;
 }
 
@@ -14,7 +15,8 @@ body {
 }
 
 .table-with-lines {
-    border: 2px solid black;
+    border: 2px solid #1f2226;
+    background-color: #3b4047;
 }
 
 .table-no-lines {
@@ -32,42 +34,53 @@ body {
 
 th, td {
     margin-bottom: 1px;
-    border: 2px solid black;
+    border: 2px solid #1f2226;
     border-collapse: collapse;
     padding: 5px;
     text-align: center;
     overflow-wrap: break-word;
     word-wrap: break-word;
     min-width: 0;
+    color: #f2f2f2;
+}
+
+th {
+    background-color: #4a5058;
+}
+
+td {
+    background-color: #3b4047;
 }
 
 .th-no-lines, .td-no-lines {
     border: none;
     padding: 5px;
     text-align: center;
+    background-color: transparent;
 }
 
 button {
-    background-color: #1F51FF;
+    background-color: #6b7280;
     border: none;
-    color: white;
+    color: #ffffff;
     text-align: center;
     cursor: pointer;
     border-radius: 4px;
     transition: 0.3s;
 }
 
+button:hover {
+    background-color: #8a919c;
+    opacity: 1;
+}
+
 .table-button {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-
     padding: clamp(4px, 1vw, 12px) clamp(6px, 2vw, 20px);
-
     font-size: clamp(0.7rem, 1vw, 1rem);
-
     margin: 2px;
-
     white-space: normal;
     overflow-wrap: break-word;
 }
@@ -76,10 +89,6 @@ button {
     padding: 10px 20px;
     font-size: 16px;
     margin: 4px 2px;
-}
-
-button:hover {
-    opacity: 1;
 }
 
 td input:not([type="radio"]):not([type="checkbox"]),
@@ -93,11 +102,26 @@ td textarea {
     padding: clamp(2px, 0.5vw, 6px);
 }
 
+input,
+textarea {
+    background-color: #eceff1;
+    color: #1f2226;
+    border: 1px solid #6b7280;
+    border-radius: 4px;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    outline: 2px solid #aeb4bd;
+}
+
 select {
-    background-color: #1F51FF;
-    color: white;
+    background-color: #5b616b;
+    color: #ffffff;
     text-align-last: center;
     border-radius: 5px;
+    border: 1px solid #8a919c;
 }
 
 option {
@@ -105,6 +129,8 @@ option {
     text-align-last: center;
     padding: 5px;
     border-radius: 5px;
+    background-color: #f2f2f2;
+    color: #1f2226;
 }
 
 .sidebar {
@@ -114,7 +140,7 @@ option {
     z-index: 1;
     top: 0;
     left: 0;
-    background-color: #87CEFA;
+    background-color: #262a2f;
     overflow-x: hidden;
     transition: 0.5s;
     padding-top: 60px;
@@ -124,13 +150,14 @@ option {
     padding: 8px 8px 8px 32px;
     text-decoration: none;
     font-size: 15px;
-    color: black;
+    color: #f2f2f2;
     display: block;
     transition: 0.3s;
 }
 
 .sidebar a:hover {
-    color: #f1f1f1;
+    color: #cfd4da;
+    background-color: #3b4047;
 }
 
 .sidebar .closebtn {
@@ -144,8 +171,8 @@ option {
 .openbtn {
     font-size: 15px;
     cursor: pointer;
-    background-color: #0000CD;
-    color: white;
+    background-color: #4a5058;
+    color: #ffffff;
     padding: 8px 15px;
     margin: 4px 2px;
     border: none;
@@ -153,14 +180,14 @@ option {
 }
 
 .openbtn:hover {
-    background-color: #444;
+    background-color: #6b7280;
 }
 
 .signoutbtn {
     font-size: 15px;
     cursor: pointer;
-    background-color: #87CEFA;
-    color: black;
+    background-color: #3b4047;
+    color: #ffffff;
     padding: 8px 15px;
     margin: 8px 15px;
     border: none;
@@ -168,7 +195,8 @@ option {
 }
 
 .signoutbtn:hover {
-    color: #f1f1f1;
+    background-color: #6b7280;
+    color: #ffffff;
 }
 
 #main {
@@ -181,7 +209,6 @@ th.linebreak {
     word-wrap: break-word;
     overflow-wrap: break-word;
     text-align: center;
-
 }
 
 .language-flags {
@@ -197,77 +224,24 @@ img.flag {
     height: auto;
 }
 
-.col-4 {
-    width: 4%;
-}
-
-.col-5 {
-    width: 5%;
-}
-
-.col-7 {
-    width: 7%;
-}
-
-.col-10 {
-    width: 10%;
-}
-
-.col-12-5 {
-    width: 12.5%;
-}
-
-.col-15 {
-    width: 15%;
-}
-
-.col-16 {
-    width: 16%;
-}
-
-.col-18 {
-    width: 18%;
-}
-
-.col-20 {
-    width: 20%;
-}
-
-.col-21 {
-    width: 21%;
-}
-
-.col-22 {
-    width: 22%;
-}
-
-.col-25 {
-    width: 25%;
-}
-
-.col-28 {
-    width: 28%;
-}
-
-.col-30 {
-    width: 30%;
-}
-
-.col-33 {
-    width: 33%;
-}
-
-.col-34 {
-    width: 34%;
-}
-
-.col-50 {
-    width: 50%;
-}
-
-.col-56 {
-    width: 56%;
-}
+.col-4 { width: 4%; }
+.col-5 { width: 5%; }
+.col-7 { width: 7%; }
+.col-10 { width: 10%; }
+.col-12-5 { width: 12.5%; }
+.col-15 { width: 15%; }
+.col-16 { width: 16%; }
+.col-18 { width: 18%; }
+.col-20 { width: 20%; }
+.col-21 { width: 21%; }
+.col-22 { width: 22%; }
+.col-25 { width: 25%; }
+.col-28 { width: 28%; }
+.col-30 { width: 30%; }
+.col-33 { width: 33%; }
+.col-34 { width: 34%; }
+.col-50 { width: 50%; }
+.col-56 { width: 56%; }
 
 .left-aligned {
     text-align: left;
@@ -288,39 +262,23 @@ img.flag {
 }
 
 .holiday-cell {
-    background-color: #90EE90;
+    background-color: #6f7f6f;
 }
 
 .error-red {
     background-color: #FF0000;
+    color: #ffffff;
 }
 
-.electric-blue {
-    background-color: #7DF9FF;
-}
-
-.pink-lace {
-    background-color: #FEC8D8;
-}
-
-.pale-lavender {
-    background-color: #E0BBE4;
-}
-
-.purple-gray {
-    background-color: #957DAD;
-}
-
-.pastel-violet {
-    background-color: #D291BC;
-}
-
-.simple-rose-gold {
-    background-color: #FFDFD3;
-}
-
+.electric-blue,
+.pink-lace,
+.pale-lavender,
+.purple-gray,
+.pastel-violet,
+.simple-rose-gold,
 .mainly-blue {
-    background-color: #B0B9E6;
+    background-color: #555c66;
+    color: #ffffff;
 }
 
 .visually-hidden {
@@ -328,11 +286,11 @@ img.flag {
     left: -9999px;
 }
 
-.section-spacer-30{
+.section-spacer-30 {
     height: 30px;
 }
 
-.section-spacer-30{
+.section-spacer-60 {
     height: 60px;
 }
 
@@ -344,7 +302,6 @@ img.flag {
     margin-bottom: 15px;
 }
 
-/* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
 @media screen and (max-height: 450px) {
     .sidebar {
         padding-top: 15px;
@@ -353,6 +310,4 @@ img.flag {
     .sidebar a {
         font-size: 18px;
     }
-}	
-
-			
+}
