@@ -45,7 +45,8 @@ public class UserService {
         ShiftRequestForm shiftRequestForm = new ShiftRequestForm();
         User currentUser = userRepository.getUserByUsername(username);
 
-        if (currentUser.getShiftRequest() != null && currentUser.isShiftRequestActive()) {
+        //if (currentUser.hasShiftRequest()) {
+        if (currentUser.getShiftRequest() != null) {
             shiftRequestForm = shiftRequestMapper.entityToForm(currentUser.getShiftRequest());
         }
         else
@@ -56,10 +57,10 @@ public class UserService {
 
     public Optional<ShiftRequestViewRecord> getShiftRequestViewRecord(String username) {
         User user = userRepository.getUserByUsername(username);
-        if (user == null || user.getShiftRequest() == null || !user.isShiftRequestActive()) {
+        if (user == null || !user.hasShiftRequest()) {
             return Optional.empty();
         }
-        return Optional.of(shiftRequestMapper.entityToViewRecord(user.getShiftRequest(), user));
+        return Optional.of(shiftRequestMapper.entityToViewRecord(user, user.getShiftRequest()));
     }
 
     public User getUserByUsername(String username) {
@@ -77,12 +78,13 @@ public class UserService {
 
     public void deleteShiftRequest(String username) {
         User user = userRepository.getUserByUsername(username);
-
-        //shiftRequestRepository.delete(user.getShiftRequest());
-
-        user.setShiftRequestActive(false);
         user.setShiftRequest(null);
         userRepository.save(user);
+    }
+
+    public boolean hasShiftRequest(String username) {
+        User user = userRepository.getUserByUsername(username);
+        return user != null && user.hasShiftRequest();
     }
 
 

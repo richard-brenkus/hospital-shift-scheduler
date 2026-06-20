@@ -57,23 +57,21 @@ public class ShiftRequestService {
     }
 
     @Transactional
-    public ShiftRequest submitShiftRequest(User user, ShiftRequestForm form) {
-        ShiftRequest existingRequest = user.getShiftRequest();
+    public ShiftRequest submitShiftRequest(String username, ShiftRequestForm form) {
+        User user = userRepository.getUserByUsername(username);
 
+        ShiftRequest existingRequest = user.getShiftRequest();
         ShiftRequest shiftRequest;
 
         if (existingRequest == null) {
             shiftRequest = shiftRequestMapper.formToEntity(form);
-            //shiftRequest.setUser(user);
-            user.setShiftRequest(shiftRequest);
-            user.setShiftRequestActive(true);
-        } else {
-            shiftRequest = this.updateEntity(existingRequest, form);
+        }
+        else {
+            shiftRequest = updateEntity(existingRequest, form);
         }
 
-        user.setShiftRequestActive(true);
-
-        return shiftRequestRepository.save(shiftRequest);
+        user.setShiftRequest(shiftRequest);
+        return shiftRequest;
     }
 
     private ShiftRequestValidationResult validateNoShiftsOnly(ShiftRequestForm form) {

@@ -25,11 +25,11 @@ public final class ModelAttributeName {
     public static final String USER_COUNT = "userCount";
     public static final String SHIFT_REQUEST_COUNT = "shiftRequestCount";
     public static final String PERCENTAGE = "percentage";
+    public static final String HAS_SHIFT_REQUEST = "hasShiftRequest";
 
     // Shift request
     public static final String SHIFT_REQUEST_FORM = "shiftRequestForm";
     public static final String SUBMITTED_SHIFT_REQUEST_RECORD = "submittedShiftRequestRecord";
-    public static final String IS_SHIFT_REQUEST_ACTIVE = "isShiftRequestActive";
 
     // Selection lists
     public static final String WEEKDAY_COUNT_LIST = "weekdayCountList";

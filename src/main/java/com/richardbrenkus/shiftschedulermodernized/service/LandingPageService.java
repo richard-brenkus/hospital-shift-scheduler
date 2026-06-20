@@ -27,7 +27,7 @@ public class LandingPageService {
             if (!user.getRole().equals(Role.ADMIN)) {
                 userCountWithoutAdmin = userCountWithoutAdmin + 1;
 
-                if (user.isShiftRequestActive()) {
+                if (user.hasShiftRequest()) {
                     shiftRequestCount = shiftRequestCount + 1;
                 }
             }

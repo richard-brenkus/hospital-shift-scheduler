@@ -24,7 +24,7 @@ public class ShiftRequestMapper {
     public ShiftRequest formToEntity(ShiftRequestForm form) {
         ShiftRequest shiftRequest = new ShiftRequest();
 
-        if(form.getDatesNo() != null)
+        if (form.getDatesNo() != null)
             shiftRequest.setDatesNo(new ArrayList<>(form.getDatesNo()));
         List<ShiftPreference> shiftPreferences = new ArrayList<>();
 
@@ -42,7 +42,7 @@ public class ShiftRequestMapper {
 
     public ShiftRequestForm entityToForm(ShiftRequest shiftRequest) {
         ShiftRequestForm shiftRequestForm = new ShiftRequestForm();
-        if(shiftRequest.getDatesNo() != null)
+        if (shiftRequest.getDatesNo() != null)
             shiftRequestForm.setDatesNo(new ArrayList<>(shiftRequest.getDatesNo()));
         List<ShiftPreferenceForm> shiftPreferences = new ArrayList<>();
 
@@ -55,25 +55,33 @@ public class ShiftRequestMapper {
         return shiftRequestForm;
     }
 
-    public ShiftRequestViewRecord entityToViewRecord(ShiftRequest shiftRequest, User user) {
+    public ShiftRequestViewRecord entityToViewRecord(User user, ShiftRequest shiftRequest) {
         List<ShiftPreferenceViewRecord> shiftPreferenceViewRecords = new ArrayList<>();
-        for (ShiftPreference shiftPreference : shiftRequest.getPreferences()) {
-            ShiftPreferenceViewRecord shiftPreferenceViewRecord = ShiftPreferenceViewRecord.builder()
-                    .shiftType(shiftPreference.getShiftType())
-                    .noShiftRequested(shiftPreference.isNoShiftRequested())
-                    .anyDateSelected(shiftPreference.isAnyDateSelected())
-                    .weekdayCount(shiftPreference.getWeekdayCount())
-                    .weekendCount(shiftPreference.getWeekendCount())
-                    .priority(shiftPreference.getPriority())
-                    .stringDatesYes(this.getShiftRequestDatesAsString(shiftPreference.getDatesYes()))
-                    .build();
+        //ShiftRequest shiftRequest = user.getShiftRequest();
+        if (shiftRequest != null) {
+            for (ShiftPreference shiftPreference : shiftRequest.getPreferences()) {
+                ShiftPreferenceViewRecord shiftPreferenceViewRecord = ShiftPreferenceViewRecord.builder()
+                        .shiftType(shiftPreference.getShiftType())
+                        .noShiftRequested(shiftPreference.isNoShiftRequested())
+                        .anyDateSelected(shiftPreference.isAnyDateSelected())
+                        .weekdayCount(shiftPreference.getWeekdayCount())
+                        .weekendCount(shiftPreference.getWeekendCount())
+                        .priority(shiftPreference.getPriority())
+                        .stringDatesYes(this.getShiftRequestDatesAsString(shiftPreference.getDatesYes()))
+                        .build();
 
-            shiftPreferenceViewRecords.add(shiftPreferenceViewRecord);
+                shiftPreferenceViewRecords.add(shiftPreferenceViewRecord);
 
+            }
+        }
+
+        List<LocalDate> datesNo = new ArrayList<>();
+        if (shiftRequest != null) {
+            datesNo = shiftRequest.getDatesNo();
         }
 
         return ShiftRequestViewRecord.builder()
-                .stringDatesNo(this.getShiftRequestDatesAsString(shiftRequest.getDatesNo()))
+                .stringDatesNo(this.getShiftRequestDatesAsString(datesNo))
                 .enabledShiftTypes(user.getAllowedShiftTypes())
                 .preferences(shiftPreferenceViewRecords)
                 .build();
@@ -108,7 +116,7 @@ public class ShiftRequestMapper {
 
     private String formatDates(List<LocalDate> dates) {
 
-        if(dates == null)
+        if (dates == null)
             return "";
 
         String datesString = dates.stream()

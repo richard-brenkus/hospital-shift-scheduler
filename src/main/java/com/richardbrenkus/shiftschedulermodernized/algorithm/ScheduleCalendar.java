@@ -24,6 +24,6 @@ public class ScheduleCalendar {
     private boolean overrideUserShiftRequestAll;
     private boolean overrideShiftCountCap;
     private boolean overrideConflictingDates;
-    private boolean overrideIsShiftRequestActive;
+    private boolean overrideHasShiftRequest;
     private boolean overridePreviousMonthValid;
 }

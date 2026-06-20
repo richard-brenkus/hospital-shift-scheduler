@@ -52,7 +52,6 @@ public class User {
     private String title;
 
     private boolean enabled = true;
-    private boolean shiftRequestActive = false;
 
     @ElementCollection
     @CollectionTable(name = "user_allowed_shift_types", joinColumns = @JoinColumn(name = "user_id"))

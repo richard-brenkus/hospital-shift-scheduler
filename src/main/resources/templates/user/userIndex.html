@@ -316,18 +316,18 @@
 <br>
 
 <div class="centered">
-    <p th:if="${isShiftRequestActive == false}" data-th-text="#{userIndex.noValidRequest}">
+    <p th:if="${hasShiftRequest == false}" data-th-text="#{userIndex.noValidRequest}">
         The user doesn't have a shift request in the system. Please submit a shift request first!
     </p>
 
-    <p th:if="${isShiftRequestActive == true}">
+    <p th:if="${hasShiftRequest == true || submittedShiftRequestRecord != null}">
         <b data-th-text="#{userIndex.currentRequestDetails}">
             Current shift request details:
         </b>
     </p>
 
     <table class="table-with-lines centered"
-           th:if="${isShiftRequestActive == true and submittedShiftRequestRecord != null}">
+           th:if="${hasShiftRequest == true and submittedShiftRequestRecord != null}">
         <thead>
         <tr>
             <th class="centered" data-th-text="#{label.shiftType}">Type</th>
@@ -356,7 +356,7 @@
         </tbody>
     </table>
 
-    <div th:if="${isShiftRequestActive == true
+    <div th:if="${hasShiftRequest == true
             and submittedShiftRequestRecord != null
             and !#strings.isEmpty(submittedShiftRequestRecord.stringDatesNo)}">
         <br>
@@ -376,7 +376,7 @@
 
 <br>
 
-<div th:if="${isShiftRequestActive == true}" class="centered">
+<div th:if="${hasShiftRequest == true}" class="centered">
     <form target="_blank" action="#" th:action="@{/user/request_summary}" method="post">
         <input type="hidden" th:name="isAdmin" th:value="${isAdmin}"/>
         <input type="hidden" th:name="usernamePassed" th:value="${usernamePassed}"/>
