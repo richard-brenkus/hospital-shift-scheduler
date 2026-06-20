@@ -9,7 +9,7 @@ import org.springframework.ui.Model;
 @Service
 public class UserIndexPageService {
 
-    public void populateUserIndexModel(Model model, String username, ShiftRequestForm shiftRequestForm, boolean isAdmin, String usernamePassed) {
+    public void populateUserIndexModel(Model model, ShiftRequestForm shiftRequestForm, boolean isAdmin, String usernamePassed) {
         model.addAttribute(ModelAttributeName.SHIFT_REQUEST_FORM, shiftRequestForm);
         model.addAttribute(ModelAttributeName.WEEKEND_COUNT_LIST, SelectionLists.WEEKEND_COUNT_LIST);
         model.addAttribute(ModelAttributeName.WEEKDAY_COUNT_LIST, SelectionLists.WEEKDAY_COUNT_LIST);

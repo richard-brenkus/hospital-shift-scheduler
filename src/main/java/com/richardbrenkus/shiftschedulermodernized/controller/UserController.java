@@ -11,7 +11,8 @@ import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
 import com.richardbrenkus.shiftschedulermodernized.service.*;
 import jakarta.validation.Valid;
-import org.springframework.security.core.annotation.CurrentSecurityContext;
+import org.springframework.security.core.Authentication;
+//import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -42,12 +43,12 @@ public class UserController {
     }
 
     @GetMapping({"/", "/home", "/index"})
-    public String index(@CurrentSecurityContext(expression = "authentication?.name") String name) {
-        if (name == null || "anonymousUser".equals(name)) {
+    public String index(Authentication authentication) {
+        if (authentication.getName() == null || "anonymousUser".equals(authentication.getName())) {
             return "redirect:/login";
         }
 
-        if ("admin".equalsIgnoreCase(name)) {
+        if ("admin".equalsIgnoreCase(authentication.getName())) {
             return "redirect:/admin/adminIndex";
         }
 
@@ -65,7 +66,9 @@ public class UserController {
     }
 
     @GetMapping("/admin/adminIndex")
-    public String adminIndex(@CurrentSecurityContext(expression = "authentication?.name") String username, Model model) {
+    public String adminIndex(Authentication authentication, Model model) {
+
+        String username = authentication.getName();
 
         model.addAttribute(ModelAttributeName.DISPLAY_NAME, userService.getDisplayNameByUserName(username));
 
@@ -91,14 +94,16 @@ public class UserController {
     }
 
     @GetMapping("/user/userIndex")
-    public String userIndex(@CurrentSecurityContext(expression = "authentication?.name") String username, Model model) {
+    public String userIndex(Authentication authentication, Model model) {
+
+        String username = authentication.getName();
 
         model.addAttribute(ModelAttributeName.DISPLAY_NAME, userService.getDisplayNameByUserName(username));
         model.addAttribute(ModelAttributeName.CONFLICTING_DATES, false);
 
         ShiftRequestForm shiftRequestForm = userService.getShiftRequestForm(username);
 
-        userIndexPageService.populateUserIndexModel(model, username, shiftRequestForm, false, username);
+        userIndexPageService.populateUserIndexModel(model, shiftRequestForm, false, username);
 
         Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = userService.getShiftRequestViewRecord(username);
         submittedShiftRequestRecord.ifPresentOrElse(record -> {
@@ -117,17 +122,20 @@ public class UserController {
             @Valid @ModelAttribute("shiftRequestForm") ShiftRequestForm shiftRequestForm,
             BindingResult bindingResult,
             Model model,
-            @CurrentSecurityContext(expression = "authentication?.name") String username,
-            @RequestParam(defaultValue = "false") boolean isAdmin,
-            @RequestParam String usernamePassed) {
+            Authentication authentication,
+            @RequestParam(required = false) String usernamePassed) {
 
-        String targetUsername = isAdmin ? usernamePassed : username;
+        boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        String loggedInUsername = authentication.getName();
+        String targetUsername = isAdmin && usernamePassed != null ? usernamePassed : loggedInUsername;
+
         User user = userService.getUserByUsername(targetUsername);
 
         model.addAttribute(ModelAttributeName.DISPLAY_NAME, userService.getDisplayNameByUserName(targetUsername));
-        userIndexPageService.populateUserIndexModel(model, username, shiftRequestForm, isAdmin, usernamePassed);
+        userIndexPageService.populateUserIndexModel(model, shiftRequestForm, user.isAdmin(), usernamePassed);
 
-        Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = userService.getShiftRequestViewRecord(username);
+        Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = userService.getShiftRequestViewRecord(targetUsername);
         submittedShiftRequestRecord.ifPresentOrElse(record -> {
                     model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, true);
                     model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, record);
@@ -177,7 +185,9 @@ public class UserController {
     }
 
     @PostMapping("/user/change_password")
-    public String changeUserPassword(Model model, @RequestParam(name = "newPassword") String newPassword, @RequestParam(name = "confirmNewPassword") String confirmNewPassword, @CurrentSecurityContext(expression = "authentication?.name") String username) {
+    public String changeUserPassword(Model model, @RequestParam(name = "newPassword") String newPassword, @RequestParam(name = "confirmNewPassword") String confirmNewPassword, Authentication authentication) {
+
+        String username = authentication.getName();
 
         if (!(newPassword.contentEquals(confirmNewPassword))) {
             model.addAttribute("newPassword", newPassword);
@@ -203,7 +213,9 @@ public class UserController {
     }
 
     @PostMapping("user/request_summary")
-    public String showRequest(Model model, @RequestParam(name = "usernamePassed") String username, @RequestParam(name = "isAdmin") Boolean isAdmin) {
+    public String showRequest(Model model, @RequestParam(name = "usernamePassed") String username, Authentication authentication) {
+
+        boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
         User currentUser = userService.getUserByUsername(username);
         model.addAttribute("isAdmin", isAdmin);
@@ -214,8 +226,6 @@ public class UserController {
             else return "redirect:/user/userIndex";
         }
 
-        Optional<ShiftRequestViewRecord> shiftRequestViewRecord = userService.getShiftRequestViewRecord(username);
-
         model.addAttribute("displayName", userService.getDisplayNameByUserName(username));
         model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, userService.getShiftRequestViewRecord(username).orElse(null));
         model.addAttribute("hasShiftRequest", currentUser.hasShiftRequest());
@@ -225,12 +235,14 @@ public class UserController {
 
     @PostMapping("/user/deactivate_request")
     public String deactivateRequest(@RequestParam(name = "usernamePassed") String username,
-                                    @RequestParam(name = "isAdmin") Boolean isAdmin,
+                                    Authentication authentication,
                                     Model model) {
+
+        boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
         userService.deleteShiftRequest(username);
 
-        String redirectUrl = Boolean.TRUE.equals(isAdmin)
+        String redirectUrl = isAdmin
                 ? "/admin/adminIndex"
                 : "/user/userIndex";
 

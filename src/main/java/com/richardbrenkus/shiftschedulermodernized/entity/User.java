@@ -70,5 +70,10 @@ public class User {
     public boolean hasShiftRequest() {
         return shiftRequest != null;
     }
+
+    @Transient
+    public boolean isAdmin() {
+        return role == Role.ADMIN;
+    }
 }
 
