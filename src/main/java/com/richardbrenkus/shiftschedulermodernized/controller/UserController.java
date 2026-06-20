@@ -198,6 +198,8 @@ public class UserController {
 
         userService.changePassword(username, newPassword);
 
-        return "redirect:/user/userIndex";
+        return "user/password_changed";
     }
+
+
 }
