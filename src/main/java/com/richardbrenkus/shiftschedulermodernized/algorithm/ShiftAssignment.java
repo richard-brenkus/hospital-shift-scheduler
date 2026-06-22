@@ -10,6 +10,6 @@ import lombok.*;
 @Builder
 public class ShiftAssignment {
 
-    private int shiftType; // 1-6
+    private int shiftType;
     private User user;
 }

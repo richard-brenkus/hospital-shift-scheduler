@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+
+    <title>User updated successfully</title>
+
+    <link rel="stylesheet" th:href="@{/styles/main.css}"/>
+</head>
+
+<body>
+
+<button class="openbtn" onclick="openNav()">menu</button>
+
+<div class="centered">
+
+    <h1 th:if="${actionType == 'update'}"
+        data-th-text="#{update.success.header}">
+        User details updated successfully!
+    </h1>
+
+    <h1 th:if="${actionType == 'add'}"
+        data-th-text="#{add.success.header}">
+        The new user has been registered successfully!
+    </h1>
+
+    <br>
+
+    <form th:action="@{/admin/register_user}" method="get">
+        <button type="submit"
+                class="standard-button"
+                data-th-text="#{button.registerAnother}">
+            Register new user
+        </button>
+    </form>
+
+    <br>
+
+    <form th:action="@{/admin/users}" method="get">
+        <button type="submit"
+                class="standard-button"
+                data-th-text="#{button.showUsers}">
+            Show users
+        </button>
+    </form>
+
+    <br>
+
+    <form th:action="@{/admin/adminIndex}" method="get">
+        <button type="submit"
+                class="standard-button"
+                data-th-text="#{button.backToHomePage}">
+            Go back
+        </button>
+    </form>
+
+</div>
+
+<div id="mySidebar" class="sidebar">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
+
+    <a th:href="@{/admin/adminIndex}" data-th-text="#{sidebar.landingPage}">Home page</a>
+    <a th:href="@{/admin/register_user}" data-th-text="#{sidebar.registerNew}">Register a new user</a>
+    <a th:href="@{/admin/all}" data-th-text="#{sidebar.showAllUsersJSON}">All users as JSON</a>
+    <a th:href="@{/admin/users}" data-th-text="#{sidebar.showAllUsers}">Show all users</a>
+    <a th:href="@{/admin/delete}" data-th-text="#{sidebar.deleteUser}">Delete user</a>
+    <a th:href="@{/admin/update_select}" data-th-text="#{sidebar.updateUser}">Update user</a>
+    <a th:href="@{/admin/export/excel}" data-th-text="#{sidebar.exportUsers}">Export users to Excel</a>
+    <a th:href="@{/admin/delete_request_select}" data-th-text="#{sidebar.deleteRequest}">Delete shift request</a>
+    <a th:href="@{/admin/update_request_select}" data-th-text="#{sidebar.updateRequest}">Update shift request</a>
+    <a th:href="@{/admin/calculate_schedule}" data-th-text="#{sidebar.calculateSchedule}">Calculate schedule</a>
+    <a th:href="@{/admin/show_saved_calendars}" data-th-text="#{sidebar.showCalendars}">Show saved calendars</a>
+    <a th:href="@{/admin/scheduled_tasks}" data-th-text="#{sidebar.scheduledTasks}">Scheduled tasks</a>
+
+    <br>
+
+    <div>
+        <form th:action="@{/logout}" method="post">
+            <button class="signoutbtn"
+                    type="submit"
+                    data-th-text="#{sidebar.signout}">
+                Sign out
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openNav() {
+        document.getElementById("mySidebar").style.width = "250px";
+    }
+
+    function closeNav() {
+        document.getElementById("mySidebar").style.width = "0";
+    }
+</script>
+
+</body>
+</html>

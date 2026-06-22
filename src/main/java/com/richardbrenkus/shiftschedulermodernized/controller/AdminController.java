@@ -10,10 +10,14 @@ import com.richardbrenkus.shiftschedulermodernized.service.LandingPageService;
 import com.richardbrenkus.shiftschedulermodernized.service.ScheduledTasksService;
 import com.richardbrenkus.shiftschedulermodernized.service.ShiftTypeService;
 import com.richardbrenkus.shiftschedulermodernized.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 
 @Controller
 public class AdminController {
@@ -68,6 +72,65 @@ public class AdminController {
 
         return "admin/register_user";
     }
+
+    @PostMapping(path = "/admin/add")
+    public String addNewUser(@Valid @ModelAttribute(ModelAttributeName.USER_FORM) UserForm userForm,
+                             BindingResult bindingResult,
+                             Model model) {
+
+        if (userForm.getAllowedShiftTypes() == null || userForm.getAllowedShiftTypes().isEmpty()) {
+            bindingResult.rejectValue(
+                    "allowedShiftTypes",
+                    "error.allowedShiftTypes",
+                    "Please select at least one shift type!"
+            );
+        }
+
+        if (userService.existsByUsernameIgnoreCase(userForm.getUsername())) {
+            bindingResult.rejectValue(
+                    "username",
+                    "error.username",
+                    "This user name has already been used!"
+            );
+        }
+
+        if (userService.existsByEmailIgnoreCase(userForm.getEmail())) {
+            bindingResult.rejectValue(
+                    "email",
+                    "error.email",
+                    "This email address has already been used!"
+            );
+        }
+
+        if (userService.existsByNameIgnoreCase(userForm.getName())) {
+            bindingResult.rejectValue(
+                    "name",
+                    "error.name",
+                    "A user with the same name already exists! Please make the name unique."
+            );
+        }
+
+        if (bindingResult.hasErrors()) {
+            prepareRegisterUserModel(model);
+            return "admin/register_user";
+        }
+
+        userService.createUser(userForm);
+
+        model.addAttribute(ModelAttributeName.ACTION_TYPE, ModelAttributeValue.ACTION_TYPE_ADD);
+        return "admin/user_update_success";
+    }
+
+    private void prepareRegisterUserModel(Model model) {
+        model.addAttribute(ModelAttributeName.PROFESSIONS, Profession.values());
+        model.addAttribute(ModelAttributeName.SHIFT_TYPES, shiftTypeService.getShiftTypes());
+        model.addAttribute(ModelAttributeName.ACTION_TYPE, ModelAttributeValue.ACTION_TYPE_ADD);
+        model.addAttribute(ModelAttributeName.HEADER_TYPE, ModelAttributeValue.HEADER_TYPE_ADMIN_ADD);
+    }
+
+
+
+
 
 
 

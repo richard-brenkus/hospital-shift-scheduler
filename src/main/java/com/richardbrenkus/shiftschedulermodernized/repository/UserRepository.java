@@ -12,11 +12,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 public interface UserRepository extends CrudRepository<User, Long> {
 
-    @Query("SELECT u FROM User u WHERE u.username = :username")
-    User getUserByUsername(@Param("username") String username);
+    User getUserByUsername(String username);
 
-    @Query("SELECT u FROM User u WHERE u.name = :name")
-    User getUserByName(@Param("name") String name);
+    User getUserByName(String name);
+
+    boolean existsByUsernameIgnoreCase(String username);
+
+    boolean existsByEmailIgnoreCase(String email);
+
+    boolean existsByNameIgnoreCase(String name);
 
     @Modifying
     @Transactional

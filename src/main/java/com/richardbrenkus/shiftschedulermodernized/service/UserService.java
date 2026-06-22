@@ -1,17 +1,23 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
+import com.richardbrenkus.shiftschedulermodernized.config.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.config.PasswordEncoderConfig;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftPreferenceForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.UserForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftRequestViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.ShiftRequestRepository;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,12 +30,14 @@ public class UserService {
     private final ShiftRequestMapper shiftRequestMapper;
     private final PasswordEncoderConfig encoder;
     private final ShiftRequestRepository shiftRequestRepository;
+    private final PasswordEncoderConfig passwordEncoder;
 
-    public UserService(UserRepository userRepository, ShiftRequestMapper shiftRequestMapper, PasswordEncoderConfig encoder, ShiftRequestRepository shiftRequestRepository) {
+    public UserService(UserRepository userRepository, ShiftRequestMapper shiftRequestMapper, PasswordEncoderConfig encoder, ShiftRequestRepository shiftRequestRepository, PasswordEncoderConfig passwordEncoder) {
         this.userRepository = userRepository;
         this.shiftRequestMapper = shiftRequestMapper;
         this.encoder = encoder;
         this.shiftRequestRepository = shiftRequestRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public String getDisplayNameByUserName(String userName) {
@@ -86,6 +94,41 @@ public class UserService {
         User user = userRepository.getUserByUsername(username);
         return user != null && user.hasShiftRequest();
     }
+
+    @Transactional
+    public User createUser(UserForm form) {
+        User user = new User();
+
+        user.setCreationDate(ZonedDateTime.now(ApplicationConstants.ZONE_ID));
+        user.setName(form.getName());
+        user.setUsername(form.getUsername());
+        user.setEmail(form.getEmail());
+        user.setBirthday(form.getBirthday());
+        user.setNote(form.getNote());
+        user.setTitle(form.getTitle());
+        user.setProfession(form.getProfession());
+        user.setEnabled(true);
+        user.setRole(Role.USER);
+        user.setPassword(passwordEncoder.passwordEncoder().encode(form.getPassword()));
+
+        user.setAllowedShiftTypes(new HashSet<>(form.getAllowedShiftTypes()));
+
+        return userRepository.save(user);
+    }
+
+    public boolean existsByUsernameIgnoreCase(String username) {
+        return userRepository.existsByUsernameIgnoreCase(username);
+    }
+
+    public boolean existsByEmailIgnoreCase(String email) {
+        return userRepository.existsByEmailIgnoreCase(email);
+    }
+
+    public boolean existsByNameIgnoreCase(String name) {
+        return userRepository.existsByNameIgnoreCase(name);
+    }
+
+
 
 
 

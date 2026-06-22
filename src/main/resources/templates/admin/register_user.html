@@ -137,10 +137,12 @@
 
                 <td class="td-no-lines">
                     <div th:each="shiftType : ${shiftTypes}">
-                        <input type="checkbox"
-                               th:id="'shiftType-' + ${shiftType}"
-                               th:value="${shiftType}"
-                               th:field="*{allowedShiftTypes}"/>
+                        <label>
+                            <input type="checkbox"
+                                   th:id="'shiftType-' + ${shiftType}"
+                                   th:value="${shiftType}"
+                                   th:field="*{allowedShiftTypes}"/>
+                        </label>
 
                         <label th:for="'shiftType-' + ${shiftType}">
                             <span th:text="#{__${'shiftType' + shiftType}__}">Shift type</span>

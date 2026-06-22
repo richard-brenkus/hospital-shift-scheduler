@@ -13,7 +13,7 @@ public record ShiftRequestViewRecord(
         ZonedDateTime creationDate,
         Long userId,
         String username,
-        String displayName,
+        //String displayName,
         Set<Integer> enabledShiftTypes,
         Set<Integer> keepPreviousShiftTypes,
         boolean keepPreviousNoDates,

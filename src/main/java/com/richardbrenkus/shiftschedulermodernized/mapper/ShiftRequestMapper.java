@@ -57,7 +57,6 @@ public class ShiftRequestMapper {
 
     public ShiftRequestViewRecord entityToViewRecord(User user, ShiftRequest shiftRequest) {
         List<ShiftPreferenceViewRecord> shiftPreferenceViewRecords = new ArrayList<>();
-        //ShiftRequest shiftRequest = user.getShiftRequest();
         if (shiftRequest != null) {
             for (ShiftPreference shiftPreference : shiftRequest.getPreferences()) {
                 ShiftPreferenceViewRecord shiftPreferenceViewRecord = ShiftPreferenceViewRecord.builder()
