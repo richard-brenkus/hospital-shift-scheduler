@@ -1,9 +1,10 @@
 package com.richardbrenkus.shiftschedulermodernized.controller;
 
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeName;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.ValidationConstants;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.PasswordChangeForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
-import com.richardbrenkus.shiftschedulermodernized.dto.view.LandingPageRecord;
-import com.richardbrenkus.shiftschedulermodernized.dto.view.ScheduledTasksRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftRequestValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftRequestViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
@@ -44,7 +45,7 @@ public class UserController {
     @GetMapping({"/", "/home", "/index"})
     public String index(Authentication authentication) {
         boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals(Role.ADMIN.asAuthority()));
 
         return isAdmin
                 ? "redirect:/admin/adminIndex"
@@ -61,33 +62,6 @@ public class UserController {
         return "403";
     }
 
-    @GetMapping("/admin/adminIndex")
-    public String adminIndex(Authentication authentication, Model model) {
-
-        String username = authentication.getName();
-
-        model.addAttribute(ModelAttributeName.DISPLAY_NAME, userService.getDisplayNameByUserName(username));
-
-        LandingPageRecord landingPageRecord = landingPageService.getLandingPageRecord();
-        model.addAttribute(ModelAttributeName.USER_COUNT, landingPageRecord.userCountWithoutAdmin());
-        model.addAttribute(ModelAttributeName.SHIFT_REQUEST_COUNT, landingPageRecord.shiftRequestCount());
-        model.addAttribute(ModelAttributeName.PERCENTAGE, landingPageRecord.percentage());
-
-        ScheduledTasksRecord scheduledTasksRecord = scheduledTasksService.getScheduledTasksRecord();
-        model.addAttribute(ModelAttributeName.REMINDER_DEADLINE, scheduledTasksRecord.reminderDeadline());
-        model.addAttribute(ModelAttributeName.REMINDER_IS_ACTIVE, scheduledTasksRecord.reminderIsActive());
-        model.addAttribute(ModelAttributeName.REMINDER_TASK_INFO, scheduledTasksRecord.reminderTaskInfo());
-        model.addAttribute(ModelAttributeName.REMINDER_TASK, scheduledTasksRecord.reminderTask());
-        model.addAttribute(ModelAttributeName.REMINDER_START, scheduledTasksRecord.reminderStart());
-        model.addAttribute(ModelAttributeName.REMINDER_FREQUENCY, scheduledTasksRecord.reminderFrequency());
-        model.addAttribute(ModelAttributeName.REMINDER_REPETITIONS, scheduledTasksRecord.reminderRepetitions());
-        model.addAttribute(ModelAttributeName.CLEANUP_TASK_INFO, scheduledTasksRecord.cleanupTaskInfo());
-        model.addAttribute(ModelAttributeName.CLEANUP_IS_ACTIVE, scheduledTasksRecord.cleanupIsActive());
-        model.addAttribute(ModelAttributeName.CLEANUP_DATE_TIME, scheduledTasksRecord.cleanupDateTime());
-        model.addAttribute(ModelAttributeName.CLEANUP_TASK, scheduledTasksRecord.cleanupTask());
-
-        return "admin/adminIndex";
-    }
 
     @GetMapping("/user/userIndex")
     public String userIndex(Authentication authentication, Model model) {
@@ -115,13 +89,13 @@ public class UserController {
 
     @PostMapping("/request_submitted")
     public String requestSubmitted(
-            @Valid @ModelAttribute("shiftRequestForm") ShiftRequestForm shiftRequestForm,
+            @Valid @ModelAttribute(ModelAttributeName.SHIFT_REQUEST_FORM) ShiftRequestForm shiftRequestForm,
             BindingResult bindingResult,
             Model model,
             Authentication authentication,
             @RequestParam(required = false) String usernamePassed) {
 
-        boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(Role.ADMIN.asAuthority()));
 
         String loggedInUsername = authentication.getName();
         String targetUsername = isAdmin && usernamePassed != null ? usernamePassed : loggedInUsername;
@@ -151,7 +125,7 @@ public class UserController {
             }
 
             for (String rejectedField : validationResult.rejectedFields()) {
-                bindingResult.rejectValue(rejectedField, "error." + rejectedField);
+                bindingResult.rejectValue(rejectedField, ValidationConstants.ERROR_PREFIX + rejectedField);
             }
 
             return "user/userIndex";
@@ -172,49 +146,43 @@ public class UserController {
     @GetMapping("/user/change_password")
     public String showChangePassword(Model model) {
 
-        model.addAttribute("noMatch", false);
-        model.addAttribute("tooShort", false);
-        model.addAttribute("newPassword", "");
-        model.addAttribute("confirmNewPassword", "");
+        model.addAttribute(ModelAttributeName.NO_MATCH, false);
+        model.addAttribute(ValidationConstants.ERROR_PREFIX + ModelAttributeName.TOO_SHORT, false);
+        model.addAttribute(ModelAttributeName.PASSWORD_CHANGE_FORM, new PasswordChangeForm());
 
         return "user/change_password";
     }
 
     @PostMapping("/user/change_password")
-    public String changeUserPassword(Model model, @RequestParam(name = "newPassword") String newPassword, @RequestParam(name = "confirmNewPassword") String confirmNewPassword, Authentication authentication) {
+    public String changeUserPassword(
+            @Valid @ModelAttribute PasswordChangeForm form,
+            BindingResult bindingResult,
+            Model model,
+            Authentication authentication) {
+
+        if (bindingResult.hasErrors()) {
+            return "user/change_password";
+        }
+
+        if (!form.passwordsMatch()) {
+            model.addAttribute(ModelAttributeName.NO_MATCH, true);
+            form.setConfirmedPassword("");
+            return "user/change_password";
+        }
 
         String username = authentication.getName();
-
-        if (!(newPassword.contentEquals(confirmNewPassword))) {
-            model.addAttribute("newPassword", newPassword);
-            model.addAttribute("confirmNewPassword", confirmNewPassword);
-            model.addAttribute("noMatch", true);
-            model.addAttribute("tooShort", false);
-
-            return "user/change_password";
-        }
-
-        if (newPassword.length() < 8) {
-            model.addAttribute("newPassword", newPassword);
-            model.addAttribute("confirmNewPassword", confirmNewPassword);
-            model.addAttribute("noMatch", false);
-            model.addAttribute("tooShort", true);
-
-            return "user/change_password";
-        }
-
-        userService.changePassword(username, newPassword);
+        userService.changePassword(username, form.getNewPassword());
 
         return "user/password_changed";
     }
 
     @PostMapping("user/request_summary")
-    public String showRequest(Model model, @RequestParam(name = "usernamePassed") String username, Authentication authentication) {
+    public String showRequest(Model model, @RequestParam(name = ModelAttributeName.USERNAME_PASSED) String username, Authentication authentication) {
 
-        boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(Role.ADMIN.asAuthority()));
 
         User currentUser = userService.getUserByUsername(username);
-        model.addAttribute("isAdmin", isAdmin);
+        model.addAttribute(ModelAttributeName.IS_ADMIN, isAdmin);
 
         if (!currentUser.hasShiftRequest()) {
             if (isAdmin)
@@ -222,19 +190,19 @@ public class UserController {
             else return "redirect:/user/userIndex";
         }
 
-        model.addAttribute("displayName", userService.getDisplayNameByUserName(username));
+        model.addAttribute(ModelAttributeName.DISPLAY_NAME, userService.getDisplayNameByUserName(username));
         model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, userService.getShiftRequestViewRecord(username).orElse(null));
-        model.addAttribute("hasShiftRequest", currentUser.hasShiftRequest());
+        model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, currentUser.hasShiftRequest());
 
         return "user/request_summary";
     }
 
     @PostMapping("/user/deactivate_request")
-    public String deactivateRequest(@RequestParam(name = "usernamePassed") String username,
+    public String deactivateRequest(@RequestParam(name = ModelAttributeName.USERNAME_PASSED) String username,
                                     Authentication authentication,
                                     Model model) {
 
-        boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(Role.ADMIN.asAuthority()));
 
         userService.deleteShiftRequest(username);
 
@@ -242,7 +210,7 @@ public class UserController {
                 ? "/admin/adminIndex"
                 : "/user/userIndex";
 
-        model.addAttribute("redirectUrl", redirectUrl);
+        model.addAttribute(ModelAttributeName.REDIRECT_URL, redirectUrl);
 
         return "user/shift_request_deleted";
     }

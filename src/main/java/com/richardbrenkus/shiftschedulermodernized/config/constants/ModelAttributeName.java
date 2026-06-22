@@ -26,6 +26,8 @@ public final class ModelAttributeName {
     public static final String SHIFT_REQUEST_COUNT = "shiftRequestCount";
     public static final String PERCENTAGE = "percentage";
     public static final String HAS_SHIFT_REQUEST = "hasShiftRequest";
+    public static final String PASSWORD_CHANGE_FORM = "passwordChangeForm";
+    public static final String SHIFT_TYPES = "shiftTypes";
 
     // Shift request
     public static final String SHIFT_REQUEST_FORM = "shiftRequestForm";
@@ -44,4 +46,16 @@ public final class ModelAttributeName {
     public static final String NO_SHIFTS_ONLY_SELECTED = "noShiftsOnlySelected";
     public static final String NO_DATES_ONLY = "noDatesOnly";
     public static final String YES_DATES_ANY_DATE = "yesDatesAnyDate";
+
+    // Validation errors
+    public static final String NO_MATCH = "noMatch";
+    public static final String TOO_SHORT = "tooShort";
+
+
+    // Other
+    public static final String USER_FORM = "userForm";
+    public static final String PROFESSIONS = "professions";
+    public static final String HEADER_TYPE = "headerType";
+    public static final String ACTION_TYPE = "actionType";
+    public static final String REDIRECT_URL = "redirectUrl";
 }
