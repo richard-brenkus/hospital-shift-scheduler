@@ -12,7 +12,6 @@ import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
 import com.richardbrenkus.shiftschedulermodernized.service.*;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
-//import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -44,15 +43,12 @@ public class UserController {
 
     @GetMapping({"/", "/home", "/index"})
     public String index(Authentication authentication) {
-        if (authentication.getName() == null || "anonymousUser".equals(authentication.getName())) {
-            return "redirect:/login";
-        }
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        if ("admin".equalsIgnoreCase(authentication.getName())) {
-            return "redirect:/admin/adminIndex";
-        }
-
-        return "redirect:/user/userIndex";
+        return isAdmin
+                ? "redirect:/admin/adminIndex"
+                : "redirect:/user/userIndex";
     }
 
     @GetMapping("/login")
