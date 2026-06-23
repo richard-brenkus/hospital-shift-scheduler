@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
 
-    <title>User updated successfully</title>
+    <title>User deleted successfully</title>
 
     <link rel="stylesheet" th:href="@{/styles/main.css}"/>
 </head>
@@ -15,15 +15,15 @@
 
 <div class="centered">
 
-    <h1 th:if="${actionType == 'update'}"
-        data-th-text="#{update.success.header}">
-        User details updated successfully!
+    <h1 data-th-text="#{user.delete.success.header}">
+        User deleted successfully
     </h1>
 
-    <h1 th:if="${actionType == 'add'}"
-        data-th-text="#{add.success.header}">
-        The new user has been registered successfully!
-    </h1>
+    <br>
+
+    <p data-th-text="#{user.delete.success.message}">
+        The shift request has been deleted successfully.
+    </p>
 
     <br>
 

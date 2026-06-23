@@ -1,12 +1,10 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
-
-    <title>User updated successfully</title>
-
     <link rel="stylesheet" th:href="@{/styles/main.css}"/>
+    <title>Delete user</title>
 </head>
 
 <body>
@@ -14,33 +12,51 @@
 <button class="openbtn" onclick="openNav()">menu</button>
 
 <div class="centered">
+    <h1 data-th-text="#{deleteUser.header}">Delete user</h1>
 
-    <h1 th:if="${actionType == 'update'}"
-        data-th-text="#{update.success.header}">
-        User details updated successfully!
-    </h1>
+    <form th:action="@{/admin/delete_user}" method="post">
+        <table class="table-no-lines">
+            <tr>
+                <td class="td-no-lines">
+                    <label for="userId" data-th-text="#{deleteUser.select}">
+                        Select user
+                    </label>
+                </td>
+            </tr>
 
-    <h1 th:if="${actionType == 'add'}"
-        data-th-text="#{add.success.header}">
-        The new user has been registered successfully!
-    </h1>
+            <tr>
+                <td class="td-no-lines">
+                    <select id="userId" name="userId" required>
+                        <option value="" data-th-text="#{deleteUser.select}">
+                            Select user
+                        </option>
 
-    <br>
+                        <option th:each="user : ${users}"
+                                th:value="${user.id}"
+                                th:text="${user.name + ' (' + user.username + ')'}">
+                            User name
+                        </option>
+                    </select>
+                </td>
+            </tr>
 
-    <form th:action="@{/admin/register_user}" method="get">
-        <button type="submit"
-                class="standard-button"
-                data-th-text="#{button.registerAnother}">
-            Register new user
-        </button>
+            <tr>
+                <td class="td-no-lines">
+                    <button type="submit"
+                            class="standard-button"
+                            data-th-text="#{button.delete}"
+                            onclick="return confirm('Delete selected user?');">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+        </table>
     </form>
 
     <br>
 
     <form th:action="@{/admin/users}" method="get">
-        <button type="submit"
-                class="standard-button"
-                data-th-text="#{button.showUsers}">
+        <button type="submit" class="standard-button" data-th-text="#{button.showUsers}">
             Show users
         </button>
     </form>
@@ -48,20 +64,17 @@
     <br>
 
     <form th:action="@{/admin/adminIndex}" method="get">
-        <button type="submit"
-                class="standard-button"
-                data-th-text="#{button.backToHomePage}">
+        <button type="submit" class="standard-button" data-th-text="#{button.backToHomePage}">
             Go back
         </button>
     </form>
-
 </div>
 
 <div id="mySidebar" class="sidebar">
     <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
 
     <a th:href="@{/admin/adminIndex}" data-th-text="#{sidebar.landingPage}">Home page</a>
-    <a th:href="@{/admin/register_user}" data-th-text="#{sidebar.registerNew}">Register a new user</a>
+    <a th:href="@{/admin/register_merged}" data-th-text="#{sidebar.registerNew}">Register a new user</a>
     <a th:href="@{/admin/all}" data-th-text="#{sidebar.showAllUsersJSON}">All users as JSON</a>
     <a th:href="@{/admin/users}" data-th-text="#{sidebar.showAllUsers}">Show all users</a>
     <a th:href="@{/admin/delete_user}" data-th-text="#{sidebar.deleteUser}">Delete user</a>
@@ -77,9 +90,7 @@
 
     <div>
         <form th:action="@{/logout}" method="post">
-            <button class="signoutbtn"
-                    type="submit"
-                    data-th-text="#{sidebar.signout}">
+            <button class="signoutbtn" type="submit" data-th-text="#{sidebar.signout}">
                 Sign out
             </button>
         </form>

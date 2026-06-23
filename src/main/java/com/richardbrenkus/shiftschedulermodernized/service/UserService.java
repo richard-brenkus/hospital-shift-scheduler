@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 import static com.richardbrenkus.shiftschedulermodernized.config.ApplicationConstants.DATE_FORMATTER;
 
@@ -128,8 +129,20 @@ public class UserService {
         return userRepository.existsByNameIgnoreCase(name);
     }
 
+    public List<User> getAllUsersWithoutAdmin() {
+        return StreamSupport.stream(userRepository.findAll().spliterator(), false)
+                .filter(user -> !user.isAdmin())
+                .toList();
+    }
 
+    public User getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + userId));
+    }
 
+    public void deleteUser(User user) {
+        userRepository.delete(user);
+    }
 
 
 

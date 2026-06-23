@@ -6,6 +6,7 @@ import com.richardbrenkus.shiftschedulermodernized.config.constants.Profession;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.LandingPageRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ScheduledTasksRecord;
+import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.service.LandingPageService;
 import com.richardbrenkus.shiftschedulermodernized.service.ScheduledTasksService;
 import com.richardbrenkus.shiftschedulermodernized.service.ShiftTypeService;
@@ -18,6 +19,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 @Controller
 public class AdminController {
@@ -120,6 +124,29 @@ public class AdminController {
         model.addAttribute(ModelAttributeName.ACTION_TYPE, ModelAttributeValue.ACTION_TYPE_ADD);
         return "admin/user_update_success";
     }
+
+    @GetMapping("/admin/delete_user")
+    public String showDeleteUserPage(Model model) {
+        List<User> users = userService.getAllUsersWithoutAdmin();
+
+        model.addAttribute("users", users);
+        return "admin/delete_user";
+    }
+
+    @PostMapping("/admin/delete_user")
+    public String deleteUser(@RequestParam Long userId) {
+        User user = userService.getUserById(userId);
+
+        if (user.isAdmin()) {
+            throw new IllegalArgumentException("Admin user cannot be deleted.");
+        }
+
+        userService.deleteUser(user);
+
+        return "admin/user_delete_success";
+    }
+
+
 
     private void prepareRegisterUserModel(Model model) {
         model.addAttribute(ModelAttributeName.PROFESSIONS, Profession.values());
