@@ -28,15 +28,15 @@ public class UserController {
 
     private final LandingPageService landingPageService;
     private final UserService userService;
-    private final UserIndexPageService userIndexPageService;
+    private final PrepareModelService prepareModelService;
     private final ScheduledTasksService scheduledTasksService;
     private final ShiftRequestService shiftRequestService;
     private final ShiftRequestMapper shiftRequestMapper;
 
-    public UserController(LandingPageService landingPageService, UserService userService, UserIndexPageService userIndexPageService, ScheduledTasksService scheduledTasksService, ShiftRequestService shiftRequestService, ShiftRequestMapper shiftRequestMapper) {
+    public UserController(LandingPageService landingPageService, UserService userService, PrepareModelService prepareModelService, ScheduledTasksService scheduledTasksService, ShiftRequestService shiftRequestService, ShiftRequestMapper shiftRequestMapper) {
         this.landingPageService = landingPageService;
         this.userService = userService;
-        this.userIndexPageService = userIndexPageService;
+        this.prepareModelService = prepareModelService;
         this.scheduledTasksService = scheduledTasksService;
         this.shiftRequestService = shiftRequestService;
         this.shiftRequestMapper = shiftRequestMapper;
@@ -73,7 +73,7 @@ public class UserController {
 
         ShiftRequestForm shiftRequestForm = userService.getShiftRequestForm(username);
 
-        userIndexPageService.populateUserIndexModel(model, shiftRequestForm, false, username);
+        prepareModelService.populateUserIndexModelForUser(model, shiftRequestForm, false, username);
 
         Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = userService.getShiftRequestViewRecord(username);
         submittedShiftRequestRecord.ifPresentOrElse(record -> {
@@ -103,7 +103,7 @@ public class UserController {
         User user = userService.getUserByUsername(targetUsername);
 
         model.addAttribute(ModelAttributeName.DISPLAY_NAME, userService.getDisplayNameByUserName(targetUsername));
-        userIndexPageService.populateUserIndexModel(model, shiftRequestForm, user.isAdmin(), usernamePassed);
+        prepareModelService.populateUserIndexModelForUser(model, shiftRequestForm, user.isAdmin(), usernamePassed);
 
         Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = userService.getShiftRequestViewRecord(targetUsername);
         submittedShiftRequestRecord.ifPresentOrElse(record -> {

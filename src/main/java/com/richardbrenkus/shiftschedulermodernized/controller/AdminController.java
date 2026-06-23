@@ -3,14 +3,12 @@ package com.richardbrenkus.shiftschedulermodernized.controller;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeName;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeValue;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Profession;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.LandingPageRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ScheduledTasksRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
-import com.richardbrenkus.shiftschedulermodernized.service.LandingPageService;
-import com.richardbrenkus.shiftschedulermodernized.service.ScheduledTasksService;
-import com.richardbrenkus.shiftschedulermodernized.service.ShiftTypeService;
-import com.richardbrenkus.shiftschedulermodernized.service.UserService;
+import com.richardbrenkus.shiftschedulermodernized.service.*;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -21,7 +19,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
+import java.util.*;
 
 @Controller
 public class AdminController {
@@ -30,12 +28,16 @@ public class AdminController {
     private final UserService userService;
     private final ScheduledTasksService scheduledTasksService;
     private final ShiftTypeService shiftTypeService;
+    private final ShiftRequestService shiftRequestService;
+    private final PrepareModelService prepareModelService;
 
-    public AdminController(LandingPageService landingPageService, UserService userService, ScheduledTasksService scheduledTasksService, ShiftTypeService shiftTypeService) {
+    public AdminController(LandingPageService landingPageService, UserService userService, ScheduledTasksService scheduledTasksService, ShiftTypeService shiftTypeService, ShiftRequestService shiftRequestService, PrepareModelService prepareModelService) {
         this.landingPageService = landingPageService;
         this.userService = userService;
         this.scheduledTasksService = scheduledTasksService;
         this.shiftTypeService = shiftTypeService;
+        this.shiftRequestService = shiftRequestService;
+        this.prepareModelService = prepareModelService;
     }
 
     @GetMapping("/admin/adminIndex")
@@ -115,7 +117,7 @@ public class AdminController {
         }
 
         if (bindingResult.hasErrors()) {
-            prepareRegisterUserModel(model);
+            prepareModelService.prepareRegisterUserModel(model);
             return "admin/register_user";
         }
 
@@ -129,7 +131,7 @@ public class AdminController {
     public String showDeleteUserPage(Model model) {
         List<User> users = userService.getAllUsersWithoutAdmin();
 
-        model.addAttribute("users", users);
+        model.addAttribute(ModelAttributeName.USERS, users);
         return "admin/delete_user";
     }
 
@@ -146,20 +148,59 @@ public class AdminController {
         return "admin/user_delete_success";
     }
 
+    @GetMapping(path = "/admin/delete_shift_request")
+    public String deleteRequestSelect(Model model) {
 
+        final UserForm updatedUser = new UserForm();
+        List<User> usersList = userService.getAllUsersWithShiftRequest();
 
-    private void prepareRegisterUserModel(Model model) {
-        model.addAttribute(ModelAttributeName.PROFESSIONS, Profession.values());
-        model.addAttribute(ModelAttributeName.SHIFT_TYPES, shiftTypeService.getShiftTypes());
-        model.addAttribute(ModelAttributeName.ACTION_TYPE, ModelAttributeValue.ACTION_TYPE_ADD);
-        model.addAttribute(ModelAttributeName.HEADER_TYPE, ModelAttributeValue.HEADER_TYPE_ADMIN_ADD);
+        model.addAttribute(ModelAttributeName.USERS, usersList);
+        model.addAttribute(ModelAttributeName.UPDATED_USER, updatedUser);
+
+        return "admin/delete_shift_request";
+
     }
 
+    @PostMapping(path = "/admin/delete_request")
+    public String deleteRequest(@RequestParam(name = "id") long userId) {
 
+        shiftRequestService.deleteShiftRequest(userId);
 
+        return "redirect:/admin/adminIndex";
+    }
 
+    @GetMapping(path = "/admin/update_select")
+    public String updateUser(Model model) {
 
+        final UserForm updatedUser = new UserForm();
+        List<User> usersList = userService.getAllUsersAndAdmins();
 
+        model.addAttribute(ModelAttributeName.USERS, usersList);
+        model.addAttribute(ModelAttributeName.UPDATED_USER, updatedUser);
+
+        return "admin/update_user";
+    }
+
+    @GetMapping(path = "/admin/update_shift_request")
+    public String updateRequest(Model model) {
+
+        final User updatedUser = new User();
+        List<User> usersList = userService.getAllUsersWithShiftRequest();
+
+        model.addAttribute(ModelAttributeName.USERS, usersList);
+        model.addAttribute(ModelAttributeName.UPDATED_USER, updatedUser);
+
+        return "admin/update_shift_request";
+    }
+
+    @PostMapping(path = "/admin/update_shift_request")
+    public String updateShiftRequest(Model model, @RequestParam long id) {
+
+        ShiftRequestForm shiftRequestForm = shiftRequestService.getShiftRequestFormByUserId(id);
+        prepareModelService.populateUserIndexModelForAdmin(model, shiftRequestForm, true, id);
+
+        return "user/userIndex";
+    }
 
 
 }

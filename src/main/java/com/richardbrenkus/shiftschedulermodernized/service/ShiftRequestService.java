@@ -10,6 +10,7 @@ import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.ShiftRequestRepository;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,14 +23,14 @@ public class ShiftRequestService {
     UserRepository userRepository;
     ShiftRequestRepository shiftRequestRepository;
     UserService userService;
-    UserIndexPageService userIndexPageService;
+    PrepareModelService prepareModelService;
     ShiftRequestMapper shiftRequestMapper;
 
-    public ShiftRequestService(UserRepository userRepository, ShiftRequestRepository shiftRequestRepository, UserService userService, UserIndexPageService userIndexPageService, ShiftRequestMapper shiftRequestMapper) {
+    public ShiftRequestService(UserRepository userRepository, ShiftRequestRepository shiftRequestRepository, UserService userService, PrepareModelService prepareModelService, ShiftRequestMapper shiftRequestMapper) {
         this.userRepository = userRepository;
         this.shiftRequestRepository = shiftRequestRepository;
         this.userService = userService;
-        this.userIndexPageService = userIndexPageService;
+        this.prepareModelService = prepareModelService;
         this.shiftRequestMapper = shiftRequestMapper;
     }
 
@@ -72,6 +73,15 @@ public class ShiftRequestService {
 
         user.setShiftRequest(shiftRequest);
         return shiftRequest;
+    }
+
+    @Transactional
+    public void deleteShiftRequest(long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid user Id: " + userId));
+
+        user.setShiftRequest(null);
+        userRepository.save(user);
     }
 
     private ShiftRequestValidationResult validateNoShiftsOnly(ShiftRequestForm form) {
@@ -237,6 +247,21 @@ public class ShiftRequestService {
 
         return existingRequest;
     }
+
+    public ShiftRequestForm getShiftRequestFormByUserId(long id) {
+
+        User user = userService.getUserById(id);
+        if (user != null)
+            return userService.getShiftRequestForm(user.getUsername());
+        else throw new IllegalArgumentException("Invalid user Id: " + id);
+
+    }
+
+
+
+
+
+
 
     private void updatePreference(ShiftPreference existingPreference,
                                   ShiftPreferenceForm form) {

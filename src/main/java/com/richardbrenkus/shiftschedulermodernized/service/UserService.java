@@ -54,7 +54,6 @@ public class UserService {
         ShiftRequestForm shiftRequestForm = new ShiftRequestForm();
         User currentUser = userRepository.getUserByUsername(username);
 
-        //if (currentUser.hasShiftRequest()) {
         if (currentUser.getShiftRequest() != null) {
             shiftRequestForm = shiftRequestMapper.entityToForm(currentUser.getShiftRequest());
         }
@@ -143,6 +142,18 @@ public class UserService {
     public void deleteUser(User user) {
         userRepository.delete(user);
     }
+
+    public List<User> getAllUsersWithShiftRequest() {
+        return StreamSupport.stream(userRepository.findAll().spliterator(), false)
+                .filter(User::hasShiftRequest)
+                .toList();
+    }
+
+    public List<User> getAllUsersAndAdmins(){
+        return StreamSupport.stream(userRepository.findAll().spliterator(), false)
+                .toList();
+    }
+
 
 
 

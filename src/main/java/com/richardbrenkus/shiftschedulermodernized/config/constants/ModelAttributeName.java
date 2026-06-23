@@ -28,10 +28,15 @@ public final class ModelAttributeName {
     public static final String HAS_SHIFT_REQUEST = "hasShiftRequest";
     public static final String PASSWORD_CHANGE_FORM = "passwordChangeForm";
     public static final String SHIFT_TYPES = "shiftTypes";
+    public static final String USERS = "users";
+    public static final String UPDATED_USER = "updatedUser";
+    public static final String USERNAME = "username";
 
     // Shift request
     public static final String SHIFT_REQUEST_FORM = "shiftRequestForm";
     public static final String SUBMITTED_SHIFT_REQUEST_RECORD = "submittedShiftRequestRecord";
+    public static final String CURRENT_PRIORITY = "currentPriority";
+
 
     // Selection lists
     public static final String WEEKDAY_COUNT_LIST = "weekdayCountList";

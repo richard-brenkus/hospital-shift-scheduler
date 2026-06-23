@@ -3,8 +3,10 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
+
+    <title>Delete shift request</title>
+
     <link rel="stylesheet" th:href="@{/styles/main.css}"/>
-    <title>Delete user</title>
 </head>
 
 <body>
@@ -12,28 +14,34 @@
 <button class="openbtn" onclick="openNav()">menu</button>
 
 <div class="centered">
-    <h1 data-th-text="#{deleteUser.header}">Delete user</h1>
+    <h1 data-th-text="#{deleteRequest.header}">Delete shift request</h1>
 
-    <form th:action="@{/admin/delete_user}" method="post">
+    <form action="#"
+          th:action="@{/admin/delete_request}"
+          method="post"
+          th:object="${updatedUser}">
+
         <table class="table-no-lines">
             <tr>
                 <td class="td-no-lines">
-                    <label for="userId" data-th-text="#{deleteUser.select}">
-                        Select user
+                    <label for="requestSelect"
+                           data-th-text="#{deleteRequest.select}">
+                        Select a shift request
                     </label>
                 </td>
             </tr>
 
             <tr>
                 <td class="td-no-lines">
-                    <select id="userId" name="userId" required>
-                        <option value="" data-th-text="#{deleteUser.select}">
-                            Select user
+                    <select id="requestSelect" th:field="*{id}">
+                        <option value=""
+                                data-th-text="#{deleteRequest.select}">
+                            Select shift request
                         </option>
 
                         <option th:each="user : ${users}"
                                 th:value="${user.id}"
-                                th:text="${user.name + ' (' + user.username + ')'}">
+                                th:text="${user.name}">
                             User name
                         </option>
                     </select>
@@ -44,8 +52,7 @@
                 <td class="td-no-lines">
                     <button type="submit"
                             class="standard-button"
-                            data-th-text="#{button.delete}"
-                            onclick="return confirm('Delete selected user?');">
+                            data-th-text="#{button.delete}">
                         Delete
                     </button>
                 </td>
@@ -55,16 +62,10 @@
 
     <br>
 
-    <form th:action="@{/admin/users}" method="get">
-        <button type="submit" class="standard-button" data-th-text="#{button.showUsers}">
-            Show users
-        </button>
-    </form>
-
-    <br>
-
     <form th:action="@{/admin/adminIndex}" method="get">
-        <button type="submit" class="standard-button" data-th-text="#{button.backToHomePage}">
+        <button type="submit"
+                class="standard-button"
+                data-th-text="#{button.backToHomePage}">
             Go back
         </button>
     </form>
@@ -77,7 +78,7 @@
     <a th:href="@{/admin/register_merged}" data-th-text="#{sidebar.registerNew}">Register a new user</a>
     <a th:href="@{/admin/all}" data-th-text="#{sidebar.showAllUsersJSON}">All users as JSON</a>
     <a th:href="@{/admin/users}" data-th-text="#{sidebar.showAllUsers}">Show all users</a>
-    <a th:href="@{/admin/delete_user}" data-th-text="#{sidebar.deleteUser}">Delete user</a>
+    <a th:href="@{/admin/delete}" data-th-text="#{sidebar.deleteUser}">Delete user</a>
     <a th:href="@{/admin/update_select}" data-th-text="#{sidebar.updateUser}">Update user</a>
     <a th:href="@{/admin/export/excel}" data-th-text="#{sidebar.exportUsers}">Export users to Excel</a>
     <a th:href="@{/admin/delete_shift_request}" data-th-text="#{sidebar.deleteRequest}">Delete shift request</a>
@@ -90,7 +91,9 @@
 
     <div>
         <form th:action="@{/logout}" method="post">
-            <button class="signoutbtn" type="submit" data-th-text="#{sidebar.signout}">
+            <button class="signoutbtn"
+                    type="submit"
+                    data-th-text="#{sidebar.signout}">
                 Sign out
             </button>
         </form>
