@@ -14,7 +14,7 @@
     <h1 data-th-text="#{updateRequestSelect.header}">Update shift request</h1>
 
     <form action="#"
-          th:action="@{/admin/update_request_select}"
+          th:action="@{/admin/update_shift_request}"
           method="post"
           th:object="${updatedUser}">
 
@@ -82,8 +82,8 @@
     <a th:href="@{/admin/delete}" data-th-text="#{sidebar.deleteUser}">Delete user</a>
     <a th:href="@{/admin/update_select}" data-th-text="#{sidebar.updateUser}">Update user</a>
     <a th:href="@{/admin/export/excel}" data-th-text="#{sidebar.exportUsers}">Export users to Excel</a>
-    <a th:href="@{/admin/delete_request_select}" data-th-text="#{sidebar.deleteRequest}">Delete shift request</a>
-    <a th:href="@{/admin/update_request_select}" data-th-text="#{sidebar.updateRequest}">Update shift request</a>
+    <a th:href="@{/admin/delete_shift_request}" data-th-text="#{sidebar.deleteRequest}">Delete shift request</a>
+    <a th:href="@{/admin/update_shift_request}" data-th-text="#{sidebar.updateRequest}">Update shift request</a>
     <a th:href="@{/admin/calculate_schedule}" data-th-text="#{sidebar.calculateSchedule}">Calculate schedule</a>
     <a th:href="@{/admin/show_saved_calendars}" data-th-text="#{sidebar.showCalendars}">Show saved calendars</a>
     <a th:href="@{/admin/scheduled_tasks}" data-th-text="#{sidebar.scheduledTasks}">Scheduled tasks</a>
