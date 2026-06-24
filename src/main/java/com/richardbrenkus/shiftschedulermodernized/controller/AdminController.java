@@ -169,7 +169,7 @@ public class AdminController {
         return "redirect:/admin/adminIndex";
     }
 
-    @GetMapping(path = "/admin/update_select")
+    @GetMapping(path = "/admin/update_user")
     public String updateUser(Model model) {
 
         final UserForm updatedUser = new UserForm();
@@ -202,27 +202,20 @@ public class AdminController {
         return "user/userIndex";
     }
 
-    /*@PostMapping(path = "admin/updateFormSelect")
-    public String updateFormGet(@ModelAttribute("user") User user, @RequestParam String id, Model model) {
+    @PostMapping(path = "admin/update_user")
+    public String updateFormGet(@ModelAttribute("user") User user, @RequestParam long id, Model model) {
 
-        if (id.isEmpty())
-            return "redirect:/admin/update_select";
+        //final UserForm updatedUser = userService.getShiftRequestFormByUserId(id);
 
-        final User updatedUser;
-        final long longId;
 
-        longId = Long.parseLong(id);
-
-        updatedUser = userRepository.findById(longId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
-        model.addAttribute("professions", professions);
-        model.addAttribute("updateduser", updatedUser);
-        model.addAttribute("user", updatedUser);
+        //model.addAttribute("professions", professions);
+        ////model.addAttribute("updateduser", updatedUser);
+        //model.addAttribute("user", updatedUser);
         model.addAttribute("actionType", "/admin/updateForm");
         model.addAttribute("headerType", "update");
 
-        return "admin/register_merged";
-    }*/
+        return "admin/register_user";
+    }
 
 
 }

@@ -71,11 +71,11 @@ public class UserController {
         model.addAttribute(ModelAttributeName.DISPLAY_NAME, userService.getDisplayNameByUserName(username));
         model.addAttribute(ModelAttributeName.CONFLICTING_DATES, false);
 
-        ShiftRequestForm shiftRequestForm = userService.getShiftRequestForm(username);
+        ShiftRequestForm shiftRequestForm = shiftRequestService.getShiftRequestForm(username);
 
         prepareModelService.populateUserIndexModelForUser(model, shiftRequestForm, false, username);
 
-        Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = userService.getShiftRequestViewRecord(username);
+        Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = shiftRequestService.getShiftRequestViewRecord(username);
         submittedShiftRequestRecord.ifPresentOrElse(record -> {
                     model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, userService.hasShiftRequest(username));
                     model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, record);
@@ -105,7 +105,7 @@ public class UserController {
         model.addAttribute(ModelAttributeName.DISPLAY_NAME, userService.getDisplayNameByUserName(targetUsername));
         prepareModelService.populateUserIndexModelForUser(model, shiftRequestForm, user.isAdmin(), usernamePassed);
 
-        Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = userService.getShiftRequestViewRecord(targetUsername);
+        Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = shiftRequestService.getShiftRequestViewRecord(targetUsername);
         submittedShiftRequestRecord.ifPresentOrElse(record -> {
                     model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, true);
                     model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, record);
@@ -191,7 +191,7 @@ public class UserController {
         }
 
         model.addAttribute(ModelAttributeName.DISPLAY_NAME, userService.getDisplayNameByUserName(username));
-        model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, userService.getShiftRequestViewRecord(username).orElse(null));
+        model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, shiftRequestService.getShiftRequestViewRecord(username).orElse(null));
         model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, currentUser.hasShiftRequest());
 
         return "user/request_summary";
@@ -204,7 +204,7 @@ public class UserController {
 
         boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(Role.ADMIN.asAuthority()));
 
-        userService.deleteShiftRequest(username);
+        shiftRequestService.deleteShiftRequest(username);
 
         String redirectUrl = isAdmin
                 ? "/admin/adminIndex"

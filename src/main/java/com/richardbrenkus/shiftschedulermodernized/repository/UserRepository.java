@@ -14,7 +14,7 @@ public interface UserRepository extends CrudRepository<User, Long> {
 
     User getUserByUsername(String username);
 
-    User getUserByName(String name);
+    User getUserById(Long id);
 
     boolean existsByUsernameIgnoreCase(String username);
 

@@ -3,6 +3,7 @@ package com.richardbrenkus.shiftschedulermodernized.service;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftPreferenceForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftRequestValidationResult;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftRequestViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftPreference;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
@@ -251,9 +252,36 @@ public class ShiftRequestService {
 
         User user = userService.getUserById(id);
         if (user != null)
-            return userService.getShiftRequestForm(user.getUsername());
+            return getShiftRequestForm(user.getUsername());
         else throw new IllegalArgumentException("Invalid user Id: " + id);
 
+    }
+
+    public ShiftRequestForm getShiftRequestForm(String username){
+        ShiftRequestForm shiftRequestForm = new ShiftRequestForm();
+        User currentUser = userRepository.getUserByUsername(username);
+
+        if (currentUser.getShiftRequest() != null) {
+            shiftRequestForm = shiftRequestMapper.entityToForm(currentUser.getShiftRequest());
+        }
+        else
+            this.fillAllowedShiftTypes(currentUser, shiftRequestForm);
+
+        return shiftRequestForm;
+    }
+
+    public Optional<ShiftRequestViewRecord> getShiftRequestViewRecord(String username) {
+        User user = userRepository.getUserByUsername(username);
+        if (user == null || !user.hasShiftRequest()) {
+            return Optional.empty();
+        }
+        return Optional.of(shiftRequestMapper.entityToViewRecord(user, user.getShiftRequest()));
+    }
+
+    public void deleteShiftRequest(String username) {
+        User user = userRepository.getUserByUsername(username);
+        user.setShiftRequest(null);
+        userRepository.save(user);
     }
 
 
@@ -312,6 +340,15 @@ public class ShiftRequestService {
 
         if (!Objects.equals(existingPreference.getDatesYes(), preferenceForm.getDatesYes())) {
             existingPreference.setDatesYes(new ArrayList<>(preferenceForm.getDatesYes()));
+        }
+    }
+
+    private void fillAllowedShiftTypes(User currentUser, ShiftRequestForm shiftRequestForm) {
+        List<Integer> allowedShiftTypes = new ArrayList<>(currentUser.getAllowedShiftTypes());
+        for(Integer shiftType : allowedShiftTypes) {
+            ShiftPreferenceForm shiftPreferenceForm = new ShiftPreferenceForm();
+            shiftPreferenceForm.setShiftType(shiftType);
+            shiftRequestForm.getPreferences().add(shiftPreferenceForm);
         }
     }
 
