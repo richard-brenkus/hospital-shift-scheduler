@@ -140,7 +140,7 @@ public class UserController {
         model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, true);
         model.addAttribute(ModelAttributeName.DISPLAY_NAME, userService.getDisplayNameByUserName(targetUsername));
 
-        return "user/request_summary";
+        return "user/shift_request_summary";
     }
 
     @GetMapping("/user/change_password")
@@ -176,7 +176,7 @@ public class UserController {
         return "user/password_changed";
     }
 
-    @PostMapping("user/request_summary")
+    @PostMapping("user/shift_request_summary")
     public String showRequest(Model model, @RequestParam(name = ModelAttributeName.USERNAME_PASSED) String username, Authentication authentication) {
 
         boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(Role.ADMIN.asAuthority()));
@@ -194,7 +194,7 @@ public class UserController {
         model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, shiftRequestService.getShiftRequestViewRecord(username).orElse(null));
         model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, currentUser.hasShiftRequest());
 
-        return "user/request_summary";
+        return "user/shift_request_summary";
     }
 
     @PostMapping("/user/deactivate_request")

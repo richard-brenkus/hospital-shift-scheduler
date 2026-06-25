@@ -5,10 +5,7 @@ import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttribu
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Profession;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserForm;
-import com.richardbrenkus.shiftschedulermodernized.dto.view.LandingPageRecord;
-import com.richardbrenkus.shiftschedulermodernized.dto.view.ScheduledTasksRecord;
-import com.richardbrenkus.shiftschedulermodernized.dto.view.UserSummaryViewRecord;
-import com.richardbrenkus.shiftschedulermodernized.dto.view.UserUpdateValidationResult;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.*;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.service.*;
 import jakarta.validation.Valid;
@@ -252,6 +249,20 @@ public class AdminController {
         model.addAttribute(ModelAttributeName.IS_ADMIN, true);
         model.addAttribute(ModelAttributeName.USERS, usersList);
         return "admin/all_users_list";
+    }
+
+    @PostMapping("/admin/show_request_summary")
+    public String showRequestSummaryForAdmin(@RequestParam Long userId,
+                                             Model model) {
+
+        User user = userService.getUserById(userId);
+        ShiftRequestViewRecord record = shiftRequestService.getShiftRequestViewRecord(user.getUsername()).orElse(null);
+
+        model.addAttribute(ModelAttributeName.DISPLAY_NAME, userService.getDisplayNameByUserName(user.getUsername()));
+        model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, record);
+        model.addAttribute(ModelAttributeName.IS_ADMIN, true);
+
+        return "user/shift_request_summary";
     }
 
 
