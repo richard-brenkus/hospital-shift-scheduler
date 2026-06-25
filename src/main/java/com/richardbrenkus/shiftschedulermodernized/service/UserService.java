@@ -4,6 +4,7 @@ import com.richardbrenkus.shiftschedulermodernized.config.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.config.PasswordEncoderConfig;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserForm;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.UserSummaryViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserUpdateValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
@@ -18,7 +19,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.StreamSupport;
 
 import static com.richardbrenkus.shiftschedulermodernized.config.ApplicationConstants.DATE_FORMATTER;
@@ -54,7 +54,6 @@ public class UserService {
     public UserForm getUserFormByUserId(long userId) {
         return userMapper.entityToUserFormByUserId(userId);
     }
-
 
     public User getUserByUsername(String username) {
         return userRepository.getUserByUsername(username);
@@ -130,6 +129,12 @@ public class UserService {
 
     public List<User> getAllUsersAndAdmins() {
         return StreamSupport.stream(userRepository.findAll().spliterator(), false)
+                .toList();
+    }
+
+    public List<UserSummaryViewRecord> getAllUserSummaryViewRecords() {
+        return StreamSupport.stream(userRepository.findAll().spliterator(), false)
+                .map(userMapper::entityToUserSummaryViewRecord)
                 .toList();
     }
 

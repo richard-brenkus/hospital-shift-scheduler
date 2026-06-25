@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Users</title>
+
+    <link rel="stylesheet" th:href="@{/styles/main.css}"/>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <link rel="stylesheet"
+          type="text/css"
+          href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.css">
+
+    <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $("#myTable").DataTable();
+        });
+    </script>
+
+</head>
+
+<body>
+
+<button class="openbtn standard-button" onclick="openNav()">Menu</button>
+
+<div th:switch="${users}">
+
+    <h1 th:case="null"
+        data-th-text="#{users.header.noneFound}">
+        No users found!
+    </h1>
+
+    <div th:case="*">
+
+        <h1 class="centered"
+            data-th-text="#{users.header}">
+            Users
+        </h1>
+
+        <table class="table-with-lines table-narrow" id="myTable">
+
+            <colgroup>
+                <col class="col-30">
+                <col class="col-25">
+                <col class="col-25">
+                <col class="col-10">
+                <col class="col-10">
+            </colgroup>
+
+            <thead>
+            <tr>
+                <th data-th-text="#{users.name}">Name</th>
+                <th data-th-text="#{users.username}">Username</th>
+                <th data-th-text="#{users.email}">Email</th>
+                <th data-th-text="#{users.shiftRequest}">Request</th>
+                <th data-th-text="#{users.show}">Show</th>
+            </tr>
+            </thead>
+
+            <tbody>
+
+            <tr th:each="user : ${users}">
+
+                <td th:text="${user.name}"></td>
+
+                <td th:text="${user.username}"></td>
+
+                <td th:text="${user.email}"></td>
+
+                <!-- Create or Edit shift request -->
+
+                <td th:with="buttonLabel=${user.hasShiftRequest} ? #{users.edit} : #{users.new}">
+
+                    <form th:action="@{/admin/update_shift_request}"
+                          method="post">
+
+                        <input type="hidden"
+                               name="id"
+                               th:value="${user.userId}"/>
+
+                        <button type="submit"
+                                class="table-button"
+                                th:classappend="${user.hasShiftRequest} ? ' button-orange' : ' button-green'"
+                                th:text="${buttonLabel}">
+                            Shift request
+                        </button>
+
+                    </form>
+
+                </td>
+
+
+                <!-- Show existing shift request -->
+
+                <td>
+
+                    <div th:if="${user.hasShiftRequest}"
+                         class="centered">
+
+                        <form target="_blank"
+                              th:action="@{/admin/show_request_summary}"
+                              method="post">
+
+                            <input type="hidden"
+                                   name="userId"
+                                   th:value="${user.userId}"/>
+
+                            <button class="table-button"
+                                    type="submit"
+                                    data-th-text="#{users.show}">
+                                Show
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </td>
+
+            </tr>
+
+            </tbody>
+
+        </table>
+
+        <br>
+
+        <form th:action="@{/admin/adminIndex}" method="get">
+            <button class="standard-button"
+                    type="submit"
+                    data-th-text="#{button.backToHomePage}">
+                Go back
+            </button>
+        </form>
+
+    </div>
+
+</div>
+
+<div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
+
+<script>
+
+    function openNav() {
+        document.getElementById("adminSidebar").style.width = "250px";
+    }
+
+    function closeNav() {
+        document.getElementById("adminSidebar").style.width = "0";
+    }
+
+</script>
+
+</body>
+</html>

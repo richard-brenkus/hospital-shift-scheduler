@@ -7,6 +7,7 @@ import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.LandingPageRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ScheduledTasksRecord;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.UserSummaryViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserUpdateValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.service.*;
@@ -242,6 +243,15 @@ public class AdminController {
         userService.updateUser(updatedUser);
 
         return "admin/user_update_success";
+    }
+
+    @GetMapping("/admin/all_users_list")
+    public String showUsers(Model model) {
+
+        List<UserSummaryViewRecord> usersList = userService.getAllUserSummaryViewRecords();
+        model.addAttribute(ModelAttributeName.IS_ADMIN, true);
+        model.addAttribute(ModelAttributeName.USERS, usersList);
+        return "admin/all_users_list";
     }
 
 

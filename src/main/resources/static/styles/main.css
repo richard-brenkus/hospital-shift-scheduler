@@ -302,6 +302,24 @@ img.flag {
     margin-bottom: 15px;
 }
 
+.button-green {
+    background-color: #3f8f4f;   /* muted green */
+    color: white;
+}
+
+.button-green:hover {
+    background-color: #4ea85f;
+}
+
+.button-orange {
+    background-color: #b56b2d;   /* muted orange */
+    color: white;
+}
+
+.button-orange:hover {
+    background-color: #cc7a34;
+}
+
 @media screen and (max-height: 450px) {
     .sidebar {
         padding-top: 15px;
