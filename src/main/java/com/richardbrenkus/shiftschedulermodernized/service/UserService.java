@@ -3,12 +3,11 @@ package com.richardbrenkus.shiftschedulermodernized.service;
 import com.richardbrenkus.shiftschedulermodernized.config.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.config.PasswordEncoderConfig;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
-import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftPreferenceForm;
-import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserForm;
-import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftRequestViewRecord;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.UserUpdateValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
+import com.richardbrenkus.shiftschedulermodernized.mapper.UserMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.ShiftRequestRepository;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -32,13 +31,15 @@ public class UserService {
     private final PasswordEncoderConfig encoder;
     private final ShiftRequestRepository shiftRequestRepository;
     private final PasswordEncoderConfig passwordEncoder;
+    private final UserMapper userMapper;
 
-    public UserService(UserRepository userRepository, ShiftRequestMapper shiftRequestMapper, PasswordEncoderConfig encoder, ShiftRequestRepository shiftRequestRepository, PasswordEncoderConfig passwordEncoder) {
+    public UserService(UserRepository userRepository, ShiftRequestMapper shiftRequestMapper, PasswordEncoderConfig encoder, ShiftRequestRepository shiftRequestRepository, PasswordEncoderConfig passwordEncoder, UserMapper userMapper) {
         this.userRepository = userRepository;
         this.shiftRequestMapper = shiftRequestMapper;
         this.encoder = encoder;
         this.shiftRequestRepository = shiftRequestRepository;
         this.passwordEncoder = passwordEncoder;
+        this.userMapper = userMapper;
     }
 
     public String getDisplayNameByUserName(String userName) {
@@ -50,19 +51,9 @@ public class UserService {
         return displayName;
     }
 
-    /*public UserForm getUserFormByUserId(long userId){
-        UserForm userForm = new UserForm();
-        User currentUser = userRepository.getUserById(userId);
-
-        if (currentUser.getShiftRequest() != null) {
-            //userForm = shiftRequestMapper.entityToForm(currentUser.getShiftRequest());
-        }
-        else
-            this.fillAllowedShiftTypes(currentUser, userForm);
-
-        return userForm;
-    }*/
-
+    public UserForm getUserFormByUserId(long userId) {
+        return userMapper.entityToUserFormByUserId(userId);
+    }
 
 
     public User getUserByUsername(String username) {
@@ -137,17 +128,60 @@ public class UserService {
                 .toList();
     }
 
-    public List<User> getAllUsersAndAdmins(){
+    public List<User> getAllUsersAndAdmins() {
         return StreamSupport.stream(userRepository.findAll().spliterator(), false)
                 .toList();
     }
 
+    @Transactional
+    public void updateUser(UserForm form) {
+
+        User existingUser = userRepository.findById(form.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + form.getId()));
+
+        existingUser.setTitle(form.getTitle());
+        existingUser.setName(form.getName());
+        existingUser.setUsername(form.getUsername());
+        existingUser.setBirthday(form.getBirthday());
+        existingUser.setEmail(form.getEmail());
+        existingUser.setNote(form.getNote());
+        existingUser.setProfession(form.getProfession());
+        existingUser.setAllowedShiftTypes(form.getAllowedShiftTypes() == null
+                ? new HashSet<>()
+                : new HashSet<>(form.getAllowedShiftTypes()));
+        userRepository.save(existingUser);
+        // a role change here is not allowed as it is database-only
+    }
 
 
+    public UserUpdateValidationResult validateUserUpdate(UserForm updatedUser) {
+        Long id = updatedUser.getId();
 
+        List<String> defaultMessages = new ArrayList<>();
+        List<String> rejectedFields = new ArrayList<>();
 
+        if (userRepository.existsByUsernameIgnoreCaseAndIdNot(updatedUser.getUsername(), id)) {
+            defaultMessages.add("This username already exists! Choose another one.");
+            rejectedFields.add("username");
+        }
 
+        if (userRepository.existsByEmailIgnoreCaseAndIdNot(updatedUser.getEmail(), id)) {
+            defaultMessages.add("This email address already exists! Choose another one.");
+            rejectedFields.add("email");
+        }
 
+        if (userRepository.existsByNameIgnoreCaseAndIdNot(updatedUser.getName(), id)) {
+            defaultMessages.add("This name already exists! Choose another one.");
+            rejectedFields.add("name");
+        }
+
+        if (updatedUser.getAllowedShiftTypes() == null || updatedUser.getAllowedShiftTypes().isEmpty()) {
+            defaultMessages.add("Please select at least one shift type!");
+            rejectedFields.add("allowedShiftTypes");
+        }
+
+        return new UserUpdateValidationResult(rejectedFields.isEmpty(), defaultMessages, rejectedFields);
+    }
 
 
     private String getShiftRequestDatesAsString(List<LocalDate> localDatesList) {
@@ -164,10 +198,6 @@ public class UserService {
 
         return stringDates;
     }
-
-
-
-
 
 
 }

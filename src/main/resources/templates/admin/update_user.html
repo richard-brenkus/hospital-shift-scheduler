@@ -20,7 +20,7 @@
 <br>
 
 <div class="centered">
-    <form action="#" th:action="@{/admin/updateFormSelect}" method="post" th:object="${updatedUser}">
+    <form action="#" th:action="@{/admin/update_user}" method="post" th:object="${updatedUser}">
         <table class="table-no-lines">
             <tr>
                 <td class="td-no-lines">
@@ -63,40 +63,15 @@
     </form>
 </div>
 
-<div id="mySidebar" class="sidebar">
-    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
-
-    <a th:href="@{/admin/adminIndex}" data-th-text="#{sidebar.landingPage}">Home page</a>
-    <a th:href="@{/admin/register_merged}" data-th-text="#{sidebar.registerNew}">Register a new user</a>
-    <a th:href="@{/admin/all}" data-th-text="#{sidebar.showAllUsersJSON}">All users as JSON</a>
-    <a th:href="@{/admin/users}" data-th-text="#{sidebar.showAllUsers}">Show all users</a>
-    <a th:href="@{/admin/delete}" data-th-text="#{sidebar.deleteUser}">Delete user</a>
-    <a th:href="@{/admin/update_user}" data-th-text="#{sidebar.updateUser}">Update user</a>
-    <a th:href="@{/admin/export/excel}" data-th-text="#{sidebar.exportUsers}">Export users to Excel</a>
-    <a th:href="@{/admin/delete_shift_request}" data-th-text="#{sidebar.deleteRequest}">Delete shift request</a>
-    <a th:href="@{/admin/update_shift_request}" data-th-text="#{sidebar.updateRequest}">Update shift request</a>
-    <a th:href="@{/admin/calculate_schedule}" data-th-text="#{sidebar.calculateSchedule}">Calculate schedule</a>
-    <a th:href="@{/admin/show_saved_calendars}" data-th-text="#{sidebar.showCalendars}">Show saved calendars</a>
-    <a th:href="@{/admin/scheduled_tasks}" data-th-text="#{sidebar.scheduledTasks}">Scheduled tasks</a>
-
-    <br>
-
-    <div>
-        <form th:action="@{/logout}" method="post">
-            <button class="signoutbtn" type="submit" data-th-text="#{sidebar.signout}">
-                Sign out
-            </button>
-        </form>
-    </div>
-</div>
+<div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
 
 <script>
     function openNav() {
-        document.getElementById("mySidebar").style.width = "250px";
+        document.getElementById("adminSidebar").style.width = "250px";
     }
 
     function closeNav() {
-        document.getElementById("mySidebar").style.width = "0";
+        document.getElementById("adminSidebar").style.width = "0";
     }
 </script>
 

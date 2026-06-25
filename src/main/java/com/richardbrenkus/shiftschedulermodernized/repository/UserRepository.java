@@ -22,6 +22,12 @@ public interface UserRepository extends CrudRepository<User, Long> {
 
     boolean existsByNameIgnoreCase(String name);
 
+    boolean existsByUsernameIgnoreCaseAndIdNot(String username, Long id);
+
+    boolean existsByEmailIgnoreCaseAndIdNot(String email, Long id);
+
+    boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
+
     @Modifying
     @Transactional
     @Query("update User u set u.id = :id where u.username = :username")

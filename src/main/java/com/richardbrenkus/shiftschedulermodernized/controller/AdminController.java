@@ -7,6 +7,7 @@ import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.LandingPageRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ScheduledTasksRecord;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.UserUpdateValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.service.*;
 import jakarta.validation.Valid;
@@ -203,18 +204,44 @@ public class AdminController {
     }
 
     @PostMapping(path = "admin/update_user")
-    public String updateFormGet(@ModelAttribute("user") User user, @RequestParam long id, Model model) {
+    public String getUserUpdateForm(@ModelAttribute("user") User user, @RequestParam long id, Model model) {
 
-        //final UserForm updatedUser = userService.getShiftRequestFormByUserId(id);
+        final UserForm updatedUser = userService.getUserFormByUserId(id);
 
-
-        //model.addAttribute("professions", professions);
-        ////model.addAttribute("updateduser", updatedUser);
-        //model.addAttribute("user", updatedUser);
-        model.addAttribute("actionType", "/admin/updateForm");
-        model.addAttribute("headerType", "update");
+        model.addAttribute(ModelAttributeName.USER_FORM, updatedUser);
+        model.addAttribute(ModelAttributeName.PROFESSIONS, Profession.values());
+        model.addAttribute(ModelAttributeName.SHIFT_TYPES, shiftTypeService.getShiftTypes());
+        model.addAttribute(ModelAttributeName.ACTION_TYPE, ModelAttributeValue.ACTION_TYPE_UPDATE);
+        model.addAttribute(ModelAttributeName.HEADER_TYPE, ModelAttributeValue.HEADER_TYPE_ADMIN_UPDATE);
 
         return "admin/register_user";
+    }
+
+    @PostMapping(path = "/admin/update")
+    public String postUserUpdateForm(
+            @Valid @ModelAttribute(ModelAttributeName.USER_FORM) UserForm updatedUser,
+            BindingResult bindingResult,
+            Model model) {
+
+        prepareModelService.prepareUpdateUserModel(model);
+        UserUpdateValidationResult userUpdateValidationResult = userService.validateUserUpdate(updatedUser);
+        if (!userUpdateValidationResult.isValid()) {
+            for (int i = 0; i < userUpdateValidationResult.rejectedFields().size(); i++) {
+                String rejectedField = userUpdateValidationResult.rejectedFields().get(i);
+                String errorCode = "error." + rejectedField;
+                String defaultMessage = userUpdateValidationResult.defaultMessages().get(i);
+
+                bindingResult.rejectValue(rejectedField, errorCode, defaultMessage);
+            }
+        }
+
+        if (bindingResult.hasErrors()) {
+            return "admin/register_user";
+        }
+
+        userService.updateUser(updatedUser);
+
+        return "admin/user_update_success";
     }
 
 

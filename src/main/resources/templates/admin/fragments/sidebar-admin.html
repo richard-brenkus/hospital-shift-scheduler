@@ -1,0 +1,21 @@
+<div th:fragment="adminSidebar" id="adminSidebar" class="sidebar">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
+    <a href="/admin/adminIndex" data-th-text="#{sidebar.landingPage}">Home page</a>
+    <a href="/admin/register_user" data-th-text="#{sidebar.registerNew}">Register a new user</a>
+    <a href="/admin/all" data-th-text="#{sidebar.showAllUsersJSON}">All users' data JSON</a>
+    <a href="/admin/users" data-th-text="#{sidebar.showAllUsers}">Show all users</a>
+    <a href="/admin/delete_user" data-th-text="#{sidebar.deleteUser}">Delete user</a>
+    <a href="/admin/update_user" data-th-text="#{sidebar.updateUser}">Update user</a>
+    <a href="/admin/export/excel" data-th-text="#{sidebar.exportUsers}">Export users to Excel</a>
+    <a href="/admin/delete_shift_request" data-th-text="#{sidebar.deleteRequest}">Delete shift request</a>
+    <a href="/admin/update_shift_request" data-th-text="#{sidebar.updateRequest}">Update shift request</a>
+    <b><a href="/admin/calculate_schedule" data-th-text="#{sidebar.calculateSchedule}"><b>Calculate schedule</b></a></b>
+    <a href="/admin/show_saved_calendars" data-th-text="#{sidebar.showCalendars}">Show saved calendars</a>
+    <a href="/admin/scheduled_tasks" data-th-text="#{sidebar.scheduledTasks}">Scheduled tasks</a>
+    <br>
+    <div>
+        <form th:action="@{/logout}" method="post">
+            <button class="signoutbtn" type="submit" data-th-text="#{sidebar.signout}">Sign out</button>
+        </form>
+    </div>
+</div>

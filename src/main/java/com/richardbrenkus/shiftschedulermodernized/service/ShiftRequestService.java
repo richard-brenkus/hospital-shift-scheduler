@@ -36,15 +36,13 @@ public class ShiftRequestService {
 
     public ShiftRequestValidationResult validateShiftRequest(ShiftRequestForm form) {
 
-        ShiftRequestValidationResult noShiftsOnly =
-                validateNoShiftsOnly(form);
+        ShiftRequestValidationResult noShiftsOnly = validateNoShiftsOnly(form);
 
         if (!noShiftsOnly.isValid()) {
             return noShiftsOnly;
         }
 
-        ShiftRequestValidationResult conflictingDates =
-                validateConflictingDates(form);
+        ShiftRequestValidationResult conflictingDates = validateConflictingDates(form);
 
         if (!conflictingDates.isValid()) {
             return conflictingDates;
@@ -66,8 +64,7 @@ public class ShiftRequestService {
 
         if (existingRequest == null) {
             shiftRequest = shiftRequestMapper.formToEntity(form);
-        }
-        else {
+        } else {
             shiftRequest = updateEntity(existingRequest, form);
         }
 
@@ -257,14 +254,13 @@ public class ShiftRequestService {
 
     }
 
-    public ShiftRequestForm getShiftRequestForm(String username){
+    public ShiftRequestForm getShiftRequestForm(String username) {
         ShiftRequestForm shiftRequestForm = new ShiftRequestForm();
         User currentUser = userRepository.getUserByUsername(username);
 
         if (currentUser.getShiftRequest() != null) {
             shiftRequestForm = shiftRequestMapper.entityToForm(currentUser.getShiftRequest());
-        }
-        else
+        } else
             this.fillAllowedShiftTypes(currentUser, shiftRequestForm);
 
         return shiftRequestForm;
@@ -283,11 +279,6 @@ public class ShiftRequestService {
         user.setShiftRequest(null);
         userRepository.save(user);
     }
-
-
-
-
-
 
 
     private void updatePreference(ShiftPreference existingPreference,
@@ -345,7 +336,7 @@ public class ShiftRequestService {
 
     private void fillAllowedShiftTypes(User currentUser, ShiftRequestForm shiftRequestForm) {
         List<Integer> allowedShiftTypes = new ArrayList<>(currentUser.getAllowedShiftTypes());
-        for(Integer shiftType : allowedShiftTypes) {
+        for (Integer shiftType : allowedShiftTypes) {
             ShiftPreferenceForm shiftPreferenceForm = new ShiftPreferenceForm();
             shiftPreferenceForm.setShiftType(shiftType);
             shiftRequestForm.getPreferences().add(shiftPreferenceForm);
