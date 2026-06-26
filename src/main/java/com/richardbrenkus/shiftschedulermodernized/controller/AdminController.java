@@ -3,6 +3,7 @@ package com.richardbrenkus.shiftschedulermodernized.controller;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeName;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeValue;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Profession;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.PasswordChangeForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.*;
@@ -128,7 +129,7 @@ public class AdminController {
 
     @GetMapping("/admin/delete_user")
     public String showDeleteUserPage(Model model) {
-        List<User> users = userService.getAllUsersWithoutAdmin();
+        List<User> users = userService.getAllUsersWithoutAdminByNameAsc();
 
         model.addAttribute(ModelAttributeName.USERS, users);
         return "admin/delete_user";
@@ -151,7 +152,7 @@ public class AdminController {
     public String deleteRequestSelect(Model model) {
 
         final UserForm updatedUser = new UserForm();
-        List<User> usersList = userService.getAllUsersWithShiftRequest();
+        List<User> usersList = userService.getAllUsersWithShiftRequestByNameAsc();
 
         model.addAttribute(ModelAttributeName.USERS, usersList);
         model.addAttribute(ModelAttributeName.UPDATED_USER, updatedUser);
@@ -172,7 +173,7 @@ public class AdminController {
     public String updateUser(Model model) {
 
         final UserForm updatedUser = new UserForm();
-        List<User> usersList = userService.getAllUsersAndAdmins();
+        List<User> usersList = userService.getAllUsersAndAdminsByNameAsc();
 
         model.addAttribute(ModelAttributeName.USERS, usersList);
         model.addAttribute(ModelAttributeName.UPDATED_USER, updatedUser);
@@ -184,7 +185,7 @@ public class AdminController {
     public String updateRequest(Model model) {
 
         final User updatedUser = new User();
-        List<User> usersList = userService.getAllUsersWithShiftRequest();
+        List<User> usersList = userService.getAllUsersWithShiftRequestByNameAsc();
 
         model.addAttribute(ModelAttributeName.USERS, usersList);
         model.addAttribute(ModelAttributeName.UPDATED_USER, updatedUser);
@@ -245,7 +246,7 @@ public class AdminController {
     @GetMapping("/admin/all_users_list")
     public String showUsers(Model model) {
 
-        List<UserSummaryViewRecord> usersList = userService.getAllUserSummaryViewRecords();
+        List<UserViewRecord> usersList = userService.getAllUserSummaryViewRecordsByNameAsc();
         model.addAttribute(ModelAttributeName.IS_ADMIN, true);
         model.addAttribute(ModelAttributeName.USERS, usersList);
         return "admin/all_users_list";
@@ -264,6 +265,62 @@ public class AdminController {
 
         return "user/shift_request_summary";
     }
+
+    @GetMapping("/admin/select_user_password_change")
+    public String showSelectUserPasswordChangePage(Model model) {
+
+        List<UserViewRecord> users = userService.findAllUsersForSelectionByNameAsc();
+
+        model.addAttribute(ModelAttributeName.USERS, users);
+        model.addAttribute(ModelAttributeName.SELECTED_USER, UserViewRecord.builder().build());
+
+        return "admin/select_user_password_change";
+    }
+
+    @PostMapping("admin/select_user_password_change")
+    public String receiveSelectedUserForPasswordChange(
+            @RequestParam Long userId,
+            Model model
+    ) {
+        UserViewRecord user = userService.findUserViewById(userId);
+
+        model.addAttribute(ModelAttributeName.SELECTED_USER, user);
+        model.addAttribute(ModelAttributeName.PASSWORD_CHANGE_FORM, new PasswordChangeForm());
+
+        return "admin/change_user_password";
+    }
+
+    @PostMapping("/admin/change_user_password")
+    public String changeUserPasswordByAdmin(
+            @RequestParam("userId") Long userId,
+            @Valid @ModelAttribute("passwordChangeForm") PasswordChangeForm passwordChangeForm,
+            BindingResult bindingResult,
+            Model model
+    ) {
+
+        UserViewRecord selectedUser = userService.findUserViewById(userId);
+
+        if (!passwordChangeForm.passwordsMatch()) {
+            bindingResult.rejectValue(
+                    "confirmedPassword",
+                    "validation.password.mismatch",
+                    "Passwords do not match"
+            );
+        }
+
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("selectedUser", selectedUser);
+            return "admin/change_user_password";
+        }
+
+        String username = userService.getUsernameByUserId(userId);
+
+        userService.changeUserPassword(username, passwordChangeForm.getNewPassword());
+
+        return "redirect:/admin/adminIndex";
+    }
+
+
 
 
 }

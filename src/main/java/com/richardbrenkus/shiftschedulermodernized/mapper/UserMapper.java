@@ -1,7 +1,7 @@
 package com.richardbrenkus.shiftschedulermodernized.mapper;
 
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserForm;
-import com.richardbrenkus.shiftschedulermodernized.dto.view.UserSummaryViewRecord;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.UserViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import org.springframework.stereotype.Component;
@@ -46,13 +46,12 @@ public class UserMapper {
         return user;
     }
 
-    public UserSummaryViewRecord entityToUserSummaryViewRecord(User user) {
-        return UserSummaryViewRecord.builder()
+    public UserViewRecord entityToUserViewRecord(User user) {
+        return UserViewRecord.builder()
                 .userId(user.getId())
                 .name(user.getName())
                 .username(user.getUsername())   // missing
                 .email(user.getEmail())
-                .hasShiftRequest(user.hasShiftRequest())
                 .build();
     }
 

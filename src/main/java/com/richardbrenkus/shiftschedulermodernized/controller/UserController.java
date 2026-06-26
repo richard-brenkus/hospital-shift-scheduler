@@ -171,7 +171,7 @@ public class UserController {
         }
 
         String username = authentication.getName();
-        userService.changePassword(username, form.getNewPassword());
+        userService.changeUserPassword(username, form.getNewPassword());
 
         return "user/password_changed";
     }

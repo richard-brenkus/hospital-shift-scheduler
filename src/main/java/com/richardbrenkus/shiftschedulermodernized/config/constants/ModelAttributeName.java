@@ -31,6 +31,7 @@ public final class ModelAttributeName {
     public static final String USERS = "users";
     public static final String UPDATED_USER = "updatedUser";
     public static final String USERNAME = "username";
+    public static final String SELECTED_USER = "selectedUser";
 
     // Shift request
     public static final String SHIFT_REQUEST_FORM = "shiftRequestForm";

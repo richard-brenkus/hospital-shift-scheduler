@@ -4,7 +4,7 @@ import com.richardbrenkus.shiftschedulermodernized.config.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.config.PasswordEncoderConfig;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserForm;
-import com.richardbrenkus.shiftschedulermodernized.dto.view.UserSummaryViewRecord;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.UserViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserUpdateValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.StreamSupport;
@@ -59,7 +60,7 @@ public class UserService {
         return userRepository.getUserByUsername(username);
     }
 
-    public void changePassword(String username, String newPassword) {
+    public void changeUserPassword(String username, String newPassword) {
         User user = userRepository.getUserByUsername(username);
 
         String newEncodedPassword = encoder.passwordEncoder().encode(newPassword);
@@ -106,9 +107,10 @@ public class UserService {
         return userRepository.existsByNameIgnoreCase(name);
     }
 
-    public List<User> getAllUsersWithoutAdmin() {
+    public List<User> getAllUsersWithoutAdminByNameAsc() {
         return StreamSupport.stream(userRepository.findAll().spliterator(), false)
                 .filter(user -> !user.isAdmin())
+                .sorted(Comparator.comparing(User::getName))
                 .toList();
     }
 
@@ -117,24 +119,31 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + userId));
     }
 
+    public String getUsernameByUserId(long userId) {
+        return userRepository.getUserById(userId).getUsername();
+    }
+
     public void deleteUser(User user) {
         userRepository.delete(user);
     }
 
-    public List<User> getAllUsersWithShiftRequest() {
+    public List<User> getAllUsersWithShiftRequestByNameAsc() {
         return StreamSupport.stream(userRepository.findAll().spliterator(), false)
                 .filter(User::hasShiftRequest)
+                .sorted(Comparator.comparing(User::getName))
                 .toList();
     }
 
-    public List<User> getAllUsersAndAdmins() {
+    public List<User> getAllUsersAndAdminsByNameAsc() {
         return StreamSupport.stream(userRepository.findAll().spliterator(), false)
+                .sorted(Comparator.comparing(User::getName))
                 .toList();
     }
 
-    public List<UserSummaryViewRecord> getAllUserSummaryViewRecords() {
+    public List<UserViewRecord> getAllUserSummaryViewRecordsByNameAsc() {
         return StreamSupport.stream(userRepository.findAll().spliterator(), false)
-                .map(userMapper::entityToUserSummaryViewRecord)
+                .sorted(Comparator.comparing(User::getName))
+                .map(userMapper::entityToUserViewRecord)
                 .toList();
     }
 
@@ -156,6 +165,7 @@ public class UserService {
                 : new HashSet<>(form.getAllowedShiftTypes()));
         userRepository.save(existingUser);
         // a role change here is not allowed as it is database-only
+        // a password change is handled separately
     }
 
 
@@ -188,6 +198,25 @@ public class UserService {
         return new UserUpdateValidationResult(rejectedFields.isEmpty(), defaultMessages, rejectedFields);
     }
 
+    public UserViewRecord entityToUserViewRecord(User user) {
+        return new UserViewRecord(user.getId(), user.getName(), user.getUsername(), user.getEmail());
+    }
+
+    @Transactional
+    public List<UserViewRecord> findAllUsersForSelectionByNameAsc() {
+
+        return StreamSupport.stream(userRepository.findAll().spliterator(), false)
+                .sorted(Comparator.comparing(User::getName))
+                .map(userMapper::entityToUserViewRecord)
+                .toList();
+    }
+
+    public UserViewRecord findUserViewById(Long userId) {
+
+        return userRepository.findById(userId)
+                .map(userMapper::entityToUserViewRecord)
+                .orElse(null);
+    }
 
     private String getShiftRequestDatesAsString(List<LocalDate> localDatesList) {
 
