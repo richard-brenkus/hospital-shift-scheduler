@@ -1,0 +1,79 @@
+<!DOCTYPE HTML>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/styles/main.css}"/>
+    <title>Update user</title>
+</head>
+
+<body>
+
+<button class="openbtn" onclick="openNav()">menu</button>
+
+<div class="centered">
+    <h1 data-th-text="#{updateSelect.header}">
+        Edit user details
+    </h1>
+</div>
+
+<br>
+
+<div class="centered">
+    <form action="#" th:action="@{/admin/select_update_user}" method="post" th:object="${updatedUser}">
+        <table class="table-no-lines">
+            <tr>
+                <td class="td-no-lines">
+                    <label for="updatedUserSelect" data-th-text="#{updateSelect.select}">
+                        Select user
+                    </label>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="td-no-lines">
+                    <select id="updatedUserSelect" th:field="*{id}">
+                        <option value="" data-th-text="#{updateSelect.select}">
+                            Select user
+                        </option>
+
+                        <option th:each="user : ${users}"
+                                th:value="${user.id}"
+                                th:text="${user.name}">
+                            User name
+                        </option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+
+        <br>
+
+        <button type="submit" class="standard-button" data-th-text="#{button.update}">
+            Update
+        </button>
+    </form>
+
+    <br>
+
+    <form th:action="@{/admin/adminIndex}" method="get">
+        <button type="submit" class="standard-button" data-th-text="#{button.backToHomePage}">
+            Go back
+        </button>
+    </form>
+</div>
+
+<div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
+
+<script>
+    function openNav() {
+        document.getElementById("adminSidebar").style.width = "250px";
+    }
+
+    function closeNav() {
+        document.getElementById("adminSidebar").style.width = "0";
+    }
+</script>
+
+</body>
+</html>

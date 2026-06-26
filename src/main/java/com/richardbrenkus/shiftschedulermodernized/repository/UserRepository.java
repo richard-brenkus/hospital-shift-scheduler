@@ -30,8 +30,8 @@ public interface UserRepository extends CrudRepository<User, Long> {
 
     @Modifying
     @Transactional
-    @Query("update User u set u.id = :id where u.username = :username")
-    void updateUserSetIdForUsername(@Param("id") Long id, @Param("username") String username);
+    @Query("update User u set u.username = :username where u.id = :id")
+    void updateUserSetUsernameForId(@Param("username") String username, @Param("id") Long id);
 
     @Transactional
     @Query("SELECT u FROM User u")

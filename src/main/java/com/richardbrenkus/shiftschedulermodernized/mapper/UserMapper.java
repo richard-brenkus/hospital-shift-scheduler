@@ -1,6 +1,7 @@
 package com.richardbrenkus.shiftschedulermodernized.mapper;
 
-import com.richardbrenkus.shiftschedulermodernized.dto.form.UserForm;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.UserRegisterForm;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.UserUpdateForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
@@ -15,34 +16,32 @@ public class UserMapper {
         this.userRepository = userRepository;
     }
 
-
-    public UserForm entityToUserForm(User user) {
-        UserForm userForm = new UserForm();
-        userForm.setId(user.getId());
-        userForm.setTitle(user.getTitle());
-        userForm.setName(user.getName());
-        userForm.setUsername(user.getUsername());
-        userForm.setPassword(user.getPassword());
-        userForm.setNote(user.getNote());
-        userForm.setEmail(user.getEmail());
-        userForm.setBirthday(user.getBirthday());
-        userForm.setProfession(user.getProfession());
-        userForm.setAllowedShiftTypes(user.getAllowedShiftTypes());
-        return userForm;
+    public UserUpdateForm entityToUserUpdateForm(User user) {
+        UserUpdateForm userRegisterForm = new UserUpdateForm();
+        userRegisterForm.setId(user.getId());
+        userRegisterForm.setTitle(user.getTitle());
+        userRegisterForm.setName(user.getName());
+        userRegisterForm.setUsername(user.getUsername());
+        userRegisterForm.setNote(user.getNote());
+        userRegisterForm.setEmail(user.getEmail());
+        userRegisterForm.setBirthday(user.getBirthday());
+        userRegisterForm.setProfession(user.getProfession());
+        userRegisterForm.setAllowedShiftTypes(user.getAllowedShiftTypes());
+        return userRegisterForm;
     }
 
-    public User userFormToEntity(UserForm userForm) {
+    public User userRegisterFormToEntity(UserRegisterForm userRegisterForm) {
         User user = new User();
-        user.setId(userForm.getId());
-        user.setTitle(userForm.getTitle());
-        user.setName(userForm.getName());
-        user.setUsername(userForm.getUsername());
-        user.setPassword(userForm.getPassword());
-        user.setNote(userForm.getNote());
-        user.setEmail(userForm.getEmail());
-        user.setBirthday(userForm.getBirthday());
-        user.setProfession(userForm.getProfession());
-        user.setAllowedShiftTypes(userForm.getAllowedShiftTypes());
+        user.setId(userRegisterForm.getId());
+        user.setTitle(userRegisterForm.getTitle());
+        user.setName(userRegisterForm.getName());
+        user.setUsername(userRegisterForm.getUsername());
+        user.setPassword(userRegisterForm.getPassword());
+        user.setNote(userRegisterForm.getNote());
+        user.setEmail(userRegisterForm.getEmail());
+        user.setBirthday(userRegisterForm.getBirthday());
+        user.setProfession(userRegisterForm.getProfession());
+        user.setAllowedShiftTypes(userRegisterForm.getAllowedShiftTypes());
         return user;
     }
 
@@ -52,11 +51,12 @@ public class UserMapper {
                 .name(user.getName())
                 .username(user.getUsername())   // missing
                 .email(user.getEmail())
+                .hasShiftRequest(user.hasShiftRequest())
                 .build();
     }
 
-    public UserForm entityToUserFormByUserId(long userId) {
+    public UserUpdateForm entityToUserUpdateFormByUserId(long userId) {
         User user = userRepository.getUserById(userId);
-        return entityToUserForm(user);
+        return entityToUserUpdateForm(user);
     }
 }

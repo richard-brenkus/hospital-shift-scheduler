@@ -3,7 +3,8 @@ package com.richardbrenkus.shiftschedulermodernized.service;
 import com.richardbrenkus.shiftschedulermodernized.config.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.config.PasswordEncoderConfig;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
-import com.richardbrenkus.shiftschedulermodernized.dto.form.UserForm;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.UserRegisterForm;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.UserUpdateForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserUpdateValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
@@ -52,10 +53,6 @@ public class UserService {
         return displayName;
     }
 
-    public UserForm getUserFormByUserId(long userId) {
-        return userMapper.entityToUserFormByUserId(userId);
-    }
-
     public User getUserByUsername(String username) {
         return userRepository.getUserByUsername(username);
     }
@@ -75,7 +72,7 @@ public class UserService {
     }
 
     @Transactional
-    public User createUser(UserForm form) {
+    public User createUser(UserRegisterForm form) {
         User user = new User();
 
         user.setCreationDate(ZonedDateTime.now(ApplicationConstants.ZONE_ID));
@@ -148,7 +145,7 @@ public class UserService {
     }
 
     @Transactional
-    public void updateUser(UserForm form) {
+    public void updateUser(UserUpdateForm form) {
 
         User existingUser = userRepository.findById(form.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + form.getId()));
@@ -163,13 +160,13 @@ public class UserService {
         existingUser.setAllowedShiftTypes(form.getAllowedShiftTypes() == null
                 ? new HashSet<>()
                 : new HashSet<>(form.getAllowedShiftTypes()));
-        userRepository.save(existingUser);
+        //userRepository.save(existingUser);
         // a role change here is not allowed as it is database-only
         // a password change is handled separately
     }
 
 
-    public UserUpdateValidationResult validateUserUpdate(UserForm updatedUser) {
+    public UserUpdateValidationResult validateUserUpdate(UserUpdateForm updatedUser) {
         Long id = updatedUser.getId();
 
         List<String> defaultMessages = new ArrayList<>();
@@ -199,7 +196,7 @@ public class UserService {
     }
 
     public UserViewRecord entityToUserViewRecord(User user) {
-        return new UserViewRecord(user.getId(), user.getName(), user.getUsername(), user.getEmail());
+        return new UserViewRecord(user.getId(), user.getName(), user.getUsername(), user.getEmail(), user.hasShiftRequest());
     }
 
     @Transactional
@@ -216,6 +213,10 @@ public class UserService {
         return userRepository.findById(userId)
                 .map(userMapper::entityToUserViewRecord)
                 .orElse(null);
+    }
+
+    public UserUpdateForm getUserUpdateFormByUserId(long userId) {
+        return userMapper.entityToUserUpdateFormByUserId(userId);
     }
 
     private String getShiftRequestDatesAsString(List<LocalDate> localDatesList) {

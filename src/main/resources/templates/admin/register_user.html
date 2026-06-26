@@ -10,10 +10,7 @@
 <button class="openbtn" onclick="openNav()">menu</button>
 
 <div class="centered">
-    <h1 th:if="${headerType == 'add'}" data-th-text="#{register.header.add}">User registration</h1>
-    <h1 th:if="${headerType == 'update'}" data-th-text="#{register.header.update}">Edit user details</h1>
-
-    <form action="#" th:action="${actionType}" method="post" th:object="${userForm}">
+    <form action="#" th:action="@{/admin/add}" method="post" th:object="${userRegisterForm}">
         <table class="table-no-lines">
             <tr>
                 <td class="td-no-lines">

@@ -7,5 +7,6 @@ public record UserViewRecord(
         Long userId,
         String name,
         String username,
-        String email
+        String email,
+        boolean hasShiftRequest
 ){}

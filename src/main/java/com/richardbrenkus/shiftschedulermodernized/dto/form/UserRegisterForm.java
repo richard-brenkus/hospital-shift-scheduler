@@ -14,7 +14,7 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserForm {
+public class UserRegisterForm {
 
     private Long id;
 
@@ -39,6 +39,7 @@ public class UserForm {
             regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$",
             message = "{validation.password.weak}"
     )
+    @NotBlank(message = "{validation.password.required}")
     private String password;
 
     private String note;

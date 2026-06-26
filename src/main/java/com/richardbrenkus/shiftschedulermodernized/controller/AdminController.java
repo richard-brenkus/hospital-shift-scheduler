@@ -1,11 +1,11 @@
 package com.richardbrenkus.shiftschedulermodernized.controller;
 
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeName;
-import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeValue;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Profession;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.PasswordChangeForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
-import com.richardbrenkus.shiftschedulermodernized.dto.form.UserForm;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.UserRegisterForm;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.UserUpdateForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.*;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.service.*;
@@ -70,21 +70,21 @@ public class AdminController {
 
     @GetMapping("/admin/register_user")
     public String showRegistrationForm(Model model) {
-        model.addAttribute(ModelAttributeName.USER_FORM, new UserForm());
+        model.addAttribute(ModelAttributeName.USER_REGISTER_FORM, new UserRegisterForm());
         model.addAttribute(ModelAttributeName.PROFESSIONS, Profession.values());
         model.addAttribute(ModelAttributeName.SHIFT_TYPES, shiftTypeService.getShiftTypes());
-        model.addAttribute(ModelAttributeName.ACTION_TYPE, ModelAttributeValue.ACTION_TYPE_ADD);
-        model.addAttribute(ModelAttributeName.HEADER_TYPE, ModelAttributeValue.HEADER_TYPE_ADMIN_ADD);
+        //model.addAttribute(ModelAttributeName.ACTION_TYPE, ModelAttributeValue.ACTION_TYPE_ADD);
+        //model.addAttribute(ModelAttributeName.HEADER_TYPE, ModelAttributeValue.HEADER_TYPE_ADMIN_ADD);
 
         return "admin/register_user";
     }
 
     @PostMapping(path = "/admin/add")
-    public String addNewUser(@Valid @ModelAttribute(ModelAttributeName.USER_FORM) UserForm userForm,
+    public String addNewUser(@Valid @ModelAttribute(ModelAttributeName.USER_REGISTER_FORM) UserRegisterForm userRegisterForm,
                              BindingResult bindingResult,
                              Model model) {
 
-        if (userForm.getAllowedShiftTypes() == null || userForm.getAllowedShiftTypes().isEmpty()) {
+        if (userRegisterForm.getAllowedShiftTypes() == null || userRegisterForm.getAllowedShiftTypes().isEmpty()) {
             bindingResult.rejectValue(
                     "allowedShiftTypes",
                     "error.allowedShiftTypes",
@@ -92,7 +92,7 @@ public class AdminController {
             );
         }
 
-        if (userService.existsByUsernameIgnoreCase(userForm.getUsername())) {
+        if (userService.existsByUsernameIgnoreCase(userRegisterForm.getUsername())) {
             bindingResult.rejectValue(
                     "username",
                     "error.username",
@@ -100,7 +100,7 @@ public class AdminController {
             );
         }
 
-        if (userService.existsByEmailIgnoreCase(userForm.getEmail())) {
+        if (userService.existsByEmailIgnoreCase(userRegisterForm.getEmail())) {
             bindingResult.rejectValue(
                     "email",
                     "error.email",
@@ -108,7 +108,7 @@ public class AdminController {
             );
         }
 
-        if (userService.existsByNameIgnoreCase(userForm.getName())) {
+        if (userService.existsByNameIgnoreCase(userRegisterForm.getName())) {
             bindingResult.rejectValue(
                     "name",
                     "error.name",
@@ -121,9 +121,9 @@ public class AdminController {
             return "admin/register_user";
         }
 
-        userService.createUser(userForm);
+        userService.createUser(userRegisterForm);
 
-        model.addAttribute(ModelAttributeName.ACTION_TYPE, ModelAttributeValue.ACTION_TYPE_ADD);
+        //model.addAttribute(ModelAttributeName.ACTION_TYPE, ModelAttributeValue.ACTION_TYPE_ADD);
         return "admin/user_update_success";
     }
 
@@ -151,7 +151,7 @@ public class AdminController {
     @GetMapping(path = "/admin/delete_shift_request")
     public String deleteRequestSelect(Model model) {
 
-        final UserForm updatedUser = new UserForm();
+        final UserRegisterForm updatedUser = new UserRegisterForm();
         List<User> usersList = userService.getAllUsersWithShiftRequestByNameAsc();
 
         model.addAttribute(ModelAttributeName.USERS, usersList);
@@ -172,13 +172,13 @@ public class AdminController {
     @GetMapping(path = "/admin/update_user")
     public String updateUser(Model model) {
 
-        final UserForm updatedUser = new UserForm();
+        final UserRegisterForm updatedUser = new UserRegisterForm();
         List<User> usersList = userService.getAllUsersAndAdminsByNameAsc();
 
         model.addAttribute(ModelAttributeName.USERS, usersList);
         model.addAttribute(ModelAttributeName.UPDATED_USER, updatedUser);
 
-        return "admin/update_user";
+        return "admin/select_update_user";
     }
 
     @GetMapping(path = "/admin/update_shift_request")
@@ -202,23 +202,23 @@ public class AdminController {
         return "user/userIndex";
     }
 
-    @PostMapping(path = "admin/update_user")
+    @PostMapping(path = "/admin/select_update_user")
     public String getUserUpdateForm(@ModelAttribute("user") User user, @RequestParam long id, Model model) {
 
-        final UserForm updatedUser = userService.getUserFormByUserId(id);
+        final UserUpdateForm updatedUser = userService.getUserUpdateFormByUserId(id);
 
-        model.addAttribute(ModelAttributeName.USER_FORM, updatedUser);
+        model.addAttribute(ModelAttributeName.USER_UPDATE_FORM, updatedUser);
         model.addAttribute(ModelAttributeName.PROFESSIONS, Profession.values());
         model.addAttribute(ModelAttributeName.SHIFT_TYPES, shiftTypeService.getShiftTypes());
-        model.addAttribute(ModelAttributeName.ACTION_TYPE, ModelAttributeValue.ACTION_TYPE_UPDATE);
-        model.addAttribute(ModelAttributeName.HEADER_TYPE, ModelAttributeValue.HEADER_TYPE_ADMIN_UPDATE);
+        //model.addAttribute(ModelAttributeName.ACTION_TYPE, ModelAttributeValue.ACTION_TYPE_UPDATE);
+        //model.addAttribute(ModelAttributeName.HEADER_TYPE, ModelAttributeValue.HEADER_TYPE_ADMIN_UPDATE);
 
-        return "admin/register_user";
+        return "admin/update_user";
     }
 
-    @PostMapping(path = "/admin/update")
+    @PostMapping(path = "/admin/update_user")
     public String postUserUpdateForm(
-            @Valid @ModelAttribute(ModelAttributeName.USER_FORM) UserForm updatedUser,
+            @Valid @ModelAttribute(ModelAttributeName.USER_UPDATE_FORM) UserUpdateForm updatedUser,
             BindingResult bindingResult,
             Model model) {
 
@@ -235,7 +235,7 @@ public class AdminController {
         }
 
         if (bindingResult.hasErrors()) {
-            return "admin/register_user";
+            return "admin/update_user";
         }
 
         userService.updateUser(updatedUser);

@@ -59,9 +59,9 @@ public final class ModelAttributeName {
 
 
     // Other
-    public static final String USER_FORM = "userForm";
+    public static final String USER_REGISTER_FORM = "userRegisterForm";
+    public static final String USER_UPDATE_FORM = "userUpdateForm";
+
     public static final String PROFESSIONS = "professions";
-    public static final String HEADER_TYPE = "headerType";
-    public static final String ACTION_TYPE = "actionType";
     public static final String REDIRECT_URL = "redirectUrl";
 }
