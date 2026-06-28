@@ -1,5 +1,7 @@
 package com.richardbrenkus.shiftschedulermodernized.controller;
 
+import com.richardbrenkus.shiftschedulermodernized.algorithm.CalendarDay;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleCalendar;
 import com.richardbrenkus.shiftschedulermodernized.config.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeName;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Profession;
@@ -32,6 +34,7 @@ public class AdminController {
     private final ShiftRequestService shiftRequestService;
     private final PrepareModelService prepareModelService;
     private final CalculationProfileService calculationProfileService;
+    private final ScheduleCalculationService scheduleCalculationService;
 
     @GetMapping("/admin/adminIndex")
     public String adminIndex(Authentication authentication, Model model) {
@@ -333,18 +336,50 @@ public class AdminController {
     }
 
     @PostMapping("/admin/new_calculation")
-    public String startNewCalculation(
+    public String calculateSchedule(
+            Model model,
             @ModelAttribute("calculationProfileForm") CalculationProfileForm calculationProfileForm
     ) {
-        List<Integer> shiftCalculationOrder =
-                calculationProfileService.resolveShiftCalculationOrder(calculationProfileForm);
 
-        /*scheduleCalculationService.calculateSchedule(
-                calculationProfileForm,
-                shiftCalculationOrder
-        );*/
+        ScheduleCalendar bestCalendar =
+                scheduleCalculationService.calculateSchedule(calculationProfileForm);
 
-        return "redirect:/admin/show_saved_calendars";
+        model.addAttribute("calendar", bestCalendar);
+        model.addAttribute("monthDaysList", bestCalendar.getDays()
+                .stream()
+                .map(day -> day.getDate().getDayOfMonth())
+                .toList());
+
+        model.addAttribute("weekendsAndHolidays", bestCalendar.getDays()
+                .stream()
+                .filter(CalendarDay::isWeekendOrHoliday)
+                .map(day -> day.getDate().getDayOfMonth())
+                .toList());
+
+        model.addAttribute("shiftCountCap", calculationProfileForm.getShiftCountCap());
+        model.addAttribute("minimalGap", calculationProfileForm.getGapBetweenShifts());
+        model.addAttribute("forceFillSelected",
+                calculationProfileForm.isSortByDatesAmount()
+                        || !calculationProfileForm.getForceFillShiftTypes().isEmpty());
+
+        model.addAttribute("sortByDatesAmount",
+                calculationProfileForm.isSortByDatesAmount() ? "sortByDatesAmount " : "");
+
+        model.addAttribute("forceFillShiftTypes",
+                calculationProfileForm.getForceFillShiftTypes());
+
+        model.addAttribute("allUsersExist", true);
+        model.addAttribute("errorsExist", false);
+
+        evaluateEdit(model, bestCalendar, false);
+
+        Set<String> usersWithNoRequest = returnUsersWithNoRequest();
+        String usersWithNoRequestString = String.join(", ", usersWithNoRequest);
+
+        model.addAttribute("usersWithNoRequest", usersWithNoRequest);
+        model.addAttribute("usersWithNoRequestString", usersWithNoRequestString);
+
+        return "admin/schedule_table";
     }
 
 
