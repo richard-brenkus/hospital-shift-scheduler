@@ -14,7 +14,7 @@ public class PreviousMonthShiftRecord {
 
     private Integer backwardIndex;
     private String dateStringDB;
-    private Integer dateIdDB;
+    private Long dateIdDB;
 
     @Builder.Default
     private Map<Integer, String> usernameByShiftType = new HashMap<>();
