@@ -1,15 +1,14 @@
 package com.richardbrenkus.shiftschedulermodernized.controller;
 
+import com.richardbrenkus.shiftschedulermodernized.config.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeName;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Profession;
-import com.richardbrenkus.shiftschedulermodernized.dto.form.PasswordChangeForm;
-import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
-import com.richardbrenkus.shiftschedulermodernized.dto.form.UserRegisterForm;
-import com.richardbrenkus.shiftschedulermodernized.dto.form.UserUpdateForm;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.*;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.*;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.service.*;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,9 +18,11 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.YearMonth;
 import java.util.*;
 
 @Controller
+@RequiredArgsConstructor
 public class AdminController {
 
     private final LandingPageService landingPageService;
@@ -30,15 +31,7 @@ public class AdminController {
     private final ShiftTypeService shiftTypeService;
     private final ShiftRequestService shiftRequestService;
     private final PrepareModelService prepareModelService;
-
-    public AdminController(LandingPageService landingPageService, UserService userService, ScheduledTasksService scheduledTasksService, ShiftTypeService shiftTypeService, ShiftRequestService shiftRequestService, PrepareModelService prepareModelService) {
-        this.landingPageService = landingPageService;
-        this.userService = userService;
-        this.scheduledTasksService = scheduledTasksService;
-        this.shiftTypeService = shiftTypeService;
-        this.shiftRequestService = shiftRequestService;
-        this.prepareModelService = prepareModelService;
-    }
+    private final CalculationProfileService calculationProfileService;
 
     @GetMapping("/admin/adminIndex")
     public String adminIndex(Authentication authentication, Model model) {
@@ -318,6 +311,40 @@ public class AdminController {
         userService.changeUserPassword(username, passwordChangeForm.getNewPassword());
 
         return "redirect:/admin/adminIndex";
+    }
+
+    @GetMapping("/admin/calculate_schedule_select")
+    public String calculateScheduleMenu(Model model) {
+
+        CalculationProfileForm calculationProfileForm = CalculationProfileForm.builder()
+                .calculationMonth(YearMonth.now(ApplicationConstants.ZONE_ID).plusMonths(2))
+                .shiftCountCap(5)
+                .gapBetweenShifts(5)
+                .forceFillShiftTypes(new ArrayList<>())
+                .build();
+
+        model.addAttribute(ModelAttributeName.CALCULATION_PROFILE_FORM, calculationProfileForm);
+        model.addAttribute(ModelAttributeName.MONTH_OPTIONS, calculationProfileService.getAvailableCalculationMonths());
+        model.addAttribute(ModelAttributeName.GAP_BETWEEN_SHIFTS, calculationProfileService.getGapBetweenShiftsOptions());
+        model.addAttribute(ModelAttributeName.SHIFT_COUNT_MAX, calculationProfileService.getShiftCountCapOptions());
+        model.addAttribute(ModelAttributeName.SHIFT_TYPES, calculationProfileService.getAvailableShiftTypes());
+
+        return "admin/calculate_schedule_select";
+    }
+
+    @PostMapping("/admin/new_calculation")
+    public String startNewCalculation(
+            @ModelAttribute("calculationProfileForm") CalculationProfileForm calculationProfileForm
+    ) {
+        List<Integer> shiftCalculationOrder =
+                calculationProfileService.resolveShiftCalculationOrder(calculationProfileForm);
+
+        /*scheduleCalculationService.calculateSchedule(
+                calculationProfileForm,
+                shiftCalculationOrder
+        );*/
+
+        return "redirect:/admin/show_saved_calendars";
     }
 
 

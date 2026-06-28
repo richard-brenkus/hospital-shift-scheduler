@@ -22,8 +22,8 @@ public class PrepareModelService {
     public void populateUserIndexModelForUser(Model model, ShiftRequestForm shiftRequestForm, boolean isAdmin, String usernamePassed) {
         model.addAttribute(ModelAttributeName.SHIFT_REQUEST_FORM, shiftRequestForm);
         model.addAttribute(ModelAttributeName.WEEKEND_COUNT_LIST, SelectionLists.WEEKEND_COUNT_LIST);
-        model.addAttribute(ModelAttributeName.WEEKDAY_COUNT_LIST, SelectionLists.WEEKDAY_COUNT_LIST);
-        model.addAttribute(ModelAttributeName.PRIORITY_LIST, SelectionLists.PRIORITY_LIST);
+        model.addAttribute(ModelAttributeName.WEEKDAY_COUNT_LIST, SelectionLists.GENERIC_ONE_TO_TEN_LIST);
+        model.addAttribute(ModelAttributeName.PRIORITY_LIST, SelectionLists.GENERIC_ONE_TO_TEN_LIST);
         model.addAttribute(ModelAttributeName.IS_ADMIN, isAdmin);
         model.addAttribute(ModelAttributeName.USERNAME_PASSED, usernamePassed);
     }

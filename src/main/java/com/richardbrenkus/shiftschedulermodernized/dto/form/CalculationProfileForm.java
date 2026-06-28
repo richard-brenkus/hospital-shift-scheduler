@@ -1,9 +1,11 @@
 package com.richardbrenkus.shiftschedulermodernized.dto.form;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.*;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @Getter
 @Setter
@@ -16,8 +18,9 @@ public class CalculationProfileForm {
     private int gapBetweenShifts;
     private boolean sortByDatesAmount;
 
-    private int year;
-    private int month;
+    @DateTimeFormat(pattern = "yyyy-MM")
+    private YearMonth calculationMonth;
 
-    private Set<Integer> forceFillShiftTypes = new HashSet<>();
+    @Builder.Default
+    private List<Integer> forceFillShiftTypes = new ArrayList<>();
 }

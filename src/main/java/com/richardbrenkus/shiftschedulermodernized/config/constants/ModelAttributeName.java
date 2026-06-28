@@ -38,11 +38,14 @@ public final class ModelAttributeName {
     public static final String SUBMITTED_SHIFT_REQUEST_RECORD = "submittedShiftRequestRecord";
     public static final String CURRENT_PRIORITY = "currentPriority";
 
-
     // Selection lists
     public static final String WEEKDAY_COUNT_LIST = "weekdayCountList";
     public static final String WEEKEND_COUNT_LIST = "weekendCountList";
     public static final String PRIORITY_LIST = "priorityList";
+    public static final String CALCULATION_PROFILE_FORM = "calculationProfileForm";
+    public static final String MONTH_OPTIONS = "monthOptions";
+    public static final String GAP_BETWEEN_SHIFTS = "gapBetweenShiftsList";
+    public static final String SHIFT_COUNT_MAX = "shiftCountMaxList";
 
     // Validation flags
     public static final String CONFLICTING_DATES = "conflictingDates";

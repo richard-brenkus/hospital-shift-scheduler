@@ -12,6 +12,7 @@ import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
 import com.richardbrenkus.shiftschedulermodernized.service.*;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.Optional;
 
 @Controller
+@RequiredArgsConstructor
 public class UserController {
 
     private final LandingPageService landingPageService;
@@ -32,15 +34,6 @@ public class UserController {
     private final ScheduledTasksService scheduledTasksService;
     private final ShiftRequestService shiftRequestService;
     private final ShiftRequestMapper shiftRequestMapper;
-
-    public UserController(LandingPageService landingPageService, UserService userService, PrepareModelService prepareModelService, ScheduledTasksService scheduledTasksService, ShiftRequestService shiftRequestService, ShiftRequestMapper shiftRequestMapper) {
-        this.landingPageService = landingPageService;
-        this.userService = userService;
-        this.prepareModelService = prepareModelService;
-        this.scheduledTasksService = scheduledTasksService;
-        this.shiftRequestService = shiftRequestService;
-        this.shiftRequestMapper = shiftRequestMapper;
-    }
 
     @GetMapping({"/", "/home", "/index"})
     public String index(Authentication authentication) {
