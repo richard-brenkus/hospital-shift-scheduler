@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/styles/main.css}"/>
+    <title data-th-text="#{scheduleTable.title}">Calculated monthly schedule</title>
+</head>
+<body>
+
+<button class="openbtn" onclick="openNav()">menu</button>
+
+<div id="main" class="centered">
+
+    <h1 data-th-text="#{scheduleTable.header}">
+        Monthly schedule
+    </h1>
+
+    <h2>
+        <span th:text="${scheduleEditForm.month}">2026-07</span>
+    </h2>
+
+    <div class="schedule-summary">
+        <p>
+            <span data-th-text="#{calcSchedMenu.shiftCap}">Shift count cap:</span>
+            <span th:text="${scheduleEditForm.shiftCountCap}">0</span>
+        </p>
+
+        <p>
+            <span data-th-text="#{calcSchedMenu.minGap}">Minimal gap between shifts:</span>
+            <span th:text="${scheduleEditForm.gapBetweenShifts}">0</span>
+        </p>
+
+        <p>
+            <span data-th-text="#{scheduleTable.scheduleScore}">Schedule score:</span>
+            <span th:text="${scheduleValidationResult.scheduleScore}">0/0</span>
+        </p>
+    </div>
+
+    <div th:if="${scheduleEditForm.sortByDatesAmount || !#lists.isEmpty(scheduleEditForm.forceFillShiftTypes)}">
+        <b>
+            <span data-th-text="#{scheduleTable.selectedCheckboxes}">Selected checkboxes:</span>
+        </b>
+
+        <span th:if="${scheduleEditForm.sortByDatesAmount}"
+              data-th-text="#{calcSchedMenu.sortByDates}">
+            Sort by dates amount
+        </span>
+
+        <span th:if="${!#lists.isEmpty(scheduleEditForm.forceFillShiftTypes)}">
+            <span data-th-text="#{calcSchedMenu.forceFill}">Prioritized shift types:</span>
+            <span th:text="${scheduleEditForm.forceFillShiftTypes}">[1, 2]</span>
+        </span>
+    </div>
+
+    <div th:if="${not #lists.isEmpty(usersWithNoRequest)}">
+        <br>
+        <table class="table-no-lines table-full">
+            <tr>
+                <td class="td-no-lines left-aligned electric-blue">
+                    <span data-th-text="#{scheduleTable.usersNoRequest}">
+                        Users with no request:
+                    </span>
+                    <span th:text="${usersWithNoRequestString}"></span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div th:if="${scheduleValidationResult.shortStatsExist}">
+        <br>
+        <table class="table-with-lines table-full">
+            <thead>
+            <tr>
+                <th colspan="8" data-th-text="#{scheduleTable.quickStats.header}">
+                    Unused days quick statistics:
+                </th>
+            </tr>
+            <tr>
+                <th data-th-text="#{scheduleTable.quickStats.type}">Shift type</th>
+                <th data-th-text="#{scheduleTable.quickStats.user}">User</th>
+                <th data-th-text="#{scheduleTable.quickStats.remainingWeekdays}">Remaining weekdays</th>
+                <th data-th-text="#{scheduleTable.quickStats.remainingWeekends}">Remaining weekends</th>
+                <th data-th-text="#{scheduleTable.quickStats.requestedWeekdays}">Requested weekdays</th>
+                <th data-th-text="#{scheduleTable.quickStats.requestedWeekends}">Requested weekends</th>
+                <th data-th-text="#{scheduleTable.quickStats.anyDaySelected}">Any day selected</th>
+                <th data-th-text="#{scheduleTable.quickStats.worksTypes}">Works shift types</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <th:block th:each="statsEntry : ${scheduleValidationResult.shortStatsByShiftType}">
+                <tr th:each="stat : ${statsEntry.value}">
+                    <td class="centered"><b th:text="${statsEntry.key}">1</b></td>
+                    <td class="centered" th:text="${stat.name}">User</td>
+                    <td class="centered" th:text="${stat.remainingWeekdays}">0</td>
+                    <td class="centered" th:text="${stat.remainingWeekends}">0</td>
+                    <td class="centered" th:text="${stat.requestedWeekdays}">0</td>
+                    <td class="centered" th:text="${stat.requestedWeekends}">0</td>
+                    <td class="centered"
+                        th:text="${stat.anyDateSelected} ? #{scheduleTable.yes} : #{scheduleTable.no}">
+                        YES
+                    </td>
+                    <td class="centered" th:text="${stat.user != null ? stat.user.note : ''}"></td>
+                </tr>
+            </th:block>
+            </tbody>
+        </table>
+    </div>
+
+    <div th:if="${scheduleValidationResult.noShiftAssignedStatsExist}">
+        <div class="section-spacer"></div>
+
+        <table class="table-with-lines table-full">
+            <thead>
+            <tr>
+                <th colspan="5" data-th-text="#{scheduleTable.header.noShiftAssigned}">
+                    No shift assigned:
+                </th>
+            </tr>
+            <tr>
+                <th data-th-text="#{scheduleTable.overrideValid.shiftType}">Shift type</th>
+                <th data-th-text="#{scheduleTable.quickStats.user}">User</th>
+                <th data-th-text="#{scheduleTable.quickStats.requestedWeekdays}">Requested weekdays</th>
+                <th data-th-text="#{scheduleTable.quickStats.requestedWeekends}">Requested weekends</th>
+                <th data-th-text="#{scheduleTable.quickStats.anyDaySelected}">Any day selected</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <th:block th:each="statsEntry : ${scheduleValidationResult.noShiftAssignedStatsByShiftType}">
+                <tr th:each="stat : ${statsEntry.value}">
+                    <td class="centered"><b th:text="${statsEntry.key}">1</b></td>
+                    <td class="centered" th:text="${stat.name}">User</td>
+                    <td class="centered" th:text="${stat.requestedWeekdays}">0</td>
+                    <td class="centered" th:text="${stat.requestedWeekends}">0</td>
+                    <td class="centered"
+                        th:text="${stat.anyDateSelected} ? #{scheduleTable.yes} : #{scheduleTable.no}">
+                        YES
+                    </td>
+                </tr>
+            </th:block>
+            </tbody>
+        </table>
+    </div>
+
+    <div>
+        <br>
+        <form th:action="@{/admin/recalculate_schedule}" method="post">
+            <button type="submit" class="standard-button" data-th-text="#{button.recalculate}">
+                Recalculate schedule
+            </button>
+        </form>
+
+        <br>
+
+        <form th:action="@{/admin/show_full_statistics}" target="_blank" method="get">
+            <button type="submit" class="standard-button" data-th-text="#{button.showFullStats}">
+                Show full statistics
+            </button>
+        </form>
+    </div>
+
+    <div th:if="${scheduleValidationResult.errorsExist}">
+        <div class="section-spacer"></div>
+
+        <div class="left-aligned">
+            <b data-th-text="#{scheduleTable.errorsExist}">
+                ERRORS EXIST
+            </b>
+        </div>
+
+        <div class="left-aligned">
+            <div th:if="${scheduleValidationResult.userShiftCap}">
+                <b data-th-text="#{error.adminShiftCount}">Admin shift count exceeded:</b>
+                <div th:each="entry : ${scheduleValidationResult.shiftCapUsersByShiftType}"
+                     th:if="${!#sets.isEmpty(entry.value)}">
+                    <span data-th-text="#{scheduleTable.overrideValid.shiftType}">Shift type</span>
+                    <span th:text="${entry.key}">1</span>:
+                    <span th:text="${entry.value}"></span>
+                </div>
+            </div>
+
+            <div th:if="${scheduleValidationResult.userIndividualShiftCap}">
+                <b data-th-text="#{error.requestedWeekday}">Requested weekday count exceeded:</b>
+                <div th:each="entry : ${scheduleValidationResult.individualShiftCapUsersByShiftType}"
+                     th:if="${!#sets.isEmpty(entry.value)}">
+                    <span data-th-text="#{scheduleTable.overrideValid.shiftType}">Shift type</span>
+                    <span th:text="${entry.key}">1</span>:
+                    <span th:text="${entry.value}"></span>
+                </div>
+            </div>
+
+            <div th:if="${scheduleValidationResult.userWeekendCap}">
+                <b data-th-text="#{error.requestedWeekend}">Requested weekend count exceeded:</b>
+                <div th:each="entry : ${scheduleValidationResult.weekendCapUsersByShiftType}"
+                     th:if="${!#sets.isEmpty(entry.value)}">
+                    <span data-th-text="#{scheduleTable.overrideValid.shiftType}">Shift type</span>
+                    <span th:text="${entry.key}">1</span>:
+                    <span th:text="${entry.value}"></span>
+                </div>
+            </div>
+
+            <div th:if="${scheduleValidationResult.userNoRequest}">
+                <b data-th-text="#{error.noRequest}">
+                    No shiftRequest has been submitted by the user(s):
+                </b>
+                <div th:each="entry : ${scheduleValidationResult.userNoRequestByShiftType}"
+                     th:if="${!#sets.isEmpty(entry.value)}">
+                    <span data-th-text="#{scheduleTable.overrideValid.shiftType}">Shift type</span>
+                    <span th:text="${entry.key}">1</span>:
+                    <span th:text="${entry.value}"></span>
+                </div>
+            </div>
+
+            <div th:if="${scheduleValidationResult.userCrossCheck}">
+                <b data-th-text="#{error.conflictingDates}">Conflicting dates found:</b>
+                <div th:each="entry : ${scheduleValidationResult.crossCheckUsersByShiftType}"
+                     th:if="${!#sets.isEmpty(entry.value)}">
+                    <span data-th-text="#{scheduleTable.overrideValid.shiftType}">Shift type</span>
+                    <span th:text="${entry.key}">1</span>:
+                    <span th:text="${entry.value}"></span>
+                </div>
+            </div>
+
+            <div th:if="${scheduleValidationResult.userDatesNo}">
+                <b data-th-text="#{error.unwantedDates}">Unwanted dates entered:</b>
+                <div th:each="entry : ${scheduleValidationResult.datesNoCheckUsersByShiftType}"
+                     th:if="${!#sets.isEmpty(entry.value)}">
+                    <span data-th-text="#{scheduleTable.overrideValid.shiftType}">Shift type</span>
+                    <span th:text="${entry.key}">1</span>:
+                    <span th:text="${entry.value}"></span>
+                </div>
+            </div>
+
+            <div th:if="${scheduleValidationResult.previousMonthCheckFailed}">
+                <b>
+                    <span data-th-text="#{error.conflictingPreviousMonth1}">
+                        Conflicting dates. Check shifts on the previous month's last
+                    </span>
+                    <span th:text="${scheduleEditForm.gapBetweenShifts}">0</span>
+                    <span data-th-text="#{error.conflictingPreviousMonth2}">
+                        days to resolve:
+                    </span>
+                </b>
+
+                <div th:each="entry : ${scheduleValidationResult.previousMonthCheckUsersByShiftType}"
+                     th:if="${!#sets.isEmpty(entry.value)}">
+                    <span data-th-text="#{scheduleTable.overrideValid.shiftType}">Shift type</span>
+                    <span th:text="${entry.key}">1</span>:
+                    <span th:text="${entry.value}"></span>
+                </div>
+            </div>
+
+            <div th:if="${scheduleValidationResult.allUsersExist == false}">
+                <b data-th-text="#{error.usersNotFound}">
+                    The following user(s) could not be found, please check the row(s):
+                </b>
+                <span th:text="${scheduleValidationResult.nonExistentUsers}"></span>
+            </div>
+        </div>
+    </div>
+
+    <form th:action="@{/admin/evaluate_edit}"
+          method="post"
+          th:object="${scheduleEditForm}">
+
+        <input type="hidden" th:field="*{month}"/>
+        <input type="hidden" th:field="*{shiftCountCap}"/>
+        <input type="hidden" th:field="*{gapBetweenShifts}"/>
+        <input type="hidden" th:field="*{sortByDatesAmount}"/>
+
+        <input type="hidden"
+               th:each="forceFillShiftType : *{forceFillShiftTypes}"
+               name="forceFillShiftTypes"
+               th:value="${forceFillShiftType}"/>
+
+        <div class="centered button-row">
+            <button type="submit" class="standard-button" name="saveSchedule" value="false" id="evaluateSchedule"
+                    data-th-text="#{button.evaluate}">
+                Evaluate
+            </button>
+
+            <button type="submit" class="standard-button" name="saveSchedule" value="true" id="saveSchedule"
+                    data-th-text="#{button.saveSchedule}">
+                Save schedule
+            </button>
+        </div>
+
+        <table class="table-with-lines table-full">
+            <thead>
+            <tr>
+                <th data-th-text="#{scheduleTableSaved.day}">Day</th>
+                <th th:each="shiftType : ${shiftTypes}">
+                    <span data-th-text="#{scheduleTable.overrideValid.shiftType}">Shift type</span>
+                    <span th:text="${shiftType}">1</span>
+                </th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:if="${scheduleValidationResult.errorsExist && !scheduleValidationResult.userNonexistent}">
+                <td th:attr="colspan=${#lists.size(shiftTypes) + 1}" class="centered">
+                    <p>
+                        <b data-th-text="#{scheduleTable.overrideValid}">
+                            Override validation:
+                        </b>
+                    </p>
+
+                    <label for="overrideShiftCountCap" th:if="${scheduleValidationResult.userShiftCap}"
+                           data-th-text="#{scheduleTable.override.adminShiftLimit}">
+                        admin shift limit
+                    </label>
+                    <input id="overrideShiftCountCap" th:if="${scheduleValidationResult.userShiftCap}" type="checkbox"
+                           th:field="*{overrideShiftCountCap}"/>
+
+                    <label for="overrideHasShiftRequest" th:if="${scheduleValidationResult.userNoRequest}"
+                           data-th-text="#{scheduleTable.override.noRequest}">
+                        no shiftRequest
+                    </label>
+                    <input id="overrideHasShiftRequest" th:if="${scheduleValidationResult.userNoRequest}" type="checkbox"
+                           th:field="*{overrideHasShiftRequest}"/>
+
+                    <label for="overridePreviousMonthValid" th:if="${scheduleValidationResult.previousMonthCheckFailed}"
+                           data-th-text="#{scheduleTable.override.previousMonth}">
+                        previous month
+                    </label>
+                    <input id="overridePreviousMonthValid" th:if="${scheduleValidationResult.previousMonthCheckFailed}" type="checkbox"
+                           th:field="*{overridePreviousMonthValid}"/>
+
+                    <label for="overrideUserShiftRequestAll" th:if="${scheduleValidationResult.userDatesNo}"
+                           data-th-text="#{scheduleTable.override.requestAll}">
+                        user shiftRequest all
+                    </label>
+                    <input id="overrideUserShiftRequestAll" th:if="${scheduleValidationResult.userDatesNo}" type="checkbox"
+                           th:field="*{overrideUserShiftRequestAll}"/>
+
+                    <label for="overrideUserShiftRequestExceptNoDates"
+                           th:if="${scheduleValidationResult.userWeekendCap || scheduleValidationResult.userIndividualShiftCap}"
+                           data-th-text="#{scheduleTable.override.weekdaysWeekendsLimit}">
+                        user weekdays and weekends limit
+                    </label>
+                    <input id="overrideUserShiftRequestExceptNoDates"
+                           th:if="${scheduleValidationResult.userWeekendCap || scheduleValidationResult.userIndividualShiftCap}"
+                           type="checkbox"
+                           th:field="*{overrideUserShiftRequestExceptNoDates}"/>
+
+                    <label for="overrideConflictingDates" th:if="${scheduleValidationResult.userCrossCheck}"
+                           data-th-text="#{scheduleTable.override.conflictingDates}">
+                        conflicting dates
+                    </label>
+                    <input id="overrideConflictingDates" th:if="${scheduleValidationResult.userCrossCheck}" type="checkbox"
+                           th:field="*{overrideConflictingDates}"/>
+                </td>
+            </tr>
+
+            <tr th:each="day, dayStat : *{days}">
+                <td class="centered"
+                    th:classappend="${day.weekendOrHoliday} ? ' holiday-cell' : ''"
+                    th:text="${day.date.dayOfMonth}">
+                    1
+                </td>
+
+                <td th:each="assignment, assignmentStat : ${day.assignments}"
+                    class="centered"
+                    th:classappend="${(day.weekendOrHoliday ? ' holiday-cell' : '') +
+                        ((scheduleValidationResult.redFieldsByShiftType[assignment.shiftType] != null
+                        and scheduleValidationResult.redFieldsByShiftType[assignment.shiftType].contains(day.date.dayOfMonth))
+                        ? ' error-red' : '')}">
+
+                    <input type="hidden" th:field="*{days[__${dayStat.index}__].date}"/>
+                    <input type="hidden" th:field="*{days[__${dayStat.index}__].weekendOrHoliday}"/>
+                    <input type="hidden"
+                           th:field="*{days[__${dayStat.index}__].assignments[__${assignmentStat.index}__].shiftType}"/>
+
+                    <select th:field="*{days[__${dayStat.index}__].assignments[__${assignmentStat.index}__].userId}">
+                        <option value="">---</option>
+                        <option th:each="user : ${users}"
+                                th:value="${user.userId}"
+                                th:text="${user.name}">
+                            User name
+                        </option>
+                    </select>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+
+    <div class="section-spacer"></div>
+
+    <table class="table-no-lines table-full">
+        <colgroup>
+            <col class="col-50">
+            <col class="col-50">
+        </colgroup>
+        <tr>
+            <td class="td-no-lines centered">
+                <form th:action="@{/admin/adminIndex}" method="get">
+                    <button type="submit" class="standard-button" data-th-text="#{button.backToHomePage}">
+                        Go back
+                    </button>
+                </form>
+            </td>
+
+            <td class="td-no-lines centered">
+                <form th:action="@{/admin/override_validation}" method="post">
+                    <button type="submit" class="standard-button" data-th-text="#{button.saveNoValidation}">
+                        Save schedule without validation
+                    </button>
+                </form>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
+
+<script>
+    function openNav() {
+        document.getElementById("adminSidebar").style.width = "250px";
+    }
+
+    function closeNav() {
+        document.getElementById("adminSidebar").style.width = "0";
+    }
+</script>
+
+</body>
+</html>

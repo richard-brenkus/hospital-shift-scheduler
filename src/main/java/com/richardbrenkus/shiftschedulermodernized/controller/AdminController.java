@@ -1,13 +1,14 @@
 package com.richardbrenkus.shiftschedulermodernized.controller;
 
-import com.richardbrenkus.shiftschedulermodernized.algorithm.CalendarDay;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleCalendar;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.config.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeName;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Profession;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.*;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.*;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
+import com.richardbrenkus.shiftschedulermodernized.mapper.ScheduleMapper;
 import com.richardbrenkus.shiftschedulermodernized.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.YearMonth;
 import java.util.*;
+import java.util.stream.IntStream;
 
 @Controller
 @RequiredArgsConstructor
@@ -35,6 +37,8 @@ public class AdminController {
     private final PrepareModelService prepareModelService;
     private final CalculationProfileService calculationProfileService;
     private final ScheduleCalculationService scheduleCalculationService;
+    private final ScheduleValidationService scheduleValidationService;
+    private final ScheduleMapper scheduleMapper;
 
     @GetMapping("/admin/adminIndex")
     public String adminIndex(Authentication authentication, Model model) {
@@ -340,49 +344,71 @@ public class AdminController {
             Model model,
             @ModelAttribute("calculationProfileForm") CalculationProfileForm calculationProfileForm
     ) {
-
         ScheduleCalendar bestCalendar =
                 scheduleCalculationService.calculateSchedule(calculationProfileForm);
 
-        model.addAttribute("calendar", bestCalendar);
-        model.addAttribute("monthDaysList", bestCalendar.getDays()
-                .stream()
-                .map(day -> day.getDate().getDayOfMonth())
-                .toList());
+        ScheduleEditForm scheduleEditForm =
+                scheduleMapper.toEditForm(bestCalendar, calculationProfileForm);
 
-        model.addAttribute("weekendsAndHolidays", bestCalendar.getDays()
-                .stream()
-                .filter(CalendarDay::isWeekendOrHoliday)
-                .map(day -> day.getDate().getDayOfMonth())
-                .toList());
+        ScheduleValidationResult scheduleValidationResult =
+                scheduleValidationService.generateUserStats(bestCalendar);
 
-        model.addAttribute("shiftCountCap", calculationProfileForm.getShiftCountCap());
-        model.addAttribute("minimalGap", calculationProfileForm.getGapBetweenShifts());
-        model.addAttribute("forceFillSelected",
-                calculationProfileForm.isSortByDatesAmount()
-                        || !calculationProfileForm.getForceFillShiftTypes().isEmpty());
-
-        model.addAttribute("sortByDatesAmount",
-                calculationProfileForm.isSortByDatesAmount() ? "sortByDatesAmount " : "");
-
-        model.addAttribute("forceFillShiftTypes",
-                calculationProfileForm.getForceFillShiftTypes());
-
-        model.addAttribute("allUsersExist", true);
-        model.addAttribute("errorsExist", false);
-
-        evaluateEdit(model, bestCalendar, false);
-
-        Set<String> usersWithNoRequest = returnUsersWithNoRequest();
-        String usersWithNoRequestString = String.join(", ", usersWithNoRequest);
-
-        model.addAttribute("usersWithNoRequest", usersWithNoRequest);
-        model.addAttribute("usersWithNoRequestString", usersWithNoRequestString);
+        addScheduleTableAttributes(model, scheduleEditForm, scheduleValidationResult);
 
         return "admin/schedule_table";
     }
 
+    @PostMapping("/admin/evaluate_edit")
+    public String evaluateEdit(
+            Model model,
+            @ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm,
+            @RequestParam(defaultValue = "false") boolean saveSchedule
+    ) {
+        ScheduleValidationResult validationResult =
+                scheduleValidationService.evaluateEdit(scheduleEditForm, saveSchedule);
 
+        addScheduleTableAttributes(model, scheduleEditForm, validationResult);
+
+        if (saveSchedule && !validationResult.isErrorsExist()) {
+            return "redirect:/admin/show_saved_calendars";
+        }
+
+        return "admin/schedule_table";
+    }
+
+    private void addScheduleTableAttributes(
+            Model model,
+            ScheduleEditForm scheduleEditForm,
+            ScheduleValidationResult validationResult
+    ) {
+        List<Integer> shiftTypes = IntStream.rangeClosed(1, shiftTypeService.getShiftTypes().getLast())
+                .boxed()
+                .toList();
+
+        Set<String> usersWithNoRequest =
+                scheduleCalculationService.returnUsersWithNoRequest();
+
+        model.addAttribute("scheduleEditForm", scheduleEditForm);
+        model.addAttribute("scheduleValidationResult", validationResult);
+
+        model.addAttribute("shiftTypes", shiftTypes);
+        model.addAttribute("users", userService.findAllUsersForSelectionByNameAsc());
+
+        model.addAttribute("usersWithNoRequest", usersWithNoRequest);
+        model.addAttribute("usersWithNoRequestString", String.join(", ", usersWithNoRequest));
+
+        /*
+         * Legacy aliases.
+         */
+        model.addAttribute("shiftCountCap", scheduleEditForm.getShiftCountCap());
+        model.addAttribute("minimalGap", scheduleEditForm.getGapBetweenShifts());
+        model.addAttribute("forceFillSelected",
+                scheduleEditForm.isSortByDatesAmount()
+                        || !scheduleEditForm.getForceFillShiftTypes().isEmpty());
+        model.addAttribute("forceFillShiftTypes", scheduleEditForm.getForceFillShiftTypes());
+
+
+    }
 
 
 }

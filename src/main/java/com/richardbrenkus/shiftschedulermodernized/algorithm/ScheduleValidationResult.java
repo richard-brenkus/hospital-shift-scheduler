@@ -2,10 +2,7 @@ package com.richardbrenkus.shiftschedulermodernized.algorithm;
 
 import lombok.*;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Getter
 @Setter
@@ -32,9 +29,13 @@ public class ScheduleValidationResult {
     private boolean noShiftAssignedStatsExist;
 
     private String scheduleScore;
+    private String usersWithNoRequestString;
 
     @Builder.Default
-    private Set<String> nonExistentUsers = new HashSet<>();
+    private Set<String> nonExistentUsers = new TreeSet<>();
+
+    @Builder.Default
+    private Set<String> usersWithNoRequest = new TreeSet<>();
 
     @Builder.Default
     private Map<Integer, Set<Integer>> redFieldsByShiftType = new HashMap<>();
@@ -76,44 +77,40 @@ public class ScheduleValidationResult {
     }
 
     public void addShiftCapUser(int shiftType, String userName) {
-        shiftCapUsersByShiftType
-                .computeIfAbsent(shiftType, key -> new HashSet<>())
-                .add(userName);
+        addName(shiftCapUsersByShiftType, shiftType, userName);
     }
 
     public void addIndividualShiftCapUser(int shiftType, String userName) {
-        individualShiftCapUsersByShiftType
-                .computeIfAbsent(shiftType, key -> new HashSet<>())
-                .add(userName);
+        addName(individualShiftCapUsersByShiftType, shiftType, userName);
     }
 
     public void addWeekendCapUser(int shiftType, String userName) {
-        weekendCapUsersByShiftType
-                .computeIfAbsent(shiftType, key -> new HashSet<>())
-                .add(userName);
+        addName(weekendCapUsersByShiftType, shiftType, userName);
     }
 
     public void addCrossCheckUser(int shiftType, String userName) {
-        crossCheckUsersByShiftType
-                .computeIfAbsent(shiftType, key -> new HashSet<>())
-                .add(userName);
+        addName(crossCheckUsersByShiftType, shiftType, userName);
     }
 
     public void addUserNoRequest(int shiftType, String userName) {
-        userNoRequestByShiftType
-                .computeIfAbsent(shiftType, key -> new HashSet<>())
-                .add(userName);
+        addName(userNoRequestByShiftType, shiftType, userName);
     }
 
     public void addDatesNoCheckUser(int shiftType, String userName) {
-        datesNoCheckUsersByShiftType
-                .computeIfAbsent(shiftType, key -> new HashSet<>())
-                .add(userName);
+        addName(datesNoCheckUsersByShiftType, shiftType, userName);
     }
 
     public void addPreviousMonthCheckUser(int shiftType, String userName) {
-        previousMonthCheckUsersByShiftType
-                .computeIfAbsent(shiftType, key -> new HashSet<>())
+        addName(previousMonthCheckUsersByShiftType, shiftType, userName);
+    }
+
+    private void addName(Map<Integer, Set<String>> target, int shiftType, String userName) {
+        if (userName == null || userName.isBlank()) {
+            return;
+        }
+
+        target.computeIfAbsent(shiftType, key -> new TreeSet<>())
                 .add(userName);
     }
 }
+

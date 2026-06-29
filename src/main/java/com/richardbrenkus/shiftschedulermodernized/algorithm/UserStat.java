@@ -8,10 +8,8 @@ import java.util.Set;
 
 @Builder
 public record UserStat(
-
         User user,
         String name,
-
         int shiftType,
 
         int requestedWeekdays,
@@ -30,19 +28,32 @@ public record UserStat(
         int assignedWeekdays,
         int assignedWeekends,
         int assignedTotal,
+        int assignedTotalAllShiftTypes,
+
+        Set<Integer> assignedDateDays,
 
         YearMonth month
 ) {
 
-    public String monthName() {
-        return month == null ? "" : month.getMonth().name();
-    }
-
-    public int monthInt() {
-        return month == null ? 0 : month.getMonthValue();
-    }
-
-    public int year() {
-        return month == null ? 0 : month.getYear();
+    public UserStat withAssignedTotalAllShiftTypes(int assignedTotalAllShiftTypes) {
+        return UserStat.builder()
+                .user(user)
+                .name(name)
+                .shiftType(shiftType)
+                .requestedWeekdays(requestedWeekdays)
+                .requestedWeekends(requestedWeekends)
+                .calculatedWeekdays(calculatedWeekdays)
+                .calculatedWeekends(calculatedWeekends)
+                .remainingWeekdays(remainingWeekdays)
+                .remainingWeekends(remainingWeekends)
+                .anyDateSelected(anyDateSelected)
+                .requestedDateDays(requestedDateDays)
+                .assignedWeekdays(assignedWeekdays)
+                .assignedWeekends(assignedWeekends)
+                .assignedTotal(assignedTotal)
+                .assignedTotalAllShiftTypes(assignedTotalAllShiftTypes)
+                .assignedDateDays(assignedDateDays)
+                .month(month)
+                .build();
     }
 }
