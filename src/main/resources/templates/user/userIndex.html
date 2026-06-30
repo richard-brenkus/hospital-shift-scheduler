@@ -16,12 +16,12 @@
     <script>
         function firstDayOfNextMonth() {
             const today = new Date();
-            return new Date(today.getFullYear(), today.getMonth() + 1, 1);
+            return new Date(today.getFullYear(), today.getMonth() + 2, 1);
         }
 
         function lastDayOfNextMonth() {
             const today = new Date();
-            return new Date(today.getFullYear(), today.getMonth() + 2, 0);
+            return new Date(today.getFullYear(), today.getMonth() + 3, 0);
         }
 
         function parseIsoDate(value) {

@@ -1,16 +1,12 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
 import com.richardbrenkus.shiftschedulermodernized.algorithm.*;
-import com.richardbrenkus.shiftschedulermodernized.config.ShiftTypeProperties;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileForm;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftPreference;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
-import com.richardbrenkus.shiftschedulermodernized.entity.StoredCalendarDay;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.repository.StoredCalendarDayRepository;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
-import com.richardbrenkus.shiftschedulermodernized.util.CalendarDateIdUtils;
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,11 +22,12 @@ import java.util.stream.StreamSupport;
 @RequiredArgsConstructor
 public class ScheduleCalculationService {
 
-    private static final int NUMBER_OF_TRIES = 100;
+    private static final int NUMBER_OF_ATTEMPTS = 100;
 
     private final UserRepository userRepository;
     private final StoredCalendarDayRepository storedCalendarDayRepository;
-    private final ShiftTypeProperties shiftTypeProperties;
+    private final ShiftTypeService shiftTypeService;
+    private final ScheduleValidationService scheduleValidationService;
 
     @Transactional(readOnly = true)
     public ScheduleCalendar calculateSchedule(CalculationProfileForm form) {
@@ -42,7 +39,7 @@ public class ScheduleCalculationService {
 
         YearMonth calculationMonth = form.getCalculationMonth();
 
-        List<Integer> shiftTypes = getShiftTypes();
+        List<Integer> shiftTypes = shiftTypeService.getShiftTypes();
         List<Integer> calculationOrder = resolveShiftCalculationOrder(form, shiftTypes);
         List<Integer> priorities = IntStream.rangeClosed(1, 10)
                 .boxed()
@@ -53,20 +50,15 @@ public class ScheduleCalculationService {
         LocalDate firstDayOfMonth = calculationMonth.atDay(1);
         List<LocalDate> holidaysCzech = getHolidaysCzechRepublic(form.getCalculationMonth());
 
-        Map<Integer, PreviousMonthShiftRecord> previousMonthCalendar =
-                loadPreviousMonthCalendar(firstDayOfMonth, minimalGap, shiftTypes);
+        Map<Integer, PreviousMonthShiftRecord> previousMonthCalendar = scheduleValidationService.loadPreviousMonthCalendar(firstDayOfMonth, minimalGap, shiftTypes);
 
         List<ScheduleCalendar> candidateCalendars = new ArrayList<>();
 
-        for (int attempt = 0; attempt < NUMBER_OF_TRIES; attempt++) {
+        for (int attempt = 0; attempt < NUMBER_OF_ATTEMPTS; attempt++) {
 
             CalculationCounters counters = new CalculationCounters();
 
-            ScheduleCalendar calendar = createEmptyScheduleCalendar(
-                    form,
-                    calculationMonth,
-                    holidaysCzech
-            );
+            ScheduleCalendar calendar = createEmptyScheduleCalendar(form, calculationMonth, holidaysCzech);
 
             List<Integer> monthDays = IntStream.rangeClosed(1, calculationMonth.lengthOfMonth())
                     .boxed()
@@ -74,8 +66,7 @@ public class ScheduleCalculationService {
 
             Collections.shuffle(monthDays);
 
-            Map<Integer, UsersForShiftType> usersByShiftType =
-                    prepareUsersByShiftType(usersWithRequest, shiftTypes);
+            Map<Integer, UsersForShiftType> usersByShiftType = prepareUsersByShiftType(usersWithRequest, shiftTypes);
 
             int hitCounter = 0;
 
@@ -88,28 +79,12 @@ public class ScheduleCalculationService {
 
                     for (Integer shiftType : calculationOrder) {
 
-                        List<User> orderedUsers =
-                                getUsersInCalculationOrder(
-                                        usersByShiftType.get(shiftType),
-                                        shiftType,
-                                        sortByDatesAmount
-                                );
+                        List<User> orderedUsers = getUsersInCalculationOrder(usersByShiftType.get(shiftType), shiftType, sortByDatesAmount);
 
-                        boolean forceFill = form.getForceFillShiftTypes() != null
-                                && form.getForceFillShiftTypes().contains(shiftType);
+                        boolean forceFill = form.getForceFillShiftTypes() != null && form.getForceFillShiftTypes().contains(shiftType);
 
                         if (forceFill) {
-                            boolean assigned = tryAssignForceFillShift(
-                                    calendar,
-                                    calendarDay,
-                                    orderedUsers,
-                                    shiftType,
-                                    priority,
-                                    shiftCountCap,
-                                    minimalGap,
-                                    previousMonthCalendar,
-                                    counters
-                            );
+                            boolean assigned = tryAssignForceFillShift(calendar, calendarDay, orderedUsers, shiftType, priority, shiftCountCap, minimalGap, previousMonthCalendar, counters);
 
                             if (assigned) {
                                 hitCounter++;
@@ -128,28 +103,12 @@ public class ScheduleCalculationService {
 
                     for (Integer shiftType : calculationOrder) {
 
-                        List<User> orderedUsers =
-                                getUsersInCalculationOrder(
-                                        usersByShiftType.get(shiftType),
-                                        shiftType,
-                                        sortByDatesAmount
-                                );
+                        List<User> orderedUsers = getUsersInCalculationOrder(usersByShiftType.get(shiftType), shiftType, sortByDatesAmount);
 
-                        boolean forceFill = form.getForceFillShiftTypes() != null
-                                && form.getForceFillShiftTypes().contains(shiftType);
+                        boolean forceFill = form.getForceFillShiftTypes() != null && form.getForceFillShiftTypes().contains(shiftType);
 
                         if (!forceFill) {
-                            boolean assigned = tryAssignNormalShift(
-                                    calendar,
-                                    calendarDay,
-                                    orderedUsers,
-                                    shiftType,
-                                    priority,
-                                    shiftCountCap,
-                                    minimalGap,
-                                    previousMonthCalendar,
-                                    counters
-                            );
+                            boolean assigned = tryAssignNormalShift(calendar, calendarDay, orderedUsers, shiftType, priority, shiftCountCap, minimalGap, previousMonthCalendar, counters);
 
                             if (assigned) {
                                 hitCounter++;
@@ -168,17 +127,7 @@ public class ScheduleCalculationService {
                 .orElseThrow(() -> new IllegalStateException("No schedule calendar was created"));
     }
 
-    private boolean tryAssignForceFillShift(
-            ScheduleCalendar calendar,
-            CalendarDay calendarDay,
-            List<User> users,
-            int shiftType,
-            int priority,
-            int shiftCountCap,
-            int minimalGap,
-            Map<Integer, PreviousMonthShiftRecord> previousMonthCalendar,
-            CalculationCounters counters
-    ) {
+    private boolean tryAssignForceFillShift(ScheduleCalendar calendar, CalendarDay calendarDay, List<User> users, int shiftType, int priority, int shiftCountCap, int minimalGap, Map<Integer, PreviousMonthShiftRecord> previousMonthCalendar, CalculationCounters counters) {
 
         if (hasAssignment(calendarDay, shiftType)) {
             return false;
@@ -200,19 +149,8 @@ public class ScheduleCalculationService {
 
             boolean cap = shiftCountCapChecker(shiftCountCap, user, counters);
             boolean weekendCap = weekendCapChecker(user, shiftType, counters);
-            boolean crossCheck = crossValidator(
-                    calendarDay.getDate(),
-                    minimalGap,
-                    user,
-                    calendar,
-                    shiftType
-            );
-            boolean previousMonthCheck = checkPreviousMonth(
-                    previousMonthCalendar,
-                    minimalGap,
-                    calendarDay.getDate(),
-                    user
-            );
+            boolean crossCheck = scheduleValidationService.crossValidator(calendarDay.getDate(), minimalGap, user, calendar, shiftType);
+            boolean previousMonthCheck = scheduleValidationService.checkPreviousMonth(previousMonthCalendar, minimalGap, calendarDay.getDate(), user);
 
             if (cap && !calendarDay.isWeekendOrHoliday() && crossCheck && previousMonthCheck) {
                 incrementShiftCounter(user, shiftType, counters);
@@ -230,17 +168,7 @@ public class ScheduleCalculationService {
         return false;
     }
 
-    private boolean tryAssignNormalShift(
-            ScheduleCalendar calendar,
-            CalendarDay calendarDay,
-            List<User> users,
-            int shiftType,
-            int priority,
-            int shiftCountCap,
-            int minimalGap,
-            Map<Integer, PreviousMonthShiftRecord> previousMonthCalendar,
-            CalculationCounters counters
-    ) {
+    private boolean tryAssignNormalShift(ScheduleCalendar calendar, CalendarDay calendarDay, List<User> users, int shiftType, int priority, int shiftCountCap, int minimalGap, Map<Integer, PreviousMonthShiftRecord> previousMonthCalendar, CalculationCounters counters) {
 
         if (hasAssignment(calendarDay, shiftType)) {
             return false;
@@ -256,14 +184,11 @@ public class ScheduleCalculationService {
 
             ShiftRequest request = user.getShiftRequest();
 
-            boolean dateExplicitlySelected =
-                    containsDay(preference.getDatesYes(), calendarDay.getDate());
+            boolean dateExplicitlySelected = containsDay(preference.getDatesYes(), calendarDay.getDate());
 
-            boolean anyDateSelected =
-                    preference.isAnyDateSelected();
+            boolean anyDateSelected = preference.isAnyDateSelected();
 
-            boolean dateRejected =
-                    containsDay(request.getDatesNo(), calendarDay.getDate());
+            boolean dateRejected = containsDay(request.getDatesNo(), calendarDay.getDate());
 
             if ((!dateExplicitlySelected && !anyDateSelected) || dateRejected) {
                 continue;
@@ -272,19 +197,8 @@ public class ScheduleCalculationService {
             boolean cap = shiftCountCapChecker(shiftCountCap, user, counters);
             boolean userCap = userShiftCountChecker(user, shiftType, counters);
             boolean weekendCap = weekendCapChecker(user, shiftType, counters);
-            boolean crossCheck = crossValidator(
-                    calendarDay.getDate(),
-                    minimalGap,
-                    user,
-                    calendar,
-                    shiftType
-            );
-            boolean previousMonthCheck = checkPreviousMonth(
-                    previousMonthCalendar,
-                    minimalGap,
-                    calendarDay.getDate(),
-                    user
-            );
+            boolean crossCheck = scheduleValidationService.crossValidator(calendarDay.getDate(), minimalGap, user, calendar, shiftType);
+            boolean previousMonthCheck = scheduleValidationService.checkPreviousMonth(previousMonthCalendar, minimalGap, calendarDay.getDate(), user);
 
             if (!calendarDay.isWeekendOrHoliday()) {
                 if (cap && userCap && crossCheck && previousMonthCheck) {
@@ -306,16 +220,7 @@ public class ScheduleCalculationService {
         return false;
     }
 
-    private List<Integer> getShiftTypes() {
-        return IntStream.rangeClosed(1, shiftTypeProperties.count())
-                .boxed()
-                .toList();
-    }
-
-    private List<Integer> resolveShiftCalculationOrder(
-            CalculationProfileForm form,
-            List<Integer> shiftTypes
-    ) {
+    private List<Integer> resolveShiftCalculationOrder(CalculationProfileForm form, List<Integer> shiftTypes) {
 
         List<Integer> forceFillShiftTypes = form.getForceFillShiftTypes() == null
                 ? List.of()
@@ -351,10 +256,7 @@ public class ScheduleCalculationService {
                 .orElse(null);
     }
 
-    private Map<Integer, UsersForShiftType> prepareUsersByShiftType(
-            List<User> users,
-            List<Integer> shiftTypes
-    ) {
+    private Map<Integer, UsersForShiftType> prepareUsersByShiftType(List<User> users, List<Integer> shiftTypes) {
 
         Map<Integer, UsersForShiftType> result = new HashMap<>();
 
@@ -382,9 +284,7 @@ public class ScheduleCalculationService {
                 }
             }
 
-            result.put(
-                    shiftType,
-                    UsersForShiftType.builder()
+            result.put(shiftType, UsersForShiftType.builder()
                             .specificDateUsers(usersForSpecificDates)
                             .anyDateUsers(usersForAnyDate)
                             .build()
@@ -395,11 +295,7 @@ public class ScheduleCalculationService {
     }
 
 
-    private ScheduleCalendar createEmptyScheduleCalendar(
-            CalculationProfileForm form,
-            YearMonth month,
-            List<LocalDate> holidays
-    ) {
+    private ScheduleCalendar createEmptyScheduleCalendar(CalculationProfileForm form, YearMonth month, List<LocalDate> holidays) {
 
         List<CalendarDay> days = IntStream.rangeClosed(1, month.lengthOfMonth())
                 .mapToObj(month::atDay)
@@ -478,50 +374,6 @@ public class ScheduleCalculationService {
         return dates.contains(targetDate);
     }
 
-    private Map<Integer, PreviousMonthShiftRecord> loadPreviousMonthCalendar(
-            LocalDate adminDate,
-            int minimalGap,
-            List<Integer> shiftTypes
-    ) {
-        List<LocalDate> previousMonthDates =
-                createPreviousMonthDatesToCheck(adminDate, minimalGap);
-
-        Map<Integer, PreviousMonthShiftRecord> previousMonthCalendar = new HashMap<>();
-
-        int backwardIndex = 0;
-
-        for (LocalDate previousMonthDate : previousMonthDates) {
-
-            Long dateId = CalendarDateIdUtils.toDateId(previousMonthDate);
-
-            StoredCalendarDay storedCalendarDay =
-                    storedCalendarDayRepository.findById(dateId).orElse(null);
-
-            if (storedCalendarDay != null) {
-
-                PreviousMonthShiftRecord previousMonthShiftRecord =
-                        PreviousMonthShiftRecord.builder()
-                                .backwardIndex(backwardIndex)
-                                .dateStringDB(String.valueOf(dateId))
-                                .dateIdDB(dateId)
-                                .usernameByShiftType(new HashMap<>())
-                                .build();
-
-                for (Integer shiftType : shiftTypes) {
-                    String username = storedCalendarDay.getUsernameForShiftType(shiftType);
-                    previousMonthShiftRecord.setUsernameForShiftType(shiftType, username);
-                }
-
-                previousMonthCalendar.put(backwardIndex, previousMonthShiftRecord);
-            }
-
-            backwardIndex--;
-        }
-
-        return previousMonthCalendar;
-    }
-
-
     private boolean shiftCountCapChecker(Integer shiftCountCap, User user, CalculationCounters counters) {
 
         if (shiftCountCap == null) {
@@ -587,51 +439,6 @@ public class ScheduleCalculationService {
                 && currentWeekendCount < requestedWeekendCount;
     }
 
-
-
-    private CalculationCounters countAssignments(ScheduleCalendar calendar) {
-        CalculationCounters counters = new CalculationCounters();
-
-        if (calendar == null || calendar.getDays() == null) {
-            return counters;
-        }
-
-        for (CalendarDay day : calendar.getDays()) {
-            if (day.getAssignments() == null) {
-                continue;
-            }
-
-            for (ShiftAssignment assignment : day.getAssignments()) {
-                User user = assignment.getUser();
-
-                if (user == null || user.getId() == null) {
-                    continue;
-                }
-
-                int shiftType = assignment.getShiftType();
-
-                if (day.isWeekendOrHoliday()) {
-                    counters.incrementWeekend(user, shiftType);
-                } else {
-                    counters.incrementWeekday(user, shiftType);
-                }
-            }
-        }
-
-        return counters;
-    }
-
-    private static List<LocalDate> createPreviousMonthDatesToCheck(
-            LocalDate adminDate,
-            int minimalGap
-    ) {
-        LocalDate firstDayOfAdminMonth = adminDate.withDayOfMonth(1);
-
-        return IntStream.rangeClosed(1, minimalGap)
-                .mapToObj(firstDayOfAdminMonth::minusDays)
-                .toList();
-    }
-
     private List<LocalDate> getHolidaysCzechRepublic(YearMonth calculationMonth) {
 
         int year = calculationMonth.getYear();
@@ -674,20 +481,14 @@ public class ScheduleCalculationService {
         return calculateGoodFriday(year).plusDays(3);
     }
 
-    private List<User> getUsersInCalculationOrder(
-            UsersForShiftType users,
-            int shiftType,
-            boolean sortByDatesAmount
-    ) {
+    private List<User> getUsersInCalculationOrder(UsersForShiftType users, int shiftType, boolean sortByDatesAmount) {
         if (users == null) {
             return List.of();
         }
 
-        List<User> specificDateUsers =
-                new ArrayList<>(users.specificDateUsers() == null ? List.of() : users.specificDateUsers());
+        List<User> specificDateUsers = new ArrayList<>(users.specificDateUsers() == null ? List.of() : users.specificDateUsers());
 
-        List<User> anyDateUsers =
-                new ArrayList<>(users.anyDateUsers() == null ? List.of() : users.anyDateUsers());
+        List<User> anyDateUsers = new ArrayList<>(users.anyDateUsers() == null ? List.of() : users.anyDateUsers());
 
         if (sortByDatesAmount) {
             specificDateUsers.sort(
@@ -709,504 +510,6 @@ public class ScheduleCalculationService {
         result.addAll(anyDateUsers);
 
         return result;
-    }
-
-    private Map<Integer, Set<UserStat>> returnQuickUserStats(
-            ScheduleCalendar calendar,
-            int shiftCountCap,
-            CalculationCounters counters
-    ) {
-        Map<Integer, Set<UserStat>> userStatMap = new HashMap<>();
-
-        if (calendar == null || calendar.getDays() == null) {
-            return userStatMap;
-        }
-
-        Map<Integer, Set<Long>> alreadyAddedUserIdsByShiftType = new HashMap<>();
-
-        for (CalendarDay day : calendar.getDays()) {
-
-            if (day.getAssignments() == null) {
-                continue;
-            }
-
-            for (ShiftAssignment assignment : day.getAssignments()) {
-
-                User user = assignment.getUser();
-
-                if (user == null || user.getId() == null) {
-                    continue;
-                }
-
-                int shiftType = assignment.getShiftType();
-
-                ShiftPreference preference = getPreference(user, shiftType);
-
-                if (preference == null) {
-                    continue;
-                }
-
-                int totalAssignedForUser = counters.getTotalCount(user);
-
-                if (totalAssignedForUser >= shiftCountCap) {
-                    continue;
-                }
-
-                int calculatedWeekdays =
-                        counters.getWeekdayCount(user, shiftType);
-
-                int calculatedWeekends =
-                        counters.getWeekendCount(user, shiftType);
-
-                int remainingWeekdays =
-                        preference.getWeekdayCount() - calculatedWeekdays;
-
-                int remainingWeekends =
-                        preference.getWeekendCount() - calculatedWeekends;
-
-                if (remainingWeekdays <= 0 && remainingWeekends <= 0) {
-                    continue;
-                }
-
-                boolean alreadyAdded =
-                        alreadyAddedUserIdsByShiftType
-                                .computeIfAbsent(shiftType, key -> new HashSet<>())
-                                .contains(user.getId());
-
-                if (alreadyAdded) {
-                    continue;
-                }
-
-                UserStat userStat = UserStat.builder()
-                        .user(user)
-                        .name(user.getName())
-                        .shiftType(shiftType)
-                        .requestedWeekdays(preference.getWeekdayCount())
-                        .requestedWeekends(preference.getWeekendCount())
-                        .calculatedWeekdays(calculatedWeekdays)
-                        .calculatedWeekends(calculatedWeekends)
-                        .remainingWeekdays(Math.max(remainingWeekdays, 0))
-                        .remainingWeekends(Math.max(remainingWeekends, 0))
-                        .anyDateSelected(preference.isAnyDateSelected())
-                        .requestedDateDays(toDayOfMonthSet(preference.getDatesYes()))
-                        .assignedWeekdays(calculatedWeekdays)
-                        .assignedWeekends(calculatedWeekends)
-                        .assignedTotal(calculatedWeekdays + calculatedWeekends)
-                        .month(calendar.getMonth())
-                        .build();
-
-                userStatMap
-                        .computeIfAbsent(shiftType, key -> new HashSet<>())
-                        .add(userStat);
-
-                alreadyAddedUserIdsByShiftType
-                        .get(shiftType)
-                        .add(user.getId());
-            }
-        }
-
-        return userStatMap;
-    }
-
-    private Set<Integer> toDayOfMonthSet(List<LocalDate> dates) {
-        if (dates == null) {
-            return Set.of();
-        }
-
-        return dates.stream()
-                .map(LocalDate::getDayOfMonth)
-                .collect(Collectors.toCollection(TreeSet::new));
-    }
-
-    private Map<Integer, Set<UserStat>> returnNoShiftAssignedUserStatMap(
-            ScheduleCalendar calendar,
-            CalculationCounters counters
-    ) {
-        Map<Integer, Set<UserStat>> result = new HashMap<>();
-
-        if (calendar == null || calendar.getMonth() == null) {
-            return result;
-        }
-
-        List<User> usersWithRequest = findUsersWithRequest();
-        List<Integer> shiftTypes = getShiftTypes();
-
-        Map<Integer, Set<Long>> assignedUserIdsByShiftType =
-                collectAssignedUserIdsByShiftType(calendar);
-
-        for (Integer shiftType : shiftTypes) {
-
-            Set<UserStat> statsForShiftType = new HashSet<>();
-            Set<Long> assignedUserIds =
-                    assignedUserIdsByShiftType.getOrDefault(shiftType, Set.of());
-
-            for (User user : usersWithRequest) {
-
-                if (user.getId() == null) {
-                    continue;
-                }
-
-                if (!user.getAllowedShiftTypes().contains(shiftType)) {
-                    continue;
-                }
-
-                ShiftPreference preference = getPreference(user, shiftType);
-
-                if (preference == null || preference.isNoShiftRequested()) {
-                    continue;
-                }
-
-                boolean assignedForThisShiftType =
-                        assignedUserIds.contains(user.getId());
-
-                if (assignedForThisShiftType) {
-                    continue;
-                }
-
-                boolean notAssignedAnywhere =
-                        counters.getTotalCount(user) == 0;
-
-                if (!notAssignedAnywhere) {
-                    continue;
-                }
-
-                UserStat stat = UserStat.builder()
-                        .user(user)
-                        .name(user.getName())
-                        .shiftType(shiftType)
-                        .requestedWeekdays(preference.getWeekdayCount())
-                        .requestedWeekends(preference.getWeekendCount())
-                        .anyDateSelected(preference.isAnyDateSelected())
-                        .requestedDateDays(toDayOfMonthSet(preference.getDatesYes()))
-                        .assignedWeekdays(0)
-                        .assignedWeekends(0)
-                        .assignedTotal(0)
-                        .month(calendar.getMonth())
-                        .build();
-
-                statsForShiftType.add(stat);
-            }
-
-            result.put(shiftType, statsForShiftType);
-        }
-
-        return result;
-    }
-
-    private Map<Integer, Set<Long>> collectAssignedUserIdsByShiftType(
-            ScheduleCalendar calendar
-    ) {
-        Map<Integer, Set<Long>> result = new HashMap<>();
-
-        if (calendar == null || calendar.getDays() == null) {
-            return result;
-        }
-
-        for (CalendarDay day : calendar.getDays()) {
-
-            if (day.getAssignments() == null) {
-                continue;
-            }
-
-            for (ShiftAssignment assignment : day.getAssignments()) {
-
-                User user = assignment.getUser();
-
-                if (user == null || user.getId() == null) {
-                    continue;
-                }
-
-                result.computeIfAbsent(
-                        assignment.getShiftType(),
-                        key -> new HashSet<>()
-                ).add(user.getId());
-            }
-        }
-
-        return result;
-    }
-
-    private Map<Integer, Set<UserStat>> returnFullUserStats(
-            ScheduleCalendar calendar,
-            CalculationCounters counters
-    ) {
-        Map<Integer, Map<Long, UserStatBuilderData>> statsByShiftTypeAndUser =
-                new HashMap<>();
-
-        if (calendar == null || calendar.getDays() == null) {
-            return Map.of();
-        }
-
-        for (CalendarDay day : calendar.getDays()) {
-
-            if (day.getAssignments() == null) {
-                continue;
-            }
-
-            int dayOfMonth = day.getDate().getDayOfMonth();
-
-            for (ShiftAssignment assignment : day.getAssignments()) {
-
-                User user = assignment.getUser();
-
-                if (user == null || user.getId() == null) {
-                    continue;
-                }
-
-                int shiftType = assignment.getShiftType();
-
-                ShiftPreference preference = getPreference(user, shiftType);
-
-                int requestedWeekdays = preference == null ? 0 : preference.getWeekdayCount();
-                int requestedWeekends = preference == null ? 0 : preference.getWeekendCount();
-                boolean anyDateSelected = preference == null || preference.isAnyDateSelected();
-
-                int assignedWeekdays = counters.getWeekdayCount(user, shiftType);
-                int assignedWeekends = counters.getWeekendCount(user, shiftType);
-
-                UserStatBuilderData builderData =
-                        statsByShiftTypeAndUser
-                                .computeIfAbsent(shiftType, key -> new HashMap<>())
-                                .computeIfAbsent(user.getId(), key ->
-                                        UserStatBuilderData.builder()
-                                                .user(user)
-                                                .name(user.getName())
-                                                .shiftType(shiftType)
-                                                .requestedWeekdays(requestedWeekdays)
-                                                .requestedWeekends(requestedWeekends)
-                                                .calculatedWeekdays(assignedWeekdays)
-                                                .calculatedWeekends(assignedWeekends)
-                                                .assignedWeekdays(assignedWeekdays)
-                                                .assignedWeekends(assignedWeekends)
-                                                .assignedTotal(assignedWeekdays + assignedWeekends)
-                                                .remainingWeekdays(Math.max(requestedWeekdays - assignedWeekdays, 0))
-                                                .remainingWeekends(Math.max(requestedWeekends - assignedWeekends, 0))
-                                                .anyDateSelected(anyDateSelected)
-                                                .requestedDateDays(preference == null
-                                                        ? Set.of()
-                                                        : toDayOfMonthSet(preference.getDatesYes()))
-                                                .assignedDateDays(new TreeSet<>())
-                                                .month(calendar.getMonth())
-                                                .build()
-                                );
-
-                builderData.assignedDateDays().add(dayOfMonth);
-            }
-        }
-
-        Map<Integer, Set<UserStat>> result = new HashMap<>();
-
-        for (Map.Entry<Integer, Map<Long, UserStatBuilderData>> shiftTypeEntry
-                : statsByShiftTypeAndUser.entrySet()) {
-
-            Integer shiftType = shiftTypeEntry.getKey();
-
-            Set<UserStat> statsForShiftType =
-                    shiftTypeEntry.getValue()
-                            .values()
-                            .stream()
-                            .map(UserStatBuilderData::toUserStat)
-                            .collect(Collectors.toCollection(HashSet::new));
-
-            result.put(shiftType, statsForShiftType);
-        }
-
-        result = addAllShiftsUserStat(result);
-
-        return result;
-    }
-
-    private Map<Integer, Set<UserStat>> addAllShiftsUserStat(
-            Map<Integer, Set<UserStat>> fullUserStatMap
-    ) {
-        Map<String, Integer> totalAssignedByUserName = new HashMap<>();
-
-        for (Set<UserStat> stats : fullUserStatMap.values()) {
-            for (UserStat stat : stats) {
-                totalAssignedByUserName.merge(
-                        stat.name(),
-                        stat.assignedTotal(),
-                        Integer::sum
-                );
-            }
-        }
-
-        Map<Integer, Set<UserStat>> result = new HashMap<>();
-
-        for (Map.Entry<Integer, Set<UserStat>> entry : fullUserStatMap.entrySet()) {
-
-            Integer shiftType = entry.getKey();
-
-            Set<UserStat> updatedStats = entry.getValue()
-                    .stream()
-                    .map(stat -> stat.withAssignedTotalAllShiftTypes(
-                            totalAssignedByUserName.getOrDefault(stat.name(), 0)
-                    ))
-                    .collect(Collectors.toCollection(HashSet::new));
-
-            result.put(shiftType, updatedStats);
-        }
-
-        return result;
-    }
-
-    @Builder
-    private record UserStatBuilderData(
-            User user,
-            String name,
-            int shiftType,
-            int requestedWeekdays,
-            int requestedWeekends,
-            int calculatedWeekdays,
-            int calculatedWeekends,
-            int remainingWeekdays,
-            int remainingWeekends,
-            boolean anyDateSelected,
-            Set<Integer> requestedDateDays,
-            int assignedWeekdays,
-            int assignedWeekends,
-            int assignedTotal,
-            Set<Integer> assignedDateDays,
-            YearMonth month
-    ) {
-        UserStat toUserStat() {
-            return UserStat.builder()
-                    .user(user)
-                    .name(name)
-                    .shiftType(shiftType)
-                    .requestedWeekdays(requestedWeekdays)
-                    .requestedWeekends(requestedWeekends)
-                    .calculatedWeekdays(calculatedWeekdays)
-                    .calculatedWeekends(calculatedWeekends)
-                    .remainingWeekdays(remainingWeekdays)
-                    .remainingWeekends(remainingWeekends)
-                    .anyDateSelected(anyDateSelected)
-                    .requestedDateDays(requestedDateDays)
-                    .assignedWeekdays(assignedWeekdays)
-                    .assignedWeekends(assignedWeekends)
-                    .assignedTotal(assignedTotal)
-                    .assignedDateDays(assignedDateDays)
-                    .month(month)
-                    .build();
-        }
-    }
-
-    private String returnScheduleScoreAsString(
-            ScheduleCalendar calendar,
-            int shiftTypeCount
-    ) {
-        if (calendar == null || calendar.getDays() == null) {
-            return "0/0";
-        }
-
-        int assignedCount = 0;
-
-        for (CalendarDay day : calendar.getDays()) {
-            if (day.getAssignments() == null) {
-                continue;
-            }
-
-            for (ShiftAssignment assignment : day.getAssignments()) {
-                User user = assignment.getUser();
-
-                if (user != null && user.getId() != null) {
-                    assignedCount++;
-                }
-            }
-        }
-
-        if (calendar.getMonth() == null) {
-            return assignedCount + "/0";
-        }
-
-        int maxScore = calendar.getMonth().lengthOfMonth() * shiftTypeCount;
-
-        return assignedCount + "/" + maxScore;
-    }
-
-    private boolean crossValidator(
-            LocalDate date,
-            int minimalGap,
-            User user,
-            ScheduleCalendar calendar,
-            int currentShiftType
-    ) {
-        if (date == null || user == null || user.getId() == null || calendar == null) {
-            return true;
-        }
-
-        LocalDate startDate = date.minusDays(minimalGap);
-        LocalDate endDate = date.plusDays(minimalGap);
-
-        for (CalendarDay day : calendar.getDays()) {
-
-            if (day == null || day.getDate() == null || day.getAssignments() == null) {
-                continue;
-            }
-
-            LocalDate checkedDate = day.getDate();
-
-            if (checkedDate.isBefore(startDate) || checkedDate.isAfter(endDate)) {
-                continue;
-            }
-
-            for (ShiftAssignment assignment : day.getAssignments()) {
-
-                if (assignment == null || assignment.getUser() == null) {
-                    continue;
-                }
-
-                boolean sameSlot =
-                        checkedDate.equals(date)
-                                && assignment.getShiftType() == currentShiftType;
-
-                if (sameSlot) {
-                    continue;
-                }
-
-                User assignedUser = assignment.getUser();
-
-                if (Objects.equals(assignedUser.getId(), user.getId())) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    private boolean checkPreviousMonth(
-            Map<Integer, PreviousMonthShiftRecord> previousMonthCalendar,
-            Integer minimalGap,
-            LocalDate date,
-            User user
-    ) {
-        if (previousMonthCalendar == null
-                || minimalGap == null
-                || date == null
-                || user == null
-                || user.getUsername() == null) {
-            return true;
-        }
-
-        int dayOfMonth = date.getDayOfMonth();
-
-        if (dayOfMonth - minimalGap > 0) {
-            return true;
-        }
-
-        for (int backwardIndex = 0; backwardIndex > -minimalGap; backwardIndex--) {
-
-            PreviousMonthShiftRecord previousMonthDay =
-                    previousMonthCalendar.get(backwardIndex);
-
-            if (previousMonthDay != null
-                    && previousMonthDay.containsUsername(user.getUsername())) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     public Set<String> returnUsersWithNoRequest() {

@@ -6,6 +6,7 @@ import com.richardbrenkus.shiftschedulermodernized.algorithm.ShiftAssignment;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.*;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
+import com.richardbrenkus.shiftschedulermodernized.service.ShiftTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ import java.util.Objects;
 public class ScheduleMapper {
 
     private final UserRepository userRepository;
+    private final ShiftTypeService shiftTypeService;
 
     public ScheduleEditForm toEditForm(
             ScheduleCalendar calendar,
@@ -41,26 +43,37 @@ public class ScheduleMapper {
                 .overrideConflictingDates(calendar.isOverrideConflictingDates())
                 .overrideHasShiftRequest(calendar.isOverrideHasShiftRequest())
                 .overridePreviousMonthValid(calendar.isOverridePreviousMonthValid())
+                .days(new ArrayList<>())
                 .build();
 
-        List<ScheduleDayForm> days = calendar.getDays()
-                .stream()
-                .map(day -> ScheduleDayForm.builder()
-                        .date(day.getDate())
-                        .weekendOrHoliday(day.isWeekendOrHoliday())
-                        .assignments(day.getAssignments()
-                                .stream()
-                                .map(assignment -> ShiftAssignmentForm.builder()
-                                        .shiftType(assignment.getShiftType())
-                                        .userId(assignment.getUser() == null ? null : assignment.getUser().getId())
-                                        .name(assignment.getUser() == null ? "" : assignment.getUser().getName())
-                                        .title(assignment.getUser() == null ? "" : assignment.getUser().getTitle())
-                                        .build())
-                                .toList())
-                        .build())
-                .toList();
+        for (CalendarDay calendarDay : calendar.getDays()) {
+            ScheduleDayForm dayForm = ScheduleDayForm.builder()
+                    .date(calendarDay.getDate())
+                    .weekendOrHoliday(calendarDay.isWeekendOrHoliday())
+                    .assignments(new ArrayList<>())
+                    .build();
 
-        form.setDays(new ArrayList<>(days));
+            for (Integer shiftType : shiftTypeService.getShiftTypes()) {
+                ShiftAssignment existingAssignment = calendarDay.getAssignments()
+                        .stream()
+                        .filter(assignment -> assignment.getShiftType() == shiftType)
+                        .findFirst()
+                        .orElse(null);
+
+                User assignedUser = existingAssignment == null ? null : existingAssignment.getUser();
+
+                dayForm.getAssignments().add(
+                        ShiftAssignmentForm.builder()
+                                .shiftType(shiftType)
+                                .userId(assignedUser == null ? null : assignedUser.getId())
+                                .name(assignedUser == null ? "" : assignedUser.getName())
+                                .title(assignedUser == null ? "" : assignedUser.getTitle())
+                                .build()
+                );
+            }
+
+            form.getDays().add(dayForm);
+        }
 
         return form;
     }

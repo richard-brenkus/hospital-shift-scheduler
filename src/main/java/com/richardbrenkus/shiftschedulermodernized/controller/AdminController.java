@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.YearMonth;
 import java.util.*;
-import java.util.stream.IntStream;
 
 @Controller
 @RequiredArgsConstructor
@@ -350,10 +349,10 @@ public class AdminController {
         ScheduleEditForm scheduleEditForm =
                 scheduleMapper.toEditForm(bestCalendar, calculationProfileForm);
 
-        ScheduleValidationResult scheduleValidationResult =
+        ScheduleValidationResult validationResult =
                 scheduleValidationService.generateUserStats(bestCalendar);
 
-        addScheduleTableAttributes(model, scheduleEditForm, scheduleValidationResult);
+        addScheduleTableAttributes(model, scheduleEditForm, validationResult);
 
         return "admin/schedule_table";
     }
@@ -381,34 +380,17 @@ public class AdminController {
             ScheduleEditForm scheduleEditForm,
             ScheduleValidationResult validationResult
     ) {
-        List<Integer> shiftTypes = IntStream.rangeClosed(1, shiftTypeService.getShiftTypes().getLast())
-                .boxed()
-                .toList();
-
-        Set<String> usersWithNoRequest =
-                scheduleCalculationService.returnUsersWithNoRequest();
+        Set<String> usersWithNoRequest = scheduleCalculationService.returnUsersWithNoRequest();
 
         model.addAttribute("scheduleEditForm", scheduleEditForm);
         model.addAttribute("scheduleValidationResult", validationResult);
-
-        model.addAttribute("shiftTypes", shiftTypes);
+        model.addAttribute("shiftTypes", shiftTypeService.getShiftTypes());
         model.addAttribute("users", userService.findAllUsersForSelectionByNameAsc());
 
         model.addAttribute("usersWithNoRequest", usersWithNoRequest);
         model.addAttribute("usersWithNoRequestString", String.join(", ", usersWithNoRequest));
-
-        /*
-         * Legacy aliases.
-         */
-        model.addAttribute("shiftCountCap", scheduleEditForm.getShiftCountCap());
-        model.addAttribute("minimalGap", scheduleEditForm.getGapBetweenShifts());
-        model.addAttribute("forceFillSelected",
-                scheduleEditForm.isSortByDatesAmount()
-                        || !scheduleEditForm.getForceFillShiftTypes().isEmpty());
-        model.addAttribute("forceFillShiftTypes", scheduleEditForm.getForceFillShiftTypes());
-
-
     }
+
 
 
 }
