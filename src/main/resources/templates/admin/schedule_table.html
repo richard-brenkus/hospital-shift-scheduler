@@ -271,67 +271,75 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:if="${scheduleValidationResult != null && scheduleValidationResult.errorsExist && !scheduleValidationResult.userNonexistent}">
+            <tr th:if="${scheduleValidationResult != null
+                        && !scheduleValidationResult.userNonexistent
+                        && (scheduleValidationResult.errorsExist
+                            || scheduleEditForm.overrideShiftCountCap
+                            || scheduleEditForm.overrideHasShiftRequest
+                            || scheduleEditForm.overridePreviousMonthValid
+                            || scheduleEditForm.overrideUserShiftRequestAll
+                            || scheduleEditForm.overrideUserShiftRequestExceptNoDates
+                            || scheduleEditForm.overrideConflictingDates)}">
                 <td th:colspan="${#lists.size(shiftTypes) + 1}" class="centered">
                     <p><b data-th-text="#{scheduleTable.overrideValid}">Override validation:</b></p>
 
                     <label for="overrideShiftCountCap"
-                           th:if="${scheduleValidationResult.userShiftCap}"
+                           th:if="${scheduleValidationResult.userShiftCap || scheduleEditForm.overrideShiftCountCap}"
                            data-th-text="#{scheduleTable.override.adminShiftLimit}">
                         admin shift limit
                     </label>
                     <input id="overrideShiftCountCap"
-                           th:if="${scheduleValidationResult.userShiftCap}"
+                           th:if="${scheduleValidationResult.userShiftCap || scheduleEditForm.overrideShiftCountCap}"
                            type="checkbox"
                            th:field="*{overrideShiftCountCap}"/>
 
                     <label for="overrideHasShiftRequest"
-                           th:if="${scheduleValidationResult.userNoRequest}"
+                           th:if="${scheduleValidationResult.userNoRequest || scheduleEditForm.overrideHasShiftRequest}"
                            data-th-text="#{scheduleTable.override.noRequest}">
                         no shiftRequest
                     </label>
                     <input id="overrideHasShiftRequest"
-                           th:if="${scheduleValidationResult.userNoRequest}"
+                           th:if="${scheduleValidationResult.userNoRequest || scheduleEditForm.overrideHasShiftRequest}"
                            type="checkbox"
                            th:field="*{overrideHasShiftRequest}"/>
 
                     <label for="overridePreviousMonthValid"
-                           th:if="${scheduleValidationResult.previousMonthCheckFailed}"
+                           th:if="${scheduleValidationResult.previousMonthCheckFailed || scheduleEditForm.overridePreviousMonthValid}"
                            data-th-text="#{scheduleTable.override.previousMonth}">
                         previous month
                     </label>
                     <input id="overridePreviousMonthValid"
-                           th:if="${scheduleValidationResult.previousMonthCheckFailed}"
+                           th:if="${scheduleValidationResult.previousMonthCheckFailed || scheduleEditForm.overridePreviousMonthValid}"
                            type="checkbox"
                            th:field="*{overridePreviousMonthValid}"/>
 
                     <label for="overrideUserShiftRequestAll"
-                           th:if="${scheduleValidationResult.userDatesNo}"
+                           th:if="${scheduleValidationResult.userDatesNo || scheduleEditForm.overrideUserShiftRequestAll}"
                            data-th-text="#{scheduleTable.override.requestAll}">
                         user shiftRequest all
                     </label>
                     <input id="overrideUserShiftRequestAll"
-                           th:if="${scheduleValidationResult.userDatesNo}"
+                           th:if="${scheduleValidationResult.userDatesNo || scheduleEditForm.overrideUserShiftRequestAll}"
                            type="checkbox"
                            th:field="*{overrideUserShiftRequestAll}"/>
 
                     <label for="overrideUserShiftRequestExceptNoDates"
-                           th:if="${scheduleValidationResult.userWeekendCap || scheduleValidationResult.userIndividualShiftCap}"
+                           th:if="${scheduleValidationResult.userWeekendCap || scheduleValidationResult.userIndividualShiftCap || scheduleEditForm.overrideUserShiftRequestExceptNoDates}"
                            data-th-text="#{scheduleTable.override.weekdaysWeekendsLimit}">
                         user weekdays and weekends limit
                     </label>
                     <input id="overrideUserShiftRequestExceptNoDates"
-                           th:if="${scheduleValidationResult.userWeekendCap || scheduleValidationResult.userIndividualShiftCap}"
+                           th:if="${scheduleValidationResult.userWeekendCap || scheduleValidationResult.userIndividualShiftCap || scheduleEditForm.overrideUserShiftRequestExceptNoDates}"
                            type="checkbox"
                            th:field="*{overrideUserShiftRequestExceptNoDates}"/>
 
                     <label for="overrideConflictingDates"
-                           th:if="${scheduleValidationResult.userCrossCheck}"
+                           th:if="${scheduleValidationResult.userCrossCheck || scheduleEditForm.overrideConflictingDates}"
                            data-th-text="#{scheduleTable.override.conflictingDates}">
                         conflicting dates
                     </label>
                     <input id="overrideConflictingDates"
-                           th:if="${scheduleValidationResult.userCrossCheck}"
+                           th:if="${scheduleValidationResult.userCrossCheck || scheduleEditForm.overrideConflictingDates}"
                            type="checkbox"
                            th:field="*{overrideConflictingDates}"/>
                 </td>
