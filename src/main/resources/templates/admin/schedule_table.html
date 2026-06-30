@@ -43,13 +43,13 @@
         </span>
     </div>
 
-    <div th:if="${scheduleValidationResult != null && !#sets.isEmpty(scheduleValidationResult.usersWithNoRequest)}">
+    <div th:if="${!#sets.isEmpty(usersWithNoRequest)}">
         <br>
         <table class="table-no-lines table-full">
             <tr>
                 <td class="td-no-lines left-aligned electric-blue">
-                    <span data-th-text="#{scheduleTable.usersNoRequest}">Users without shift request:</span>
-                    <span th:text="${scheduleValidationResult.usersWithNoRequestString}"></span>
+                    <span data-th-text="#{scheduleTable.usersNoRequest}">Users without a submitted shift request:</span>
+                    <span th:text="${usersWithNoRequestString}"></span>
                 </td>
             </tr>
         </table>

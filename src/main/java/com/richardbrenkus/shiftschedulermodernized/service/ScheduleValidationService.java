@@ -73,9 +73,9 @@ public class ScheduleValidationService {
         ScheduleValidationResult result = validateSchedule(editedCalendar);
         generateUserStats(editedCalendar, result);
 
-        Set<String> usersWithNoRequest = returnUsersWithNoRequest();
+        /*Set<String> usersWithNoRequest = returnUsersWithNoRequest();
         result.setUsersWithNoRequest(usersWithNoRequest);
-        result.setUsersWithNoRequestString(String.join(", ", usersWithNoRequest));
+        result.setUsersWithNoRequestString(String.join(", ", usersWithNoRequest));*/
 
         if (saveSchedule && !result.isErrorsExist()) {
             storedScheduleService.saveSchedule(editedCalendar);
@@ -483,7 +483,7 @@ public class ScheduleValidationService {
                 .toList();
     }
 
-    private Set<String> returnUsersWithNoRequest() {
+    public Set<String> returnUsersWithNoRequest() {
         return StreamSupport.stream(userRepository.findAll().spliterator(), false)
                 .filter(user -> !user.hasShiftRequest())
                 .map(User::getName)

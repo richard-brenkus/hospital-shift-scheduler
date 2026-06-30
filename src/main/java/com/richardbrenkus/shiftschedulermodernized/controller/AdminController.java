@@ -343,14 +343,11 @@ public class AdminController {
             Model model,
             @ModelAttribute("calculationProfileForm") CalculationProfileForm calculationProfileForm
     ) {
-        ScheduleCalendar bestCalendar =
-                scheduleCalculationService.calculateSchedule(calculationProfileForm);
+        ScheduleCalendar bestCalendar = scheduleCalculationService.calculateSchedule(calculationProfileForm);
 
-        ScheduleEditForm scheduleEditForm =
-                scheduleMapper.toEditForm(bestCalendar, calculationProfileForm);
+        ScheduleEditForm scheduleEditForm = scheduleMapper.toEditForm(bestCalendar, calculationProfileForm);
 
-        ScheduleValidationResult validationResult =
-                scheduleValidationService.generateUserStats(bestCalendar);
+        ScheduleValidationResult validationResult = scheduleValidationService.generateUserStats(bestCalendar);
 
         addScheduleTableAttributes(model, scheduleEditForm, validationResult);
 
@@ -375,12 +372,8 @@ public class AdminController {
         return "admin/schedule_table";
     }
 
-    private void addScheduleTableAttributes(
-            Model model,
-            ScheduleEditForm scheduleEditForm,
-            ScheduleValidationResult validationResult
-    ) {
-        Set<String> usersWithNoRequest = scheduleCalculationService.returnUsersWithNoRequest();
+    private void addScheduleTableAttributes(Model model, ScheduleEditForm scheduleEditForm, ScheduleValidationResult validationResult) {
+        Set<String> usersWithNoRequest = scheduleValidationService.returnUsersWithNoRequest();
 
         model.addAttribute("scheduleEditForm", scheduleEditForm);
         model.addAttribute("scheduleValidationResult", validationResult);

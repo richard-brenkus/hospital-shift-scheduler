@@ -35,9 +35,6 @@ public class ScheduleValidationResult {
     private Set<String> nonExistentUsers = new TreeSet<>();
 
     @Builder.Default
-    private Set<String> usersWithNoRequest = new TreeSet<>();
-
-    @Builder.Default
     private Map<Integer, Set<Integer>> redFieldsByShiftType = new HashMap<>();
 
     @Builder.Default

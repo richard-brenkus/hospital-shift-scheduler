@@ -512,25 +512,6 @@ public class ScheduleCalculationService {
         return result;
     }
 
-    public Set<String> returnUsersWithNoRequest() {
-
-        return StreamSupport.stream(userRepository.findAll().spliterator(), false)
-                .filter(user -> !user.hasShiftRequest())
-                .map(User::getName)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(TreeSet::new));
-    }
-
-
-
-
-
-
-
-
-
-
-
 
 
 
