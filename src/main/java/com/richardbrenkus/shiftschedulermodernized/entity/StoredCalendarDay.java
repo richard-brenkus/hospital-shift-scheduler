@@ -42,11 +42,6 @@ public class StoredCalendarDay {
         return assignment == null ? "" : assignment.getUsername();
     }
 
-    public String getTitleForShiftType(int shiftType) {
-        StoredUserSnapshot assignment = assignmentsByShiftType.get(shiftType);
-        return assignment == null ? "" : assignment.getTitle();
-    }
-
     public void putAssignment(int shiftType, long userId, String username, String name, String title) {
         assignmentsByShiftType.put(
                 shiftType,

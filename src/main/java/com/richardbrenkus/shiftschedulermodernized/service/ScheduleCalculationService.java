@@ -5,7 +5,6 @@ import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileFo
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftPreference;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
-import com.richardbrenkus.shiftschedulermodernized.repository.StoredCalendarDayRepository;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,9 +24,8 @@ public class ScheduleCalculationService {
     private static final int NUMBER_OF_ATTEMPTS = 100;
 
     private final UserRepository userRepository;
-    private final StoredCalendarDayRepository storedCalendarDayRepository;
     private final ShiftTypeService shiftTypeService;
-    private final ScheduleValidationService scheduleValidationService;
+    private final ScheduleRuleService scheduleRuleService;
 
     @Transactional(readOnly = true)
     public ScheduleCalendar calculateSchedule(CalculationProfileForm form) {
@@ -50,7 +48,7 @@ public class ScheduleCalculationService {
         LocalDate firstDayOfMonth = calculationMonth.atDay(1);
         List<LocalDate> holidaysCzech = getHolidaysCzechRepublic(form.getCalculationMonth());
 
-        Map<Integer, PreviousMonthShiftRecord> previousMonthCalendar = scheduleValidationService.loadPreviousMonthCalendar(firstDayOfMonth, minimalGap, shiftTypes);
+        Map<Integer, PreviousMonthShiftRecord> previousMonthCalendar = scheduleRuleService.loadPreviousMonthCalendar(firstDayOfMonth, minimalGap, shiftTypes);
 
         List<ScheduleCalendar> candidateCalendars = new ArrayList<>();
 
@@ -147,18 +145,18 @@ public class ScheduleCalculationService {
                 continue;
             }
 
-            boolean cap = shiftCountCapChecker(shiftCountCap, user, counters);
-            boolean weekendCap = weekendCapChecker(user, shiftType, counters);
-            boolean crossCheck = scheduleValidationService.crossValidator(calendarDay.getDate(), minimalGap, user, calendar, shiftType);
-            boolean previousMonthCheck = scheduleValidationService.checkPreviousMonth(previousMonthCalendar, minimalGap, calendarDay.getDate(), user);
+            boolean withinTotalShiftLimit = scheduleRuleService.isWithinTotalShiftLimit(shiftCountCap, user, counters);
+            boolean withinRequestedWeekendLimit = scheduleRuleService.isWithinRequestedWeekendLimit(user, shiftType, counters);
+            boolean respectsMinimalGap = scheduleRuleService.respectsMinimalGap(calendarDay.getDate(), minimalGap, user, calendar, shiftType);
+            boolean respectsPreviousMonthGap = scheduleRuleService.respectsPreviousMonthGap(previousMonthCalendar, minimalGap, calendarDay.getDate(), user);
 
-            if (cap && !calendarDay.isWeekendOrHoliday() && crossCheck && previousMonthCheck) {
+            if (withinTotalShiftLimit && !calendarDay.isWeekendOrHoliday() && respectsMinimalGap && respectsPreviousMonthGap) {
                 incrementShiftCounter(user, shiftType, counters);
                 addAssignment(calendarDay, shiftType, user);
                 return true;
             }
 
-            if (cap && weekendCap && calendarDay.isWeekendOrHoliday() && crossCheck && previousMonthCheck) {
+            if (withinTotalShiftLimit && withinRequestedWeekendLimit && calendarDay.isWeekendOrHoliday() && respectsMinimalGap && respectsPreviousMonthGap) {
                 incrementWeekendCounter(user, shiftType, counters);
                 addAssignment(calendarDay, shiftType, user);
                 return true;
@@ -194,14 +192,14 @@ public class ScheduleCalculationService {
                 continue;
             }
 
-            boolean cap = shiftCountCapChecker(shiftCountCap, user, counters);
-            boolean userCap = userShiftCountChecker(user, shiftType, counters);
-            boolean weekendCap = weekendCapChecker(user, shiftType, counters);
-            boolean crossCheck = scheduleValidationService.crossValidator(calendarDay.getDate(), minimalGap, user, calendar, shiftType);
-            boolean previousMonthCheck = scheduleValidationService.checkPreviousMonth(previousMonthCalendar, minimalGap, calendarDay.getDate(), user);
+            boolean withinTotalShiftLimit = scheduleRuleService.isWithinTotalShiftLimit(shiftCountCap, user, counters);
+            boolean withinRequestedWeekdayLimit = scheduleRuleService.isWithinRequestedWeekdayLimit(user, shiftType, counters);
+            boolean withinRequestedWeekendLimit = scheduleRuleService.isWithinRequestedWeekendLimit(user, shiftType, counters);
+            boolean respectsMinimalGap = scheduleRuleService.respectsMinimalGap(calendarDay.getDate(), minimalGap, user, calendar, shiftType);
+            boolean respectsPreviousMonthGap = scheduleRuleService.respectsPreviousMonthGap(previousMonthCalendar, minimalGap, calendarDay.getDate(), user);
 
             if (!calendarDay.isWeekendOrHoliday()) {
-                if (cap && userCap && crossCheck && previousMonthCheck) {
+                if (withinTotalShiftLimit && withinRequestedWeekdayLimit && respectsMinimalGap && respectsPreviousMonthGap) {
                     incrementShiftCounter(user, shiftType, counters);
                     addAssignment(calendarDay, shiftType, user);
                     return true;
@@ -209,7 +207,7 @@ public class ScheduleCalculationService {
             }
 
             if (calendarDay.isWeekendOrHoliday()) {
-                if (cap && weekendCap && crossCheck && previousMonthCheck) {
+                if (withinTotalShiftLimit && withinRequestedWeekendLimit && respectsMinimalGap && respectsPreviousMonthGap) {
                     incrementWeekendCounter(user, shiftType, counters);
                     addAssignment(calendarDay, shiftType, user);
                     return true;
@@ -285,9 +283,9 @@ public class ScheduleCalculationService {
             }
 
             result.put(shiftType, UsersForShiftType.builder()
-                            .specificDateUsers(usersForSpecificDates)
-                            .anyDateUsers(usersForAnyDate)
-                            .build()
+                    .specificDateUsers(usersForSpecificDates)
+                    .anyDateUsers(usersForAnyDate)
+                    .build()
             );
         }
 
@@ -354,89 +352,12 @@ public class ScheduleCalculationService {
                 .merge(shiftType, 1, Integer::sum);
     }
 
-    private int getShiftCounter(User user, int shiftType, CalculationCounters counters) {
-        return counters.getWeekdayCounters()
-                .getOrDefault(user.getId(), Map.of())
-                .getOrDefault(shiftType, 0);
-    }
-
-    private int getWeekendCounter(User user, int shiftType, CalculationCounters counters) {
-        return counters.getWeekendCounters()
-                .getOrDefault(user.getId(), Map.of())
-                .getOrDefault(shiftType, 0);
-    }
-
     private boolean containsDay(List<LocalDate> dates, LocalDate targetDate) {
         if (dates == null || targetDate == null) {
             return false;
         }
 
         return dates.contains(targetDate);
-    }
-
-    private boolean shiftCountCapChecker(Integer shiftCountCap, User user, CalculationCounters counters) {
-
-        if (shiftCountCap == null) {
-            return true;
-        }
-
-        int shiftCountTotal = getTotalShiftCount(user, counters);
-
-        if (shiftCountTotal == 0) {
-            return true;
-        }
-
-        return shiftCountTotal < shiftCountCap;
-    }
-
-    private int getTotalShiftCount(User user, CalculationCounters counters) {
-        Map<Integer, Integer> userShiftCounters =
-                counters.getWeekdayCounters().getOrDefault(user.getId(), Map.of());
-
-        Map<Integer, Integer> userWeekendCounters =
-                counters.getWeekendCounters().getOrDefault(user.getId(), Map.of());
-
-        int weekdayTotal = userShiftCounters.values()
-                .stream()
-                .mapToInt(Integer::intValue)
-                .sum();
-
-        int weekendTotal = userWeekendCounters.values()
-                .stream()
-                .mapToInt(Integer::intValue)
-                .sum();
-
-        return weekdayTotal + weekendTotal;
-    }
-
-    private boolean userShiftCountChecker(User user, int shiftType, CalculationCounters counters) {
-
-        ShiftPreference preference = getPreference(user, shiftType);
-
-        if (preference == null) {
-            return false;
-        }
-
-        int requestedWeekdayCount = preference.getWeekdayCount();
-        int currentWeekdayCount = getShiftCounter(user, shiftType, counters);
-
-        return requestedWeekdayCount != 0
-                && currentWeekdayCount < requestedWeekdayCount;
-    }
-
-    private boolean weekendCapChecker(User user, int shiftType, CalculationCounters counters) {
-
-        ShiftPreference preference = getPreference(user, shiftType);
-
-        if (preference == null) {
-            return false;
-        }
-
-        int requestedWeekendCount = preference.getWeekendCount();
-        int currentWeekendCount = getWeekendCounter(user, shiftType, counters);
-
-        return requestedWeekendCount != 0
-                && currentWeekendCount < requestedWeekendCount;
     }
 
     private List<LocalDate> getHolidaysCzechRepublic(YearMonth calculationMonth) {
@@ -511,8 +432,6 @@ public class ScheduleCalculationService {
 
         return result;
     }
-
-
 
 
 }
