@@ -35,22 +35,22 @@ public class StoredCalendarDay {
     )
     @MapKeyColumn(name = "shift_type")
     @Builder.Default
-    private Map<Integer, StoredShiftAssignment> assignmentsByShiftType = new HashMap<>();
+    private Map<Integer, StoredUserSnapshot> assignmentsByShiftType = new HashMap<>();
 
     public String getUsernameForShiftType(int shiftType) {
-        StoredShiftAssignment assignment = assignmentsByShiftType.get(shiftType);
+        StoredUserSnapshot assignment = assignmentsByShiftType.get(shiftType);
         return assignment == null ? "" : assignment.getUsername();
     }
 
     public String getTitleForShiftType(int shiftType) {
-        StoredShiftAssignment assignment = assignmentsByShiftType.get(shiftType);
+        StoredUserSnapshot assignment = assignmentsByShiftType.get(shiftType);
         return assignment == null ? "" : assignment.getTitle();
     }
 
-    public void putAssignment(int shiftType, String username, String title) {
+    public void putAssignment(int shiftType, long userId, String username, String name, String title) {
         assignmentsByShiftType.put(
                 shiftType,
-                new StoredShiftAssignment(username, title)
+                new StoredUserSnapshot(userId, username, name, title)
         );
     }
 }

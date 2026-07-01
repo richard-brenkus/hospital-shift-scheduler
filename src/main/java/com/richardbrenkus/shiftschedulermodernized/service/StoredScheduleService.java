@@ -49,6 +49,8 @@ public class StoredScheduleService {
 
                 storedDay.putAssignment(
                         assignment.getShiftType(),
+                        user.getId(),
+                        user.getUsername(),
                         user.getName(),
                         user.getTitle()
                 );

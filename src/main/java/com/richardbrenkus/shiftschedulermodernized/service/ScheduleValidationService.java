@@ -6,7 +6,7 @@ import com.richardbrenkus.shiftschedulermodernized.algorithm.PreviousMonthShiftR
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleCalendar;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ShiftAssignment;
-import com.richardbrenkus.shiftschedulermodernized.algorithm.UserStat;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.UserStatViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.config.ShiftTypeProperties;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ScheduleEditForm;
@@ -229,11 +229,11 @@ public class ScheduleValidationService {
         CalculationCounters counters = countAssignments(calendar);
         int shiftCountCap = calendar.getCalculationProfile().getShiftCountCap();
 
-        Map<Integer, Set<UserStat>> shortStats = returnQuickUserStats(calendar, shiftCountCap, counters);
+        Map<Integer, Set<UserStatViewRecord>> shortStats = returnQuickUserStats(calendar, shiftCountCap, counters);
 
-        Map<Integer, Set<UserStat>> noShiftAssignedStats = returnNoShiftAssignedUserStatMap(calendar, counters);
+        Map<Integer, Set<UserStatViewRecord>> noShiftAssignedStats = returnNoShiftAssignedUserStatMap(calendar, counters);
 
-        Map<Integer, Set<UserStat>> fullStats = returnFullUserStats(calendar, counters);
+        Map<Integer, Set<UserStatViewRecord>> fullStats = returnFullUserStats(calendar, counters);
 
         result.setShortStatsByShiftType(shortStats);
         result.setShortStatsExist(hasAnyStats(shortStats));
@@ -255,7 +255,7 @@ public class ScheduleValidationService {
         result.markRedField(shiftType, day.getDate().getDayOfMonth());
     }
 
-    private boolean hasAnyStats(Map<Integer, Set<UserStat>> stats) {
+    private boolean hasAnyStats(Map<Integer, Set<UserStatViewRecord>> stats) {
         return stats != null
                 && stats.values().stream()
                 .anyMatch(values -> values != null && !values.isEmpty());
@@ -491,12 +491,12 @@ public class ScheduleValidationService {
                 .collect(Collectors.toCollection(TreeSet::new));
     }
 
-    private Map<Integer, Set<UserStat>> returnQuickUserStats(
+    private Map<Integer, Set<UserStatViewRecord>> returnQuickUserStats(
             ScheduleCalendar calendar,
             int shiftCountCap,
             CalculationCounters counters
     ) {
-        Map<Integer, Set<UserStat>> userStatMap = new HashMap<>();
+        Map<Integer, Set<UserStatViewRecord>> userStatMap = new HashMap<>();
 
         if (calendar == null || calendar.getDays() == null) {
             return userStatMap;
@@ -548,7 +548,7 @@ public class ScheduleValidationService {
                     continue;
                 }
 
-                UserStat userStat = UserStat.builder()
+                UserStatViewRecord userStatViewRecord = UserStatViewRecord.builder()
                         .user(user)
                         .name(user.getName())
                         .shiftType(shiftType)
@@ -568,7 +568,7 @@ public class ScheduleValidationService {
 
                 userStatMap
                         .computeIfAbsent(shiftType, key -> new HashSet<>())
-                        .add(userStat);
+                        .add(userStatViewRecord);
 
                 alreadyAddedUserIdsByShiftType
                         .get(shiftType)
@@ -579,11 +579,11 @@ public class ScheduleValidationService {
         return userStatMap;
     }
 
-    private Map<Integer, Set<UserStat>> returnNoShiftAssignedUserStatMap(
+    private Map<Integer, Set<UserStatViewRecord>> returnNoShiftAssignedUserStatMap(
             ScheduleCalendar calendar,
             CalculationCounters counters
     ) {
-        Map<Integer, Set<UserStat>> result = new HashMap<>();
+        Map<Integer, Set<UserStatViewRecord>> result = new HashMap<>();
 
         if (calendar == null || calendar.getMonth() == null) {
             return result;
@@ -595,7 +595,7 @@ public class ScheduleValidationService {
         Map<Integer, Set<Long>> assignedUserIdsByShiftType = collectAssignedUserIdsByShiftType(calendar);
 
         for (Integer shiftType : shiftTypes) {
-            Set<UserStat> statsForShiftType = new HashSet<>();
+            Set<UserStatViewRecord> statsForShiftType = new HashSet<>();
             Set<Long> assignedUserIds =
                     assignedUserIdsByShiftType.getOrDefault(shiftType, Set.of());
 
@@ -628,7 +628,7 @@ public class ScheduleValidationService {
                     continue;
                 }
 
-                UserStat stat = UserStat.builder()
+                UserStatViewRecord stat = UserStatViewRecord.builder()
                         .user(user)
                         .name(user.getName())
                         .shiftType(shiftType)
@@ -651,7 +651,7 @@ public class ScheduleValidationService {
         return result;
     }
 
-    private Map<Integer, Set<UserStat>> returnFullUserStats(
+    private Map<Integer, Set<UserStatViewRecord>> returnFullUserStats(
             ScheduleCalendar calendar,
             CalculationCounters counters
     ) {
@@ -717,14 +717,14 @@ public class ScheduleValidationService {
             }
         }
 
-        Map<Integer, Set<UserStat>> result = new HashMap<>();
+        Map<Integer, Set<UserStatViewRecord>> result = new HashMap<>();
 
         for (Map.Entry<Integer, Map<Long, UserStatBuilderData>> shiftTypeEntry
                 : statsByShiftTypeAndUser.entrySet()) {
 
             Integer shiftType = shiftTypeEntry.getKey();
 
-            Set<UserStat> statsForShiftType =
+            Set<UserStatViewRecord> statsForShiftType =
                     shiftTypeEntry.getValue()
                             .values()
                             .stream()
@@ -737,13 +737,13 @@ public class ScheduleValidationService {
         return addAllShiftsUserStat(result);
     }
 
-    private Map<Integer, Set<UserStat>> addAllShiftsUserStat(
-            Map<Integer, Set<UserStat>> fullUserStatMap
+    private Map<Integer, Set<UserStatViewRecord>> addAllShiftsUserStat(
+            Map<Integer, Set<UserStatViewRecord>> fullUserStatMap
     ) {
         Map<String, Integer> totalAssignedByUserName = new HashMap<>();
 
-        for (Set<UserStat> stats : fullUserStatMap.values()) {
-            for (UserStat stat : stats) {
+        for (Set<UserStatViewRecord> stats : fullUserStatMap.values()) {
+            for (UserStatViewRecord stat : stats) {
                 totalAssignedByUserName.merge(
                         stat.name(),
                         stat.assignedTotal(),
@@ -752,12 +752,12 @@ public class ScheduleValidationService {
             }
         }
 
-        Map<Integer, Set<UserStat>> result = new HashMap<>();
+        Map<Integer, Set<UserStatViewRecord>> result = new HashMap<>();
 
-        for (Map.Entry<Integer, Set<UserStat>> entry : fullUserStatMap.entrySet()) {
+        for (Map.Entry<Integer, Set<UserStatViewRecord>> entry : fullUserStatMap.entrySet()) {
             Integer shiftType = entry.getKey();
 
-            Set<UserStat> updatedStats = entry.getValue()
+            Set<UserStatViewRecord> updatedStats = entry.getValue()
                     .stream()
                     .map(stat -> stat.withAssignedTotalAllShiftTypes(
                             totalAssignedByUserName.getOrDefault(stat.name(), 0)
@@ -869,8 +869,8 @@ public class ScheduleValidationService {
             Set<Integer> assignedDateDays,
             YearMonth month
     ) {
-        UserStat toUserStat() {
-            return UserStat.builder()
+        UserStatViewRecord toUserStat() {
+            return UserStatViewRecord.builder()
                     .user(user)
                     .name(name)
                     .shiftType(shiftType)

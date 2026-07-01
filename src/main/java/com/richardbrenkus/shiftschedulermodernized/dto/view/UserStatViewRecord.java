@@ -1,4 +1,4 @@
-package com.richardbrenkus.shiftschedulermodernized.algorithm;
+package com.richardbrenkus.shiftschedulermodernized.dto.view;
 
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import lombok.Builder;
@@ -7,7 +7,7 @@ import java.time.YearMonth;
 import java.util.Set;
 
 @Builder
-public record UserStat(
+public record UserStatViewRecord(
         User user,
         String name,
         int shiftType,
@@ -35,8 +35,8 @@ public record UserStat(
         YearMonth month
 ) {
 
-    public UserStat withAssignedTotalAllShiftTypes(int assignedTotalAllShiftTypes) {
-        return UserStat.builder()
+    public UserStatViewRecord withAssignedTotalAllShiftTypes(int assignedTotalAllShiftTypes) {
+        return UserStatViewRecord.builder()
                 .user(user)
                 .name(name)
                 .shiftType(shiftType)

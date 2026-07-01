@@ -1,6 +1,5 @@
 package com.richardbrenkus.shiftschedulermodernized.entity;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.*;
 
@@ -10,11 +9,10 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class StoredShiftAssignment {
+public class StoredUserSnapshot {
 
-    @Column(name = "username")
+    private Long userId;
     private String username;
-
-    @Column(name = "user_title")
+    private String name;
     private String title;
 }

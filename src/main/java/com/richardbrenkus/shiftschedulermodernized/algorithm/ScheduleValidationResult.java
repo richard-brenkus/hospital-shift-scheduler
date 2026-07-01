@@ -1,5 +1,6 @@
 package com.richardbrenkus.shiftschedulermodernized.algorithm;
 
+import com.richardbrenkus.shiftschedulermodernized.dto.view.UserStatViewRecord;
 import lombok.*;
 
 import java.util.*;
@@ -59,13 +60,13 @@ public class ScheduleValidationResult {
     private Map<Integer, Set<String>> previousMonthCheckUsersByShiftType = new HashMap<>();
 
     @Builder.Default
-    private Map<Integer, Set<UserStat>> shortStatsByShiftType = new HashMap<>();
+    private Map<Integer, Set<UserStatViewRecord>> shortStatsByShiftType = new HashMap<>();
 
     @Builder.Default
-    private Map<Integer, Set<UserStat>> noShiftAssignedStatsByShiftType = new HashMap<>();
+    private Map<Integer, Set<UserStatViewRecord>> noShiftAssignedStatsByShiftType = new HashMap<>();
 
     @Builder.Default
-    private Map<Integer, Set<UserStat>> fullUserStatsByShiftType = new HashMap<>();
+    private Map<Integer, Set<UserStatViewRecord>> fullUserStatsByShiftType = new HashMap<>();
 
     public void markRedField(int shiftType, int dayOfMonth) {
         redFieldsByShiftType
