@@ -6,7 +6,6 @@ import com.richardbrenkus.shiftschedulermodernized.algorithm.ShiftAssignment;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.*;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
-import com.richardbrenkus.shiftschedulermodernized.service.ShiftTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,11 +20,11 @@ import java.util.Objects;
 public class ScheduleMapper {
 
     private final UserRepository userRepository;
-    private final ShiftTypeService shiftTypeService;
 
     public ScheduleEditForm toEditForm(
             ScheduleCalendar calendar,
-            CalculationProfileForm calculationProfileForm
+            CalculationProfileForm calculationProfileForm,
+            List<Integer> shiftTypes
     ) {
         ScheduleEditForm form = ScheduleEditForm.builder()
                 .month(calculationProfileForm.getCalculationMonth())
@@ -53,7 +52,7 @@ public class ScheduleMapper {
                     .assignments(new ArrayList<>())
                     .build();
 
-            for (Integer shiftType : shiftTypeService.getShiftTypes()) {
+            for (Integer shiftType : shiftTypes) {
                 ShiftAssignment existingAssignment = calendarDay.getAssignments()
                         .stream()
                         .filter(assignment -> assignment.getShiftType() == shiftType)

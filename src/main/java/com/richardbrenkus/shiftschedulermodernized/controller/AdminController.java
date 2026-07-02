@@ -10,6 +10,7 @@ import com.richardbrenkus.shiftschedulermodernized.dto.view.*;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ScheduleMapper;
 import com.richardbrenkus.shiftschedulermodernized.service.*;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -38,6 +39,7 @@ public class AdminController {
     private final ScheduleCalculationService scheduleCalculationService;
     private final ScheduleValidationService scheduleValidationService;
     private final ScheduleMapper scheduleMapper;
+    private final UserStatisticService userStatisticService;
 
     @GetMapping("/admin/adminIndex")
     public String adminIndex(Authentication authentication, Model model) {
@@ -341,15 +343,19 @@ public class AdminController {
     @PostMapping("/admin/new_calculation")
     public String calculateSchedule(
             Model model,
+            HttpSession session,
             @ModelAttribute("calculationProfileForm") CalculationProfileForm calculationProfileForm
     ) {
         ScheduleCalendar bestCalendar = scheduleCalculationService.calculateSchedule(calculationProfileForm);
 
-        ScheduleEditForm scheduleEditForm = scheduleMapper.toEditForm(bestCalendar, calculationProfileForm);
+        List<Integer> shiftTypes = shiftTypeService.getShiftTypes();
+        ScheduleEditForm scheduleEditForm = scheduleMapper.toEditForm(bestCalendar, calculationProfileForm, shiftTypes);
 
-        ScheduleValidationResult validationResult = scheduleValidationService.generateUserStats(bestCalendar);
+        ScheduleValidationResult scheduleValidationResult = scheduleValidationService.generateUserStats(bestCalendar);
 
-        addScheduleTableAttributes(model, scheduleEditForm, validationResult);
+        userStatisticService.storeFullStatisticsInSession(session, scheduleValidationResult, scheduleEditForm);
+
+        addScheduleTableAttributes(model, scheduleEditForm, scheduleValidationResult);
 
         return "admin/schedule_table";
     }
@@ -357,11 +363,13 @@ public class AdminController {
     @PostMapping("/admin/evaluate_edit")
     public String evaluateEdit(
             Model model,
+            HttpSession session,
             @ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm,
             @RequestParam(defaultValue = "false") boolean saveSchedule
     ) {
-        ScheduleValidationResult validationResult =
-                scheduleValidationService.evaluateEdit(scheduleEditForm, saveSchedule);
+        ScheduleValidationResult validationResult = scheduleValidationService.evaluateEdit(scheduleEditForm, saveSchedule);
+
+        userStatisticService.storeFullStatisticsInSession(session, validationResult, scheduleEditForm);
 
         addScheduleTableAttributes(model, scheduleEditForm, validationResult);
 
@@ -375,25 +383,35 @@ public class AdminController {
     @PostMapping("/admin/recalculate_schedule")
     public String recalculateSchedule(
             Model model,
+            HttpSession session,
             @ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm
     ) {
         CalculationProfileForm calculationProfileForm = scheduleEditForm.toCalculationProfileForm();
 
-        return calculateSchedule(model, calculationProfileForm);
+        return calculateSchedule(model, session, calculationProfileForm);
     }
 
-    private void addScheduleTableAttributes(Model model, ScheduleEditForm scheduleEditForm, ScheduleValidationResult validationResult) {
-        Set<String> usersWithNoRequest = scheduleValidationService.returnUsersWithNoRequest();
+    @GetMapping("/admin/show_full_statistics")
+    public String showFullStats(
+            Model model,
+            HttpSession session
+    ) {
+        userStatisticService.addFullStatisticsToModel(model, session, shiftTypeService.getShiftTypes());
 
+        return "admin/full_monthly_statistics";
+    }
+
+    private void addScheduleTableAttributes(Model model, ScheduleEditForm scheduleEditForm, ScheduleValidationResult scheduleValidationResult) {
         model.addAttribute("scheduleEditForm", scheduleEditForm);
-        model.addAttribute("scheduleValidationResult", validationResult);
+        model.addAttribute("scheduleValidationResult", scheduleValidationResult);
         model.addAttribute("shiftTypes", shiftTypeService.getShiftTypes());
         model.addAttribute("users", userService.findAllUsersForSelectionByNameAsc());
+
+        Set<String> usersWithNoRequest = scheduleValidationService.returnUsersWithNoRequest();
 
         model.addAttribute("usersWithNoRequest", usersWithNoRequest);
         model.addAttribute("usersWithNoRequestString", String.join(", ", usersWithNoRequest));
     }
-
 
 
 }

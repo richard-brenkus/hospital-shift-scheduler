@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-th-text="#{fullStats.title}">Schedule statistics</title>
+
+    <link rel="stylesheet" th:href="@{/styles/main.css}"/>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <link rel="stylesheet"
+          type="text/css"
+          href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.css">
+    <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $("#fullStatsTable").DataTable();
+        });
+    </script>
+</head>
+
+<body>
+
+<button class="openbtn" onclick="openNav()">menu</button>
+
+<div id="main" class="centered">
+
+    <h1 data-th-text="#{fullStats.header}">
+        Schedule statistics
+    </h1>
+
+    <div class="centered" th:if="${month != null}">
+        <h2 th:text="${#temporals.format(month.atDay(1), 'MM/yyyy')}">
+            01/2026
+        </h2>
+    </div>
+
+    <div class="centered" th:if="${month == null}">
+        <h2>
+            <span th:text="${year}">2026</span>
+            /
+            <span th:text="${monthInt}">1</span>
+        </h2>
+    </div>
+
+    <div th:if="${!statsExist}">
+        <p class="centered" data-th-text="#{fullStats.noStats}">
+            No statistics available.
+        </p>
+    </div>
+
+    <table th:if="${statsExist}"
+           class="table-with-lines table-full"
+           id="fullStatsTable">
+
+        <colgroup>
+            <col class="col-5">
+            <col class="col-15">
+            <col class="col-15">
+            <col class="col-10">
+            <col class="col-10">
+            <col class="col-10">
+            <col class="col-10">
+            <col class="col-10">
+            <col class="col-10">
+            <col class="col-5">
+        </colgroup>
+
+        <thead>
+        <tr>
+            <th>
+                <div class="centered"
+                     data-th-text="#{fullStats.tableHeader.shiftType}">
+                    Shift type
+                </div>
+            </th>
+            <th>
+                <div class="left-aligned"
+                     data-th-text="#{fullStats.tableHeader.name}">
+                    Name
+                </div>
+            </th>
+            <th>
+                <div class="centered"
+                     data-th-text="#{fullStats.tableHeader.dates}">
+                    Dates
+                </div>
+            </th>
+            <th>
+                <div class="centered"
+                     data-th-text="#{fullStats.tableHeader.requested.weekdays}">
+                    Requested weekdays
+                </div>
+            </th>
+            <th>
+                <div class="centered"
+                     data-th-text="#{fullStats.tableHeader.requested.weekends}">
+                    Requested weekends
+                </div>
+            </th>
+            <th>
+                <div class="centered"
+                     data-th-text="#{fullStats.tableHeader.assigned.weekdays}">
+                    Assigned weekdays
+                </div>
+            </th>
+            <th>
+                <div class="centered"
+                     data-th-text="#{fullStats.tableHeader.assigned.weekends}">
+                    Assigned weekends
+                </div>
+            </th>
+            <th>
+                <div class="centered"
+                     data-th-text="#{fullStats.tableHeader.remaining.weekdays}">
+                    Remaining weekdays
+                </div>
+            </th>
+            <th>
+                <div class="centered"
+                     data-th-text="#{fullStats.tableHeader.remaining.weekends}">
+                    Remaining weekends
+                </div>
+            </th>
+            <th>
+                <div class="centered"
+                     data-th-text="#{fullStats.tableHeader.sum}">
+                    Sum of shifts
+                </div>
+            </th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <th:block th:each="shiftType : ${shiftTypes}">
+            <tr th:each="userStat : ${fullUserStatsByShiftType.get(shiftType)}">
+
+                <td class="centered"
+                    th:text="${shiftType}">
+                    1
+                </td>
+
+                <td>
+                    <div class="left-aligned"
+                         th:text="${userStat.name}">
+                        User name
+                    </div>
+                </td>
+
+                <td class="centered"
+                    th:text="${userStat.assignedDateDays}">
+                    [1, 2, 3]
+                </td>
+
+                <td class="centered"
+                    th:text="${userStat.requestedWeekdays}">
+                    0
+                </td>
+
+                <td class="centered"
+                    th:text="${userStat.requestedWeekends}">
+                    0
+                </td>
+
+                <td class="centered"
+                    th:text="${userStat.assignedWeekdays}">
+                    0
+                </td>
+
+                <td class="centered"
+                    th:text="${userStat.assignedWeekends}">
+                    0
+                </td>
+
+                <td class="centered"
+                    th:text="${userStat.remainingWeekdays}">
+                    0
+                </td>
+
+                <td class="centered"
+                    th:text="${userStat.remainingWeekends}">
+                    0
+                </td>
+
+                <td class="centered"
+                    th:text="${userStat.assignedTotalAllShiftTypes}">
+                    0
+                </td>
+
+            </tr>
+        </th:block>
+        </tbody>
+
+    </table>
+
+    <div class="section-spacer-60"></div>
+
+    <table class="table-with-lines table-full">
+        <colgroup>
+            <col class="col-34">
+            <col class="col-33">
+            <col class="col-33">
+        </colgroup>
+
+        <thead>
+        <tr>
+            <th class="table-no-lines table-full">
+                <form th:action="@{/admin/adminIndex}" method="get">
+                    <button type="submit"
+                            class="standard-button"
+                            data-th-text="#{button.backToHomePage}">
+                        Go back to admin index
+                    </button>
+                </form>
+            </th>
+
+            <th class="table-no-lines table-full">
+                <form th:action="@{/admin/all_users_list}" method="get">
+                    <button type="submit"
+                            class="standard-button"
+                            data-th-text="#{button.showUsers}">
+                        Users list
+                    </button>
+                </form>
+            </th>
+
+            <th class="table-no-lines table-full">
+                <form th:action="@{/admin/show_saved_calendars}" method="get">
+                    <button type="submit"
+                            class="standard-button"
+                            data-th-text="#{button.backToCalendars}">
+                        Back to saved calendars selection
+                    </button>
+                </form>
+            </th>
+        </tr>
+        </thead>
+    </table>
+
+</div>
+
+<div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
+
+<script>
+    function openNav() {
+        document.getElementById("adminSidebar").style.width = "250px";
+    }
+
+    function closeNav() {
+        document.getElementById("adminSidebar").style.width = "0";
+    }
+</script>
+
+</body>
+</html>
