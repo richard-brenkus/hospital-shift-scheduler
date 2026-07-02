@@ -4,6 +4,7 @@ import com.richardbrenkus.shiftschedulermodernized.algorithm.*;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileForm;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftPreference;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
+import com.richardbrenkus.shiftschedulermodernized.entity.StoredCalendarDay;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +49,7 @@ public class ScheduleCalculationService {
         LocalDate firstDayOfMonth = calculationMonth.atDay(1);
         List<LocalDate> holidaysCzech = getHolidaysCzechRepublic(form.getCalculationMonth());
 
-        Map<Integer, PreviousMonthShiftRecord> previousMonthCalendar = scheduleRuleService.loadPreviousMonthCalendar(firstDayOfMonth, minimalGap, shiftTypes);
+        Map<Integer, StoredCalendarDay> previousMonthCalendar = scheduleRuleService.loadPreviousMonthCalendar(firstDayOfMonth, minimalGap);
 
         List<ScheduleCalendar> candidateCalendars = new ArrayList<>();
 
@@ -125,7 +126,7 @@ public class ScheduleCalculationService {
                 .orElseThrow(() -> new IllegalStateException("No schedule calendar was created"));
     }
 
-    private boolean tryAssignForceFillShift(ScheduleCalendar calendar, CalendarDay calendarDay, List<User> users, int shiftType, int priority, int shiftCountCap, int minimalGap, Map<Integer, PreviousMonthShiftRecord> previousMonthCalendar, CalculationCounters counters) {
+    private boolean tryAssignForceFillShift(ScheduleCalendar calendar, CalendarDay calendarDay, List<User> users, int shiftType, int priority, int shiftCountCap, int minimalGap, Map<Integer, StoredCalendarDay> previousMonthCalendar, CalculationCounters counters) {
 
         if (hasAssignment(calendarDay, shiftType)) {
             return false;
@@ -166,7 +167,7 @@ public class ScheduleCalculationService {
         return false;
     }
 
-    private boolean tryAssignNormalShift(ScheduleCalendar calendar, CalendarDay calendarDay, List<User> users, int shiftType, int priority, int shiftCountCap, int minimalGap, Map<Integer, PreviousMonthShiftRecord> previousMonthCalendar, CalculationCounters counters) {
+    private boolean tryAssignNormalShift(ScheduleCalendar calendar, CalendarDay calendarDay, List<User> users, int shiftType, int priority, int shiftCountCap, int minimalGap, Map<Integer, StoredCalendarDay> previousMonthCalendar, CalculationCounters counters) {
 
         if (hasAssignment(calendarDay, shiftType)) {
             return false;

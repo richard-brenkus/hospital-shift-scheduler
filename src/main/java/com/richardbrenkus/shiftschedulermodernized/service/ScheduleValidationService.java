@@ -2,7 +2,6 @@ package com.richardbrenkus.shiftschedulermodernized.service;
 
 import com.richardbrenkus.shiftschedulermodernized.algorithm.CalendarDay;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.CalculationCounters;
-import com.richardbrenkus.shiftschedulermodernized.algorithm.PreviousMonthShiftRecord;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleCalendar;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ShiftAssignment;
@@ -12,6 +11,7 @@ import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileFo
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ScheduleEditForm;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftPreference;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
+import com.richardbrenkus.shiftschedulermodernized.entity.StoredCalendarDay;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ScheduleMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
@@ -99,7 +99,7 @@ public class ScheduleValidationService {
                 ? Set.of()
                 : new HashSet<>(profile.getForceFillShiftTypes());
 
-        Map<Integer, PreviousMonthShiftRecord> previousMonthCalendar = scheduleRuleService.loadPreviousMonthCalendar(calendar.getMonth().atDay(1), minimalGap, shiftTypeService.getShiftTypes());
+        Map<Integer, StoredCalendarDay> previousMonthCalendar = scheduleRuleService.loadPreviousMonthCalendar(calendar.getMonth().atDay(1), minimalGap);
 
         CalculationCounters counters = countAssignments(calendar);
 
@@ -148,7 +148,7 @@ public class ScheduleValidationService {
 
                 ShiftRequest shiftRequest = user.getShiftRequest();
 
-                boolean withinTotalShiftLimit = scheduleRuleService.isValidWithinTotalValidShiftLimit(shiftCountCap, user, counters);
+                boolean withinTotalShiftLimit = scheduleRuleService.isValidWithinTotalShiftLimit(shiftCountCap, user, counters);
 
                 boolean withinRequestedWeekdayLimit = true;
                 boolean withinRequestedWeekendLimit = true;
@@ -161,7 +161,7 @@ public class ScheduleValidationService {
 
                 boolean respectsMinimalGap = scheduleRuleService.respectsMinimalGap(day.getDate(), minimalGap, user, calendar, shiftType);
 
-                boolean isDateAllowedByUser = scheduleRuleService.isDateAllowedByUser(day.getDate(), shiftRequest.getDatesNo());
+                boolean isNotRejectedByUser = scheduleRuleService.isNotRejectedByUser(day.getDate(), shiftRequest.getDatesNo());
 
                 boolean respectsPreviousMonthGap = scheduleRuleService.respectsPreviousMonthGap(previousMonthCalendar, minimalGap, day.getDate(), user);
 
@@ -196,7 +196,7 @@ public class ScheduleValidationService {
                     result.addCrossCheckUser(shiftType, userName);
                 }
 
-                if (!isDateAllowedByUser && !calendar.isOverrideUserShiftRequestAll()) {
+                if (!isNotRejectedByUser && !calendar.isOverrideUserShiftRequestAll()) {
                     markError(result, shiftType, day);
                     result.setUserDatesNo(true);
                     result.addDatesNoCheckUser(shiftType, userName);

@@ -154,8 +154,8 @@ public class ScheduleRuleService {
         return true;
     }
 
-    boolean respectsPreviousMonthGap(
-            Map<Integer, PreviousMonthShiftRecord> previousMonthCalendar,
+    public boolean respectsPreviousMonthGap(
+            Map<Integer, StoredCalendarDay> previousMonthCalendar,
             Integer minimalGap,
             LocalDate date,
             User user
@@ -168,18 +168,28 @@ public class ScheduleRuleService {
             return true;
         }
 
-        int dayOfMonth = date.getDayOfMonth();
-
-        if (dayOfMonth - minimalGap > 0) {
+        if (date.getDayOfMonth() - minimalGap > 0) {
             return true;
         }
 
         for (int backwardIndex = 0; backwardIndex > -minimalGap; backwardIndex--) {
-            PreviousMonthShiftRecord previousMonthDay =
+            StoredCalendarDay previousMonthDay =
                     previousMonthCalendar.get(backwardIndex);
 
-            if (previousMonthDay != null
-                    && previousMonthDay.containsUsername(user.getUsername())) {
+            if (previousMonthDay == null) {
+                continue;
+            }
+
+            boolean userWorkedPreviousMonthDay =
+                    previousMonthDay.getAssignmentsByShiftType()
+                            .values()
+                            .stream()
+                            .anyMatch(snapshot ->
+                                    snapshot != null
+                                            && user.getUsername().equals(snapshot.getUsername())
+                            );
+
+            if (userWorkedPreviousMonthDay) {
                 return false;
             }
         }
@@ -188,7 +198,7 @@ public class ScheduleRuleService {
     }
 
 
-    boolean isDateAllowedByUser(LocalDate date, List<LocalDate> datesNo) {
+    boolean isNotRejectedByUser(LocalDate date, List<LocalDate> datesNo) {
         if (datesNo == null || date == null) {
             return true;
         }
@@ -196,7 +206,7 @@ public class ScheduleRuleService {
         return !datesNo.contains(date);
     }
 
-    boolean isValidWithinTotalValidShiftLimit(Integer shiftCountCap, User user, CalculationCounters counters) {
+    boolean isValidWithinTotalShiftLimit(Integer shiftCountCap, User user, CalculationCounters counters) {
         if (user == null || !user.hasShiftRequest()) {
             return false;
         }
@@ -236,39 +246,24 @@ public class ScheduleRuleService {
         return assignedWeekdayCount <= requestedWeekdayCount;
     }
 
-    Map<Integer, PreviousMonthShiftRecord> loadPreviousMonthCalendar(
+    public Map<Integer, StoredCalendarDay> loadPreviousMonthCalendar(
             LocalDate adminDate,
-            int minimalGap,
-            List<Integer> shiftTypes
+            int minimalGap
     ) {
         List<LocalDate> previousMonthDates = createPreviousMonthDatesToCheck(adminDate, minimalGap);
 
-        Map<Integer, PreviousMonthShiftRecord> previousMonthCalendar = new HashMap<>();
+        Map<Integer, StoredCalendarDay> previousMonthCalendar = new HashMap<>();
 
         int backwardIndex = 0;
 
         for (LocalDate previousMonthDate : previousMonthDates) {
             Long dateId = CalendarDateIdUtils.toDateId(previousMonthDate);
 
-            StoredCalendarDay storedCalendarDay =
-                    storedCalendarDayRepository.findById(dateId).orElse(null);
-
-            if (storedCalendarDay != null) {
-                PreviousMonthShiftRecord previousMonthShiftRecord =
-                        PreviousMonthShiftRecord.builder()
-                                .backwardIndex(backwardIndex)
-                                .dateStringDB(String.valueOf(dateId))
-                                .dateIdDB(dateId)
-                                .usernameByShiftType(new HashMap<>())
-                                .build();
-
-                for (Integer shiftType : shiftTypes) {
-                    String username = storedCalendarDay.getUsernameForShiftType(shiftType);
-                    previousMonthShiftRecord.setUsernameForShiftType(shiftType, username);
-                }
-
-                previousMonthCalendar.put(backwardIndex, previousMonthShiftRecord);
-            }
+            int finalBackwardIndex = backwardIndex;
+            storedCalendarDayRepository.findById(dateId)
+                    .ifPresent(storedDay ->
+                            previousMonthCalendar.put(finalBackwardIndex, storedDay)
+                    );
 
             backwardIndex--;
         }
