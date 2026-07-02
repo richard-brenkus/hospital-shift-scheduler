@@ -123,14 +123,6 @@
 
     <div>
         <br>
-        <form th:action="@{/admin/recalculate_schedule}" method="post">
-            <button type="submit"
-                    class="standard-button"
-                    data-th-text="#{button.recalculate}">
-                Recalculate schedule
-            </button>
-        </form>
-        <br>
         <form th:action="@{/admin/show_full_statistics}" target="_blank" method="get">
             <button type="submit"
                     class="standard-button"
@@ -235,6 +227,18 @@
                th:each="forceFillShiftType : *{forceFillShiftTypes}"
                name="forceFillShiftTypes"
                th:value="${forceFillShiftType}"/>
+
+        <br>
+
+        <button type="submit"
+                class="standard-button"
+                th:formaction="@{/admin/recalculate_schedule}"
+                formmethod="post"
+                th:data-confirm-message="#{scheduleTable.confirmRecalculate}"
+                onclick="return confirm(this.dataset.confirmMessage);"
+                data-th-text="#{button.recalculate}">
+            Recalculate schedule
+        </button>
 
         <div class="centered button-row">
             <button type="submit"

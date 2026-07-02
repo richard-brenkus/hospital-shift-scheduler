@@ -372,6 +372,16 @@ public class AdminController {
         return "admin/schedule_table";
     }
 
+    @PostMapping("/admin/recalculate_schedule")
+    public String recalculateSchedule(
+            Model model,
+            @ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm
+    ) {
+        CalculationProfileForm calculationProfileForm = scheduleEditForm.toCalculationProfileForm();
+
+        return calculateSchedule(model, calculationProfileForm);
+    }
+
     private void addScheduleTableAttributes(Model model, ScheduleEditForm scheduleEditForm, ScheduleValidationResult validationResult) {
         Set<String> usersWithNoRequest = scheduleValidationService.returnUsersWithNoRequest();
 

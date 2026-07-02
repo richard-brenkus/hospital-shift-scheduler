@@ -45,7 +45,8 @@
                     <button type="submit"
                             class="standard-button"
                             data-th-text="#{button.delete}"
-                            onclick="return confirm('Delete selected user?');">
+                            th:data-confirm-message="#{userTable.confirmDelete}"
+                            onclick="return confirm(this.dataset.confirmMessage);">
                         Delete
                     </button>
                 </td>
