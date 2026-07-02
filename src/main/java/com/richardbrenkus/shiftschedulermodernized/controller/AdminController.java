@@ -426,8 +426,8 @@ public class AdminController {
         return "redirect:/admin/show_saved_calendars";
     }
 
-    @PostMapping("/admin/override_validation")
-    public String overrideValidation(@ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm) {
+    @PostMapping("/admin/save_schedule_override_validation")
+    public String saveScheduleOverrideValidation(@ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm) {
         ScheduleCalendar calendar = scheduleMapper.toScheduleCalendar(scheduleEditForm, scheduleEditForm.toCalculationProfileForm());
 
         storedScheduleService.saveSchedule(calendar);

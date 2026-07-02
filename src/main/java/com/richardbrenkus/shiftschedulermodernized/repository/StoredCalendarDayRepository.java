@@ -1,14 +1,18 @@
 package com.richardbrenkus.shiftschedulermodernized.repository;
 
 import com.richardbrenkus.shiftschedulermodernized.entity.StoredCalendarDay;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.Collection;
-import java.util.Optional;
+import java.util.List;
 
 @Repository
-public interface StoredCalendarDayRepository extends CrudRepository<StoredCalendarDay, Long> {
+public interface StoredCalendarDayRepository extends JpaRepository<StoredCalendarDay, Long> {
 
-    Collection<StoredCalendarDay> findByMonthYearId(String monthYearId);
+    List<StoredCalendarDay> findByMonthYearIdOrderByDayIntegerAsc(String monthYearId);
+
+    @Query("select distinct d.monthYearId from StoredCalendarDay d")
+    List<String> findDistinctMonthYearIds();
+
 }

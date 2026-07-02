@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/styles/main.css}"/>
+    <title data-th-text="#{scheduleTableSaved.title}">Saved schedule</title>
+</head>
+
+<body>
+
+<button class="openbtn" onclick="openNav()">menu</button>
+
+<div id="main" class="centered">
+
+    <h1 data-th-text="#{scheduleTableSaved.header}">
+        Saved schedule
+    </h1>
+
+    <div class="centered">
+        <h2 th:if="${savedSchedule != null && savedSchedule.month != null}"
+            th:text="${#temporals.format(savedSchedule.month.atDay(1), 'MM/yyyy')}">
+            01/2026
+        </h2>
+
+        <h2 th:if="${savedSchedule == null || savedSchedule.month == null}">
+            <span th:text="${year}">2026</span>
+            /
+            <span th:text="${monthInt}">1</span>
+        </h2>
+    </div>
+
+    <div class="centered"
+         th:if="${savedSchedule == null || savedSchedule.days == null || #lists.isEmpty(savedSchedule.days)}">
+        <p data-th-text="#{showSavedCalendars.calendarNonExistent}">
+            The database does not contain any stored dates for the selected month/year.
+        </p>
+    </div>
+
+    <div class="centered"
+         th:if="${savedSchedule != null && savedSchedule.days != null && !#lists.isEmpty(savedSchedule.days)}">
+
+        <table class="table-with-lines table-full">
+            <colgroup>
+                <col class="col-4">
+                <col th:each="shiftType : ${shiftTypes}" class="col-16">
+            </colgroup>
+
+            <thead>
+            <tr>
+                <th data-th-text="#{scheduleTableSaved.day}">
+                    Day
+                </th>
+
+                <th th:each="shiftType : ${shiftTypes}"
+                    th:text="#{scheduleTable.shiftType} + ' ' + ${shiftType}">
+                    Shift type
+                </th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="day : ${savedSchedule.days}">
+                <td class="centered"
+                    th:classappend="${day.weekendOrHoliday} ? ' holiday-cell' : ''"
+                    th:text="${day.date.dayOfMonth}">
+                    1
+                </td>
+
+                <td th:each="assignment : ${day.assignments}"
+                    class="centered"
+                    th:classappend="${day.weekendOrHoliday} ? ' holiday-cell' : ''"
+                    th:text="${assignment.displayName}">
+                    User name
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+    <br>
+    <br>
+
+    <div class="centered">
+        <table class="table-no-lines">
+            <colgroup>
+                <col class="col-28">
+                <col class="col-28">
+                <col class="col-28">
+                <col class="col-16">
+            </colgroup>
+
+            <thead>
+            <tr>
+                <th class="th-no-lines">
+                    <form th:action="@{/admin/adminIndex}" method="get">
+                        <button type="submit"
+                                class="standard-button"
+                                data-th-text="#{button.backToHomePage}">
+                            Go back
+                        </button>
+                    </form>
+                </th>
+
+                <th class="th-no-lines">
+                    <form th:action="@{/admin/show_full_statistics}" method="get">
+                        <button type="submit"
+                                class="standard-button"
+                                data-th-text="#{button.showFullStats}">
+                            Show full statistics
+                        </button>
+                    </form>
+                </th>
+
+                <th class="th-no-lines">
+                    <form th:action="@{/admin/show_saved_calendars}" method="get">
+                        <button type="submit"
+                                class="standard-button"
+                                data-th-text="#{button.backToCalendars}">
+                            Back to saved calendars selection
+                        </button>
+                    </form>
+                </th>
+
+                <th class="th-no-lines">
+                    <form th:action="@{/admin/download/excel}" method="post">
+                        <input type="hidden"
+                               name="selectedMonth"
+                               th:value="${savedSchedule != null && savedSchedule.month != null ? savedSchedule.month : month}"/>
+
+                        <button type="submit"
+                                class="standard-button"
+                                data-th-text="#{button.downloadSpreadsheet}">
+                            Download spreadsheet
+                        </button>
+                    </form>
+                </th>
+            </tr>
+            </thead>
+        </table>
+    </div>
+
+</div>
+
+<div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
+
+<script>
+    function openNav() {
+        document.getElementById("adminSidebar").style.width = "250px";
+    }
+
+    function closeNav() {
+        document.getElementById("adminSidebar").style.width = "0";
+    }
+</script>
+
+</body>
+</html>
