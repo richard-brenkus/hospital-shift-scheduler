@@ -1,9 +1,11 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
-import com.richardbrenkus.shiftschedulermodernized.algorithm.*;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.CalendarDay;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.CalculationCounters;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleCalendar;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.UsersForShiftType;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileForm;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftPreference;
-import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
 import com.richardbrenkus.shiftschedulermodernized.entity.StoredCalendarDay;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
@@ -13,7 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
@@ -27,16 +34,13 @@ public class ScheduleCalculationService {
     private final UserRepository userRepository;
     private final ShiftTypeService shiftTypeService;
     private final ScheduleRuleService scheduleRuleService;
+    private final ScheduleGenerationEngine scheduleGenerationEngine;
 
     @Transactional(readOnly = true)
     public ScheduleCalendar calculateSchedule(CalculationProfileForm form) {
 
-        boolean sortByDatesAmount = form.isSortByDatesAmount();
-
-        int minimalGap = form.getGapBetweenShifts();
-        int shiftCountCap = form.getShiftCountCap();
-
         YearMonth calculationMonth = form.getCalculationMonth();
+        int minimalGap = form.getGapBetweenShifts();
 
         List<Integer> shiftTypes = shiftTypeService.getShiftTypes();
         List<Integer> calculationOrder = resolveShiftCalculationOrder(form, shiftTypes);
@@ -46,181 +50,102 @@ public class ScheduleCalculationService {
 
         List<User> usersWithRequest = findUsersWithRequest();
 
-        LocalDate firstDayOfMonth = calculationMonth.atDay(1);
-        List<LocalDate> holidaysCzech = getHolidaysCzechRepublic(form.getCalculationMonth());
+        Map<Integer, UsersForShiftType> usersByShiftType = prepareUsersByShiftType(
+                usersWithRequest,
+                shiftTypes,
+                calculationMonth
+        );
 
-        Map<Integer, StoredCalendarDay> previousMonthCalendar = scheduleRuleService.loadPreviousMonthCalendar(firstDayOfMonth, minimalGap);
+        List<LocalDate> holidaysCzech = getHolidaysCzechRepublic(calculationMonth);
+        Map<Integer, StoredCalendarDay> previousMonthCalendar =
+                scheduleRuleService.loadPreviousMonthCalendar(calculationMonth.atDay(1), minimalGap);
 
         List<ScheduleCalendar> candidateCalendars = new ArrayList<>();
 
         for (int attempt = 0; attempt < NUMBER_OF_ATTEMPTS; attempt++) {
+            ScheduleCalendar calendar = createCandidateCalendar(
+                    form,
+                    calculationMonth,
+                    holidaysCzech,
+                    calculationOrder,
+                    priorities,
+                    usersByShiftType,
+                    previousMonthCalendar
+            );
 
-            CalculationCounters counters = new CalculationCounters();
-
-            ScheduleCalendar calendar = createEmptyScheduleCalendar(form, calculationMonth, holidaysCzech);
-
-            List<Integer> monthDays = IntStream.rangeClosed(1, calculationMonth.lengthOfMonth())
-                    .boxed()
-                    .collect(Collectors.toCollection(ArrayList::new));
-
-            Collections.shuffle(monthDays);
-
-            Map<Integer, UsersForShiftType> usersByShiftType = prepareUsersByShiftType(usersWithRequest, shiftTypes);
-
-            int hitCounter = 0;
-
-            for (Integer dayOfMonth : monthDays) {
-
-                LocalDate date = calculationMonth.atDay(dayOfMonth);
-                CalendarDay calendarDay = getCalendarDay(calendar, date);
-
-                for (Integer priority : priorities) {
-
-                    for (Integer shiftType : calculationOrder) {
-
-                        List<User> orderedUsers = getUsersInCalculationOrder(usersByShiftType.get(shiftType), shiftType, sortByDatesAmount);
-
-                        boolean forceFill = form.getForceFillShiftTypes() != null && form.getForceFillShiftTypes().contains(shiftType);
-
-                        if (forceFill) {
-                            boolean assigned = tryAssignForceFillShift(calendar, calendarDay, orderedUsers, shiftType, priority, shiftCountCap, minimalGap, previousMonthCalendar, counters);
-
-                            if (assigned) {
-                                hitCounter++;
-                            }
-                        }
-                    }
-                }
-            }
-
-            for (Integer dayOfMonth : monthDays) {
-
-                LocalDate date = calculationMonth.atDay(dayOfMonth);
-                CalendarDay calendarDay = getCalendarDay(calendar, date);
-
-                for (Integer priority : priorities) {
-
-                    for (Integer shiftType : calculationOrder) {
-
-                        List<User> orderedUsers = getUsersInCalculationOrder(usersByShiftType.get(shiftType), shiftType, sortByDatesAmount);
-
-                        boolean forceFill = form.getForceFillShiftTypes() != null && form.getForceFillShiftTypes().contains(shiftType);
-
-                        if (!forceFill) {
-                            boolean assigned = tryAssignNormalShift(calendar, calendarDay, orderedUsers, shiftType, priority, shiftCountCap, minimalGap, previousMonthCalendar, counters);
-
-                            if (assigned) {
-                                hitCounter++;
-                            }
-                        }
-                    }
-                }
-            }
-
-            calendar.setHitCounter(hitCounter);
             candidateCalendars.add(calendar);
         }
 
+        return selectBestCalendar(candidateCalendars);
+    }
+
+    private ScheduleCalendar createCandidateCalendar(
+            CalculationProfileForm form,
+            YearMonth calculationMonth,
+            List<LocalDate> holidaysCzech,
+            List<Integer> calculationOrder,
+            List<Integer> priorities,
+            Map<Integer, UsersForShiftType> usersByShiftType,
+            Map<Integer, StoredCalendarDay> previousMonthCalendar
+    ) {
+        CalculationCounters counters = new CalculationCounters();
+        ScheduleCalendar calendar = createEmptyScheduleCalendar(form, calculationMonth, holidaysCzech);
+        List<Integer> monthDays = createShuffledMonthDays(calculationMonth);
+
+        List<Integer> forceFillShiftTypes = form.getForceFillShiftTypes() == null
+                ? List.of()
+                : form.getForceFillShiftTypes();
+
+        int hitCounter = 0;
+
+        hitCounter += scheduleGenerationEngine.assignForceFillShifts(
+                calendar,
+                monthDays,
+                priorities,
+                calculationOrder,
+                usersByShiftType,
+                forceFillShiftTypes,
+                form.isSortByDatesAmount(),
+                form.getShiftCountCap(),
+                form.getGapBetweenShifts(),
+                previousMonthCalendar,
+                counters
+        );
+
+        hitCounter += scheduleGenerationEngine.assignRegularShifts(
+                calendar,
+                monthDays,
+                priorities,
+                calculationOrder,
+                usersByShiftType,
+                forceFillShiftTypes,
+                form.isSortByDatesAmount(),
+                form.getShiftCountCap(),
+                form.getGapBetweenShifts(),
+                previousMonthCalendar,
+                counters
+        );
+
+        calendar.setHitCounter(hitCounter);
+        return calendar;
+    }
+
+    private ScheduleCalendar selectBestCalendar(List<ScheduleCalendar> candidateCalendars) {
         return candidateCalendars.stream()
                 .max(Comparator.comparingInt(ScheduleCalendar::getHitCounter))
                 .orElseThrow(() -> new IllegalStateException("No schedule calendar was created"));
     }
 
-    private boolean tryAssignForceFillShift(ScheduleCalendar calendar, CalendarDay calendarDay, List<User> users, int shiftType, int priority, int shiftCountCap, int minimalGap, Map<Integer, StoredCalendarDay> previousMonthCalendar, CalculationCounters counters) {
+    private List<Integer> createShuffledMonthDays(YearMonth calculationMonth) {
+        List<Integer> monthDays = IntStream.rangeClosed(1, calculationMonth.lengthOfMonth())
+                .boxed()
+                .collect(Collectors.toCollection(ArrayList::new));
 
-        if (hasAssignment(calendarDay, shiftType)) {
-            return false;
-        }
-
-        for (User user : users) {
-
-            ShiftPreference preference = getPreference(user, shiftType);
-
-            if (preference == null || preference.getPriority() != priority) {
-                continue;
-            }
-
-            ShiftRequest request = user.getShiftRequest();
-
-            if (containsDay(request.getDatesNo(), calendarDay.getDate())) {
-                continue;
-            }
-
-            boolean withinTotalShiftLimit = scheduleRuleService.isWithinTotalShiftLimit(shiftCountCap, user, counters);
-            boolean withinRequestedWeekendLimit = scheduleRuleService.isWithinRequestedWeekendLimit(user, shiftType, counters);
-            boolean respectsMinimalGap = scheduleRuleService.respectsMinimalGap(calendarDay.getDate(), minimalGap, user, calendar, shiftType);
-            boolean respectsPreviousMonthGap = scheduleRuleService.respectsPreviousMonthGap(previousMonthCalendar, minimalGap, calendarDay.getDate(), user);
-
-            if (withinTotalShiftLimit && !calendarDay.isWeekendOrHoliday() && respectsMinimalGap && respectsPreviousMonthGap) {
-                incrementShiftCounter(user, shiftType, counters);
-                addAssignment(calendarDay, shiftType, user);
-                return true;
-            }
-
-            if (withinTotalShiftLimit && withinRequestedWeekendLimit && calendarDay.isWeekendOrHoliday() && respectsMinimalGap && respectsPreviousMonthGap) {
-                incrementWeekendCounter(user, shiftType, counters);
-                addAssignment(calendarDay, shiftType, user);
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private boolean tryAssignNormalShift(ScheduleCalendar calendar, CalendarDay calendarDay, List<User> users, int shiftType, int priority, int shiftCountCap, int minimalGap, Map<Integer, StoredCalendarDay> previousMonthCalendar, CalculationCounters counters) {
-
-        if (hasAssignment(calendarDay, shiftType)) {
-            return false;
-        }
-
-        for (User user : users) {
-
-            ShiftPreference preference = getPreference(user, shiftType);
-
-            if (preference == null || preference.getPriority() != priority) {
-                continue;
-            }
-
-            ShiftRequest request = user.getShiftRequest();
-
-            boolean dateExplicitlySelected = containsDay(preference.getDatesYes(), calendarDay.getDate());
-
-            boolean anyDateSelected = preference.isAnyDateSelected();
-
-            boolean dateRejected = containsDay(request.getDatesNo(), calendarDay.getDate());
-
-            if ((!dateExplicitlySelected && !anyDateSelected) || dateRejected) {
-                continue;
-            }
-
-            boolean withinTotalShiftLimit = scheduleRuleService.isWithinTotalShiftLimit(shiftCountCap, user, counters);
-            boolean withinRequestedWeekdayLimit = scheduleRuleService.isWithinRequestedWeekdayLimit(user, shiftType, counters);
-            boolean withinRequestedWeekendLimit = scheduleRuleService.isWithinRequestedWeekendLimit(user, shiftType, counters);
-            boolean respectsMinimalGap = scheduleRuleService.respectsMinimalGap(calendarDay.getDate(), minimalGap, user, calendar, shiftType);
-            boolean respectsPreviousMonthGap = scheduleRuleService.respectsPreviousMonthGap(previousMonthCalendar, minimalGap, calendarDay.getDate(), user);
-
-            if (!calendarDay.isWeekendOrHoliday()) {
-                if (withinTotalShiftLimit && withinRequestedWeekdayLimit && respectsMinimalGap && respectsPreviousMonthGap) {
-                    incrementShiftCounter(user, shiftType, counters);
-                    addAssignment(calendarDay, shiftType, user);
-                    return true;
-                }
-            }
-
-            if (calendarDay.isWeekendOrHoliday()) {
-                if (withinTotalShiftLimit && withinRequestedWeekendLimit && respectsMinimalGap && respectsPreviousMonthGap) {
-                    incrementWeekendCounter(user, shiftType, counters);
-                    addAssignment(calendarDay, shiftType, user);
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        Collections.shuffle(monthDays);
+        return monthDays;
     }
 
     private List<Integer> resolveShiftCalculationOrder(CalculationProfileForm form, List<Integer> shiftTypes) {
-
         List<Integer> forceFillShiftTypes = form.getForceFillShiftTypes() == null
                 ? List.of()
                 : form.getForceFillShiftTypes();
@@ -242,30 +167,18 @@ public class ScheduleCalculationService {
                 .toList();
     }
 
-    private ShiftPreference getPreference(User user, int shiftType) {
-        if (user.getShiftRequest() == null) {
-            return null;
-        }
-
-        return user.getShiftRequest()
-                .getPreferences()
-                .stream()
-                .filter(preference -> preference.getShiftType() == shiftType)
-                .findFirst()
-                .orElse(null);
-    }
-
-    private Map<Integer, UsersForShiftType> prepareUsersByShiftType(List<User> users, List<Integer> shiftTypes) {
-
+    private Map<Integer, UsersForShiftType> prepareUsersByShiftType(
+            List<User> users,
+            List<Integer> shiftTypes,
+            YearMonth calculationMonth
+    ) {
         Map<Integer, UsersForShiftType> result = new HashMap<>();
 
         for (Integer shiftType : shiftTypes) {
-
             List<User> usersForSpecificDates = new ArrayList<>();
             List<User> usersForAnyDate = new ArrayList<>();
 
             for (User user : users) {
-
                 if (!user.getAllowedShiftTypes().contains(shiftType)) {
                     continue;
                 }
@@ -278,24 +191,54 @@ public class ScheduleCalculationService {
 
                 if (preference.isAnyDateSelected()) {
                     usersForAnyDate.add(user);
-                } else {
+                    continue;
+                }
+
+                if (hasRequestedDateInMonth(preference, calculationMonth)) {
                     usersForSpecificDates.add(user);
                 }
             }
 
-            result.put(shiftType, UsersForShiftType.builder()
-                    .specificDateUsers(usersForSpecificDates)
-                    .anyDateUsers(usersForAnyDate)
-                    .build()
+            result.put(
+                    shiftType,
+                    UsersForShiftType.builder()
+                            .specificDateUsers(usersForSpecificDates)
+                            .anyDateUsers(usersForAnyDate)
+                            .build()
             );
         }
 
         return result;
     }
 
+    private boolean hasRequestedDateInMonth(ShiftPreference preference, YearMonth calculationMonth) {
+        if (preference == null || preference.getDatesYes() == null || calculationMonth == null) {
+            return false;
+        }
 
-    private ScheduleCalendar createEmptyScheduleCalendar(CalculationProfileForm form, YearMonth month, List<LocalDate> holidays) {
+        return preference.getDatesYes()
+                .stream()
+                .anyMatch(date -> date != null && YearMonth.from(date).equals(calculationMonth));
+    }
 
+    private ShiftPreference getPreference(User user, int shiftType) {
+        if (user == null || user.getShiftRequest() == null) {
+            return null;
+        }
+
+        return user.getShiftRequest()
+                .getPreferences()
+                .stream()
+                .filter(preference -> preference.getShiftType() == shiftType)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private ScheduleCalendar createEmptyScheduleCalendar(
+            CalculationProfileForm form,
+            YearMonth month,
+            List<LocalDate> holidays
+    ) {
         List<CalendarDay> days = IntStream.rangeClosed(1, month.lengthOfMonth())
                 .mapToObj(month::atDay)
                 .map(date -> CalendarDay.builder()
@@ -314,55 +257,11 @@ public class ScheduleCalculationService {
                 .build();
     }
 
-    private CalendarDay getCalendarDay(ScheduleCalendar calendar, LocalDate date) {
-        return calendar.getDays()
-                .stream()
-                .filter(day -> day.getDate().equals(date))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Calendar day not found: " + date));
-    }
-
     private boolean isWeekendOrHoliday(LocalDate date, List<LocalDate> holidays) {
         return date.getDayOfWeek().getValue() >= 6 || holidays.contains(date);
     }
 
-    private boolean hasAssignment(CalendarDay day, int shiftType) {
-        return day.getAssignments()
-                .stream()
-                .anyMatch(assignment -> assignment.getShiftType() == shiftType);
-    }
-
-    private void addAssignment(CalendarDay day, int shiftType, User user) {
-        day.getAssignments().add(
-                ShiftAssignment.builder()
-                        .shiftType(shiftType)
-                        .user(user)
-                        .build()
-        );
-    }
-
-    private void incrementShiftCounter(User user, int shiftType, CalculationCounters counters) {
-        counters.getWeekdayCounters()
-                .computeIfAbsent(user.getId(), id -> new HashMap<>())
-                .merge(shiftType, 1, Integer::sum);
-    }
-
-    private void incrementWeekendCounter(User user, int shiftType, CalculationCounters counters) {
-        counters.getWeekendCounters()
-                .computeIfAbsent(user.getId(), id -> new HashMap<>())
-                .merge(shiftType, 1, Integer::sum);
-    }
-
-    private boolean containsDay(List<LocalDate> dates, LocalDate targetDate) {
-        if (dates == null || targetDate == null) {
-            return false;
-        }
-
-        return dates.contains(targetDate);
-    }
-
     private List<LocalDate> getHolidaysCzechRepublic(YearMonth calculationMonth) {
-
         int year = calculationMonth.getYear();
 
         return List.of(
@@ -402,37 +301,4 @@ public class ScheduleCalculationService {
     private static LocalDate calculateEasterMonday(int year) {
         return calculateGoodFriday(year).plusDays(3);
     }
-
-    private List<User> getUsersInCalculationOrder(UsersForShiftType users, int shiftType, boolean sortByDatesAmount) {
-        if (users == null) {
-            return List.of();
-        }
-
-        List<User> specificDateUsers = new ArrayList<>(users.specificDateUsers() == null ? List.of() : users.specificDateUsers());
-
-        List<User> anyDateUsers = new ArrayList<>(users.anyDateUsers() == null ? List.of() : users.anyDateUsers());
-
-        if (sortByDatesAmount) {
-            specificDateUsers.sort(
-                    Comparator.comparingInt(user -> {
-                        ShiftPreference preference = getPreference(user, shiftType);
-                        return preference == null || preference.getDatesYes() == null
-                                ? Integer.MAX_VALUE
-                                : preference.getDatesYes().size();
-                    })
-            );
-        } else {
-            Collections.shuffle(specificDateUsers);
-        }
-
-        Collections.shuffle(anyDateUsers);
-
-        List<User> result = new ArrayList<>();
-        result.addAll(specificDateUsers);
-        result.addAll(anyDateUsers);
-
-        return result;
-    }
-
-
 }

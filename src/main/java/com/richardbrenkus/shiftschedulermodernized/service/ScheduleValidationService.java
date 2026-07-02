@@ -313,7 +313,7 @@ public class ScheduleValidationService {
     ) {
         Map<Integer, Set<UserStatViewRecord>> userStatMap = new HashMap<>();
 
-        if (calendar == null || calendar.getDays() == null) {
+        if (calendar == null || calendar.getDays() == null || calendar.getMonth() == null) {
             return userStatMap;
         }
 
@@ -334,7 +334,7 @@ public class ScheduleValidationService {
                 int shiftType = assignment.getShiftType();
                 ShiftPreference preference = getPreference(user, shiftType);
 
-                if (preference == null) {
+                if (!preferenceAppliesToMonth(preference, calendar.getMonth())) {
                     continue;
                 }
 
@@ -354,10 +354,7 @@ public class ScheduleValidationService {
                     continue;
                 }
 
-                boolean alreadyAdded =
-                        alreadyAddedUserIdsByShiftType
-                                .computeIfAbsent(shiftType, key -> new HashSet<>())
-                                .contains(user.getId());
+                boolean alreadyAdded = alreadyAddedUserIdsByShiftType.computeIfAbsent(shiftType, key -> new HashSet<>()).contains(user.getId());
 
                 if (alreadyAdded) {
                     continue;
@@ -374,7 +371,7 @@ public class ScheduleValidationService {
                         .remainingWeekdays(Math.max(remainingWeekdays, 0))
                         .remainingWeekends(Math.max(remainingWeekends, 0))
                         .anyDateSelected(preference.isAnyDateSelected())
-                        .requestedDateDays(toDayOfMonthSet(preference.getDatesYes()))
+                        .requestedDateDays(toCurrentMonthDayOfMonthSet(preference.getDatesYes(), calendar.getMonth()))
                         .assignedWeekdays(calculatedWeekdays)
                         .assignedWeekends(calculatedWeekends)
                         .assignedTotal(calculatedWeekdays + calculatedWeekends)
@@ -394,10 +391,33 @@ public class ScheduleValidationService {
         return userStatMap;
     }
 
-    private Map<Integer, Set<UserStatViewRecord>> returnNoShiftAssignedUserStatMap(
-            ScheduleCalendar calendar,
-            CalculationCounters counters
-    ) {
+    private boolean preferenceAppliesToMonth(ShiftPreference preference, YearMonth month) {
+        if (preference == null || month == null) {
+            return false;
+        }
+
+        if (preference.isAnyDateSelected()) {
+            return true;
+        }
+
+        return preference.getDatesYes() != null
+                && preference.getDatesYes()
+                .stream()
+                .anyMatch(date -> date != null && YearMonth.from(date).equals(month));
+    }
+
+    private Set<Integer> toCurrentMonthDayOfMonthSet(List<LocalDate> dates, YearMonth month) {
+        if (dates == null || month == null) {
+            return Set.of();
+        }
+
+        return dates.stream()
+                .filter(date -> date != null && YearMonth.from(date).equals(month))
+                .map(LocalDate::getDayOfMonth)
+                .collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    private Map<Integer, Set<UserStatViewRecord>> returnNoShiftAssignedUserStatMap(ScheduleCalendar calendar, CalculationCounters counters) {
         Map<Integer, Set<UserStatViewRecord>> result = new HashMap<>();
 
         if (calendar == null || calendar.getMonth() == null) {
@@ -450,7 +470,7 @@ public class ScheduleValidationService {
                         .requestedWeekdays(preference.getWeekdayCount())
                         .requestedWeekends(preference.getWeekendCount())
                         .anyDateSelected(preference.isAnyDateSelected())
-                        .requestedDateDays(toDayOfMonthSet(preference.getDatesYes()))
+                        .requestedDateDays(toCurrentMonthDayOfMonthSet(preference.getDatesYes(), calendar.getMonth()))
                         .assignedWeekdays(0)
                         .assignedWeekends(0)
                         .assignedTotal(0)
@@ -522,7 +542,7 @@ public class ScheduleValidationService {
                                                 .anyDateSelected(anyDateSelected)
                                                 .requestedDateDays(preference == null
                                                         ? Set.of()
-                                                        : toDayOfMonthSet(preference.getDatesYes()))
+                                                        : toCurrentMonthDayOfMonthSet(preference.getDatesYes(), calendar.getMonth()))
                                                 .assignedDateDays(new TreeSet<>())
                                                 .month(calendar.getMonth())
                                                 .build()
@@ -620,16 +640,6 @@ public class ScheduleValidationService {
         return StreamSupport.stream(userRepository.findAll().spliterator(), false)
                 .filter(User::hasShiftRequest)
                 .toList();
-    }
-
-    private Set<Integer> toDayOfMonthSet(List<LocalDate> dates) {
-        if (dates == null) {
-            return Set.of();
-        }
-
-        return dates.stream()
-                .map(LocalDate::getDayOfMonth)
-                .collect(Collectors.toCollection(TreeSet::new));
     }
 
     private String returnScheduleScoreAsString(
