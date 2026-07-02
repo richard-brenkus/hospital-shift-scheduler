@@ -11,52 +11,85 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class StoredScheduleService {
 
+    private static final DateTimeFormatter MONTH_YEAR_FORMATTER =
+            DateTimeFormatter.ofPattern("MM/yyyy");
+
     private final StoredCalendarDayRepository storedCalendarDayRepository;
 
     @Transactional
     public void saveSchedule(ScheduleCalendar calendar) {
-
         if (calendar == null || calendar.getMonth() == null) {
-            throw new IllegalArgumentException("Schedule calendar or month is missing");
+            throw new IllegalArgumentException("Cannot save schedule: calendar or calendar month is missing.");
         }
 
-        String monthYearId = calendar.getMonth()
-                .format(DateTimeFormatter.ofPattern("MM/yyyy"));
+        if (calendar.getDays() == null || calendar.getDays().isEmpty()) {
+            throw new IllegalArgumentException("Cannot save schedule: calendar contains no days.");
+        }
 
-        for (CalendarDay day : calendar.getDays()) {
+        YearMonth month = calendar.getMonth();
+        String monthYearId = month.format(MONTH_YEAR_FORMATTER);
 
-            StoredCalendarDay storedDay = StoredCalendarDay.builder()
-                    .dateId(CalendarDateIdUtils.toDateId(day.getDate()))
-                    .monthYearId(monthYearId)
-                    .dayInteger(day.getDate().getDayOfMonth())
-                    .weekendOrHoliday(day.isWeekendOrHoliday())
-                    .assignmentsByShiftType(new HashMap<>())
-                    .build();
+        List<StoredCalendarDay> storedDays = calendar.getDays()
+                .stream()
+                .filter(Objects::nonNull)
+                .sorted(Comparator.comparing(CalendarDay::getDate))
+                .map(day -> toStoredCalendarDay(day, monthYearId))
+                .toList();
 
-            for (ShiftAssignment assignment : day.getAssignments()) {
-                User user = assignment.getUser();
+        storedCalendarDayRepository.saveAll(storedDays);
+    }
 
-                if (user == null || user.getName() == null || user.getName().isBlank()) {
-                    continue;
-                }
+    private StoredCalendarDay toStoredCalendarDay(
+            CalendarDay day,
+            String monthYearId
+    ) {
+        if (day.getDate() == null) {
+            throw new IllegalArgumentException("Cannot save schedule: calendar day date is missing.");
+        }
 
-                storedDay.putAssignment(
-                        assignment.getShiftType(),
-                        user.getId(),
-                        user.getUsername(),
-                        user.getName(),
-                        user.getTitle()
-                );
+        StoredCalendarDay storedDay = StoredCalendarDay.builder()
+                .dateId(CalendarDateIdUtils.toDateId(day.getDate()))
+                .monthYearId(monthYearId)
+                .weekendOrHoliday(day.isWeekendOrHoliday())
+                .dayInteger(day.getDate().getDayOfMonth())
+                .assignmentsByShiftType(new HashMap<>())
+                .build();
+
+        if (day.getAssignments() == null) {
+            return storedDay;
+        }
+
+        for (ShiftAssignment assignment : day.getAssignments()) {
+            if (assignment == null || assignment.getUser() == null) {
+                continue;
             }
 
-            storedCalendarDayRepository.save(storedDay);
+            User user = assignment.getUser();
+
+            if (user.getId() == null) {
+                continue;
+            }
+
+            storedDay.putAssignment(
+                    assignment.getShiftType(),
+                    user.getId(),
+                    user.getUsername(),
+                    user.getName(),
+                    user.getTitle()
+            );
         }
+
+        return storedDay;
     }
 }

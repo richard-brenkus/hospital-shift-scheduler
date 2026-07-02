@@ -1,0 +1,87 @@
+<!DOCTYPE HTML>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/styles/main.css}"/>
+    <title data-th-text="#{showSavedCalendars.title}">Show saved calendars</title>
+</head>
+
+<body>
+
+<button class="openbtn" onclick="openNav()">menu</button>
+
+<div id="main" class="centered">
+
+    <h1 data-th-text="#{showSavedCalendars.header}">
+        Saved schedules
+    </h1>
+
+    <div class="centered"
+         th:if="${calendarExists == false}"
+         data-th-text="#{showSavedCalendars.calendarNonExistent}">
+        The database does not contain any stored dates for the selected month/year.
+        Please select another month/year.
+    </div>
+
+    <form th:action="@{/admin/show_saved_calendars}"
+          method="post"
+          th:object="${savedCalendarSelectionForm}">
+
+        <table class="table-no-lines">
+            <tr>
+                <td class="td-no-lines">
+                    <label for="selectedMonth"
+                           data-th-text="#{showSavedCalendars.selectMonth}">
+                        Select month:
+                    </label>
+                </td>
+
+                <td class="td-no-lines">
+                    <select id="selectedMonth"
+                            th:field="*{selectedMonth}">
+                        <option th:each="monthOption : ${monthOptions}"
+                                th:value="${monthOption.value}"
+                                th:text="${monthOption.label}">
+                            01/2026
+                        </option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+
+        <br>
+
+        <button type="submit"
+                class="standard-button"
+                data-th-text="#{button.showMonth}">
+            Show month
+        </button>
+    </form>
+
+    <br>
+
+    <form th:action="@{/admin/adminIndex}" method="get">
+        <button type="submit"
+                class="standard-button"
+                data-th-text="#{button.backToHomePage}">
+            Go back
+        </button>
+    </form>
+
+</div>
+
+<div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
+
+<script>
+    function openNav() {
+        document.getElementById("adminSidebar").style.width = "250px";
+    }
+
+    function closeNav() {
+        document.getElementById("adminSidebar").style.width = "0";
+    }
+</script>
+
+</body>
+</html>

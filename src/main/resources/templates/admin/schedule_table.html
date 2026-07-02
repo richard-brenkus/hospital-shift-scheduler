@@ -411,9 +411,18 @@
                 </form>
             </th>
             <th class="th-no-lines">
-                <form target="_blank" th:action="@{/admin/override_validation}" method="post">
-                    <button type="submit" class="standard-button" data-th-text="#{button.saveNoValidation}">
+                <form target="_blank"
+                      th:action="@{/admin/override_validation}"
+                      method="post">
+
+                    <button type="submit"
+                            class="standard-button"
+                            data-th-text="#{button.saveNoValidation}"
+                            th:attr="data-confirm-message=#{scheduleTable.confirmOverrideValidation}"
+                            onclick="return confirm(this.dataset.confirmMessage);">
+
                         Save schedule without validation
+
                     </button>
                 </form>
             </th>

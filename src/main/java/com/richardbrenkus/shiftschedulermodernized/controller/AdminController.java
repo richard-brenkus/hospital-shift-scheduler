@@ -40,6 +40,7 @@ public class AdminController {
     private final ScheduleValidationService scheduleValidationService;
     private final ScheduleMapper scheduleMapper;
     private final UserStatisticService userStatisticService;
+    private final StoredScheduleService storedScheduleService;
 
     @GetMapping("/admin/adminIndex")
     public String adminIndex(Authentication authentication, Model model) {
@@ -74,8 +75,6 @@ public class AdminController {
         model.addAttribute(ModelAttributeName.USER_REGISTER_FORM, new UserRegisterForm());
         model.addAttribute(ModelAttributeName.PROFESSIONS, Profession.values());
         model.addAttribute(ModelAttributeName.SHIFT_TYPES, shiftTypeService.getShiftTypes());
-        //model.addAttribute(ModelAttributeName.ACTION_TYPE, ModelAttributeValue.ACTION_TYPE_ADD);
-        //model.addAttribute(ModelAttributeName.HEADER_TYPE, ModelAttributeValue.HEADER_TYPE_ADMIN_ADD);
 
         return "admin/register_user";
     }
@@ -124,7 +123,6 @@ public class AdminController {
 
         userService.createUser(userRegisterForm);
 
-        //model.addAttribute(ModelAttributeName.ACTION_TYPE, ModelAttributeValue.ACTION_TYPE_ADD);
         return "admin/user_update_success";
     }
 
@@ -211,8 +209,6 @@ public class AdminController {
         model.addAttribute(ModelAttributeName.USER_UPDATE_FORM, updatedUser);
         model.addAttribute(ModelAttributeName.PROFESSIONS, Profession.values());
         model.addAttribute(ModelAttributeName.SHIFT_TYPES, shiftTypeService.getShiftTypes());
-        //model.addAttribute(ModelAttributeName.ACTION_TYPE, ModelAttributeValue.ACTION_TYPE_UPDATE);
-        //model.addAttribute(ModelAttributeName.HEADER_TYPE, ModelAttributeValue.HEADER_TYPE_ADMIN_UPDATE);
 
         return "admin/update_user";
     }
@@ -351,7 +347,7 @@ public class AdminController {
         List<Integer> shiftTypes = shiftTypeService.getShiftTypes();
         ScheduleEditForm scheduleEditForm = scheduleMapper.toEditForm(bestCalendar, calculationProfileForm, shiftTypes);
 
-        ScheduleValidationResult scheduleValidationResult = scheduleValidationService.generateUserStats(bestCalendar);
+        ScheduleValidationResult scheduleValidationResult = scheduleValidationService.initializeValidationAndUserStats(bestCalendar);
 
         userStatisticService.storeFullStatisticsInSession(session, scheduleValidationResult, scheduleEditForm);
 
@@ -367,7 +363,7 @@ public class AdminController {
             @ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm,
             @RequestParam(defaultValue = "false") boolean saveSchedule
     ) {
-        ScheduleValidationResult validationResult = scheduleValidationService.evaluateEdit(scheduleEditForm, saveSchedule);
+        ScheduleValidationResult validationResult = scheduleValidationService.validateSchedule(scheduleEditForm);
 
         userStatisticService.storeFullStatisticsInSession(session, validationResult, scheduleEditForm);
 
@@ -392,13 +388,100 @@ public class AdminController {
     }
 
     @GetMapping("/admin/show_full_statistics")
-    public String showFullStats(
-            Model model,
-            HttpSession session
-    ) {
+    public String showFullStats(Model model, HttpSession session) {
         userStatisticService.addFullStatisticsToModel(model, session, shiftTypeService.getShiftTypes());
 
         return "admin/full_monthly_statistics";
+    }
+
+    @PostMapping("/admin/save_schedule")
+    public String saveSchedule(
+            Model model,
+            HttpSession session,
+            @ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm
+    ) {
+        ScheduleValidationResult validationResult =
+                scheduleValidationService.validateSchedule(scheduleEditForm);
+
+        if (validationResult.isErrorsExist()) {
+            userStatisticService.storeFullStatisticsInSession(
+                    session,
+                    validationResult,
+                    scheduleEditForm
+            );
+
+            addScheduleTableAttributes(model, scheduleEditForm, validationResult);
+
+            return "admin/schedule_table";
+        }
+
+        ScheduleCalendar calendar =
+                scheduleMapper.toScheduleCalendar(
+                        scheduleEditForm,
+                        scheduleEditForm.toCalculationProfileForm()
+                );
+
+        storedScheduleService.saveSchedule(calendar);
+
+        return "redirect:/admin/show_saved_calendars";
+    }
+
+    @PostMapping("/admin/override_validation")
+    public String overrideValidation(@ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm) {
+        ScheduleCalendar calendar = scheduleMapper.toScheduleCalendar(scheduleEditForm, scheduleEditForm.toCalculationProfileForm());
+
+        storedScheduleService.saveSchedule(calendar);
+
+        return "redirect:/admin/show_saved_calendars";
+    }
+
+
+    @GetMapping("/admin/show_saved_calendars")
+    public String showSavedCalendars(Model model) {
+        addSavedCalendarSelectionAttributes(
+                model,
+                SavedCalendarSelectionForm.builder().build(),
+                true
+        );
+
+        return "admin/show_saved_calendars";
+    }
+
+    @PostMapping("/admin/show_saved_calendars")
+    public String showSavedCalendarsPost(
+            Model model,
+            @ModelAttribute("savedCalendarSelectionForm") SavedCalendarSelectionForm form
+    ) {
+        YearMonth selectedMonth = form.getSelectedMonth();
+
+        if (selectedMonth == null || !storedScheduleService.existsByMonth(selectedMonth)) {
+            addSavedCalendarSelectionAttributes(model, form, false);
+            return "admin/show_saved_calendars";
+        }
+
+        SavedScheduleView savedScheduleView =
+                storedScheduleService.loadSavedScheduleView(selectedMonth);
+
+        model.addAttribute("savedSchedule", savedScheduleView);
+        model.addAttribute("calendar", savedScheduleView);
+        model.addAttribute("month", selectedMonth);
+        model.addAttribute("year", selectedMonth.getYear());
+        model.addAttribute("monthInt", selectedMonth.getMonthValue());
+        model.addAttribute("monthDaysList", savedScheduleView.monthDaysList());
+        model.addAttribute("weekendsAndHolidays", savedScheduleView.weekendsAndHolidays());
+        model.addAttribute("shiftTypes", shiftTypeService.getShiftTypes());
+
+        return "admin/schedule_table_saved";
+    }
+
+    private void addSavedCalendarSelectionAttributes(
+            Model model,
+            SavedCalendarSelectionForm form,
+            boolean calendarExists
+    ) {
+        model.addAttribute("savedCalendarSelectionForm", form);
+        model.addAttribute("monthOptions", storedScheduleService.getSelectableMonthOptions());
+        model.addAttribute("calendarExists", calendarExists);
     }
 
     private void addScheduleTableAttributes(Model model, ScheduleEditForm scheduleEditForm, ScheduleValidationResult scheduleValidationResult) {

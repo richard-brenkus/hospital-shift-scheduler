@@ -38,55 +38,33 @@ public class ScheduleValidationService {
 
     private final UserRepository userRepository;
     private final ShiftTypeProperties shiftTypeProperties;
-    private final StoredScheduleService storedScheduleService;
     private final ScheduleMapper scheduleMapper;
     private final ShiftTypeService shiftTypeService;
     private final ScheduleRuleService scheduleRuleService;
 
-    /**
-     * Use this after calculateSchedule(...), before the admin edits the generated table.
-     * It produces only statistics/display data, not validation errors.
-     */
     @Transactional(readOnly = true)
-    public ScheduleValidationResult generateUserStats(ScheduleCalendar calendar) {
+    public ScheduleValidationResult initializeValidationAndUserStats(ScheduleCalendar calendar) {
         ScheduleValidationResult result = ScheduleValidationResult.builder()
                 .calendar(calendar)
                 .allUsersExist(true)
                 .errorsExist(false)
                 .build();
 
-        return generateUserStats(calendar, result);
-    }
-
-    /**
-     * Use this after the admin submits the edited schedule.
-     * It validates the edited calendar and also refreshes user statistics.
-     */
-    @Transactional
-    public ScheduleValidationResult evaluateEdit(ScheduleEditForm scheduleEditForm, boolean saveSchedule) {
-        ScheduleCalendar editedCalendar = scheduleMapper.toScheduleCalendar(scheduleEditForm, scheduleEditForm.toCalculationProfileForm());
-
-        ScheduleValidationResult result = validateSchedule(editedCalendar);
-        generateUserStats(editedCalendar, result);
-
-        if (saveSchedule && !result.isErrorsExist()) {
-            storedScheduleService.saveSchedule(editedCalendar);
-        }
-
-        return result;
+        return generateValidationAndUserStats(calendar, result);
     }
 
     @Transactional(readOnly = true)
-    public ScheduleValidationResult validateSchedule(ScheduleCalendar calendar) {
+    public ScheduleValidationResult validateSchedule(ScheduleEditForm scheduleEditForm) {
+        ScheduleCalendar editedCalendar = scheduleMapper.toScheduleCalendar(scheduleEditForm, scheduleEditForm.toCalculationProfileForm());
 
-        if (calendar == null) {
+        if (editedCalendar == null) {
             return ScheduleValidationResult.builder()
                     .allUsersExist(true)
                     .errorsExist(false)
                     .build();
         }
 
-        CalculationProfileForm profile = calendar.getCalculationProfile();
+        CalculationProfileForm profile = editedCalendar.getCalculationProfile();
 
         if (profile == null) {
             throw new IllegalArgumentException("Schedule calendar has no calculation profile.");
@@ -99,22 +77,22 @@ public class ScheduleValidationService {
                 ? Set.of()
                 : new HashSet<>(profile.getForceFillShiftTypes());
 
-        Map<Integer, StoredCalendarDay> previousMonthCalendar = scheduleRuleService.loadPreviousMonthCalendar(calendar.getMonth().atDay(1), minimalGap);
+        Map<Integer, StoredCalendarDay> previousMonthCalendar = scheduleRuleService.loadPreviousMonthCalendar(editedCalendar.getMonth().atDay(1), minimalGap);
 
-        CalculationCounters counters = countAssignments(calendar);
+        CalculationCounters counters = countAssignments(editedCalendar);
 
         ScheduleValidationResult result = ScheduleValidationResult.builder()
-                .calendar(calendar)
+                .calendar(editedCalendar)
                 .allUsersExist(true)
                 .errorsExist(false)
-                .scheduleScore(returnScheduleScoreAsString(calendar, shiftTypeProperties.count()))
+                .scheduleScore(returnScheduleScoreAsString(editedCalendar, shiftTypeProperties.count()))
                 .build();
 
-        if (calendar.getDays() == null) {
+        if (editedCalendar.getDays() == null) {
             return result;
         }
 
-        for (CalendarDay day : calendar.getDays()) {
+        for (CalendarDay day : editedCalendar.getDays()) {
 
             if (day == null || day.getAssignments() == null) {
                 continue;
@@ -135,7 +113,7 @@ public class ScheduleValidationService {
                 int shiftType = assignment.getShiftType();
                 String userName = user.getName();
 
-                if (!calendar.isOverrideHasShiftRequest() && !user.hasShiftRequest()) {
+                if (!editedCalendar.isOverrideHasShiftRequest() && !user.hasShiftRequest()) {
                     markError(result, shiftType, day);
                     result.setUserNoRequest(true);
                     result.addUserNoRequest(shiftType, userName);
@@ -159,13 +137,13 @@ public class ScheduleValidationService {
                     withinRequestedWeekdayLimit = scheduleRuleService.isValidWithinRequestedWeekdayLimit(user, shiftType, counters);
                 }
 
-                boolean respectsMinimalGap = scheduleRuleService.respectsMinimalGap(day.getDate(), minimalGap, user, calendar, shiftType);
+                boolean respectsMinimalGap = scheduleRuleService.respectsMinimalGap(day.getDate(), minimalGap, user, editedCalendar, shiftType);
 
                 boolean isNotRejectedByUser = scheduleRuleService.isNotRejectedByUser(day.getDate(), shiftRequest.getDatesNo());
 
                 boolean respectsPreviousMonthGap = scheduleRuleService.respectsPreviousMonthGap(previousMonthCalendar, minimalGap, day.getDate(), user);
 
-                if (!withinTotalShiftLimit && !calendar.isOverrideShiftCountCap()) {
+                if (!withinTotalShiftLimit && !editedCalendar.isOverrideShiftCountCap()) {
                     markError(result, shiftType, day);
                     result.setUserShiftCap(true);
                     result.addShiftCapUser(shiftType, userName);
@@ -174,8 +152,8 @@ public class ScheduleValidationService {
                 boolean forceFill = forceFillShiftTypes.contains(shiftType);
 
                 if (!forceFill
-                        && !calendar.isOverrideUserShiftRequestExceptNoDates()
-                        && !calendar.isOverrideUserShiftRequestAll()) {
+                        && !editedCalendar.isOverrideUserShiftRequestExceptNoDates()
+                        && !editedCalendar.isOverrideUserShiftRequestAll()) {
 
                     if (!withinRequestedWeekdayLimit) {
                         markError(result, shiftType, day);
@@ -190,19 +168,19 @@ public class ScheduleValidationService {
                     }
                 }
 
-                if (!respectsMinimalGap && !calendar.isOverrideConflictingDates()) {
+                if (!respectsMinimalGap && !editedCalendar.isOverrideConflictingDates()) {
                     markError(result, shiftType, day);
                     result.setUserCrossCheck(true);
                     result.addCrossCheckUser(shiftType, userName);
                 }
 
-                if (!isNotRejectedByUser && !calendar.isOverrideUserShiftRequestAll()) {
+                if (!isNotRejectedByUser && !editedCalendar.isOverrideUserShiftRequestAll()) {
                     markError(result, shiftType, day);
                     result.setUserDatesNo(true);
                     result.addDatesNoCheckUser(shiftType, userName);
                 }
 
-                if (!respectsPreviousMonthGap && !calendar.isOverridePreviousMonthValid()) {
+                if (!respectsPreviousMonthGap && !editedCalendar.isOverridePreviousMonthValid()) {
                     markError(result, shiftType, day);
                     result.setPreviousMonthCheckFailed(true);
                     result.addPreviousMonthCheckUser(shiftType, userName);
@@ -210,10 +188,12 @@ public class ScheduleValidationService {
             }
         }
 
+        this.generateValidationAndUserStats(editedCalendar, result);
+
         return result;
     }
 
-    private ScheduleValidationResult generateUserStats(ScheduleCalendar calendar, ScheduleValidationResult result) {
+    private ScheduleValidationResult generateValidationAndUserStats(ScheduleCalendar calendar, ScheduleValidationResult result) {
         if (calendar == null || calendar.getCalculationProfile() == null) {
             return result;
         }
