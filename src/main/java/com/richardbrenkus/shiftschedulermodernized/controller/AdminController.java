@@ -10,6 +10,7 @@ import com.richardbrenkus.shiftschedulermodernized.dto.view.*;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ScheduleMapper;
 import com.richardbrenkus.shiftschedulermodernized.service.*;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.io.IOException;
 import java.time.YearMonth;
 import java.util.*;
 
@@ -41,6 +43,8 @@ public class AdminController {
     private final ScheduleMapper scheduleMapper;
     private final UserStatisticService userStatisticService;
     private final StoredScheduleService storedScheduleService;
+    private final SpreadsheetService spreadsheetService;
+
 
     @GetMapping("/admin/adminIndex")
     public String adminIndex(Authentication authentication, Model model) {
@@ -468,6 +472,26 @@ public class AdminController {
 
         return "admin/schedule_table_saved";
     }
+
+    @PostMapping("/admin/download_spreadsheet")
+    public void exportSavedScheduleToExcel(
+            HttpServletResponse response,
+            @RequestParam("selectedMonth") YearMonth selectedMonth
+    ) throws IOException {
+
+        String filename = spreadsheetService.createFileName(selectedMonth);
+
+        response.setContentType(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        );
+        response.setHeader(
+                "Content-Disposition",
+                "attachment; filename=\"" + filename + "\""
+        );
+
+        spreadsheetService.writeSavedSchedule(response.getOutputStream(), selectedMonth);
+    }
+
 
     private void addSavedCalendarSelectionAttributes(
             Model model,
