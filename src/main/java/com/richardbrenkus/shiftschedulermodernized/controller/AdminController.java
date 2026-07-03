@@ -360,18 +360,13 @@ public class AdminController {
     public String evaluateEdit(
             Model model,
             HttpSession session,
-            @ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm,
-            @RequestParam(defaultValue = "false") boolean saveSchedule
+            @ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm
     ) {
         ScheduleValidationResult validationResult = scheduleValidationService.validateSchedule(scheduleEditForm);
 
         userStatisticService.storeFullStatisticsInSession(session, validationResult, scheduleEditForm);
 
         addScheduleTableAttributes(model, scheduleEditForm, validationResult);
-
-        if (saveSchedule && !validationResult.isErrorsExist()) {
-            return "redirect:/admin/show_saved_calendars";
-        }
 
         return "admin/schedule_table";
     }

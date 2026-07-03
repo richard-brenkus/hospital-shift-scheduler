@@ -11,7 +11,7 @@ public class ShiftSchedulerModernizedApplication {
         SpringApplication.run(ShiftSchedulerModernizedApplication.class, args);
         PasswordEncoderConfig encoder = new PasswordEncoderConfig();
 
-        System.out.println("Password: " + encoder.passwordEncoder().encode("alajos"));
+        //System.out.println("Password: " + encoder.passwordEncoder().encode("alajos"));
     }
 
 }

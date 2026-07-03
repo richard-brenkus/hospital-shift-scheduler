@@ -72,7 +72,6 @@ public class UserController {
         submittedShiftRequestRecord.ifPresentOrElse(record -> {
                     model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, userService.hasShiftRequest(username));
                     model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, record);
-                    System.out.println();
                 },
                 () -> model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, userService.hasShiftRequest(username))
         );

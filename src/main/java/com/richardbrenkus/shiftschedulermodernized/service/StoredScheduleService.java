@@ -143,10 +143,10 @@ public class StoredScheduleService {
                     : storedDay.getAssignmentsByShiftType().get(shiftType);
 
             assignmentViews.add(SavedScheduleShiftAssignmentView.builder()
-                            .shiftType(shiftType)
-                            .user(userSnapshot)
-                            .displayName(toDisplayName(userSnapshot))
-                            .build()
+                    .shiftType(shiftType)
+                    .user(userSnapshot)
+                    .displayName(toDisplayName(userSnapshot))
+                    .build()
             );
         }
 
