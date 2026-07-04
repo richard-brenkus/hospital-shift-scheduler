@@ -15,12 +15,10 @@ import java.time.ZonedDateTime;
 public class ScheduledTasksService {
 
     private final ScheduledEventsProfileRepository scheduledEventsRepository;
-    private final MonthlyScheduleService monthlyScheduleService;
 
 
-    public ScheduledTasksService(ScheduledEventsProfileRepository scheduledEventsRepository, MonthlyScheduleService monthlyScheduleService) {
+    public ScheduledTasksService(ScheduledEventsProfileRepository scheduledEventsRepository) {
         this.scheduledEventsRepository = scheduledEventsRepository;
-        this.monthlyScheduleService = monthlyScheduleService;
     }
 
     public ScheduledTasksRecord getScheduledTasksRecord() {
@@ -83,10 +81,26 @@ public class ScheduledTasksService {
         reminderTask.setYear(year);
         reminderTask.setMonth(month);
         LocalDate localDate = LocalDate.now(zoneId);
-        day = monthlyScheduleService.returnVerifiedDay(day, localDate, zoneId);
-        finalDay = monthlyScheduleService.returnVerifiedDay(finalDay, localDate, zoneId);
+        day = returnVerifiedDay(day, localDate, zoneId);
+        finalDay = returnVerifiedDay(finalDay, localDate, zoneId);
 
         reminderTask.setDay(day);
         reminderTask.setFinalSubmissionDay(finalDay);
+    }
+
+    public int returnVerifiedDay(int day, LocalDate localDate, ZoneId zoneId) {
+
+        int resultingDay = day;
+
+        if (localDate.isLeapYear()) {
+            if (day > ZonedDateTime.now(zoneId).getMonth().maxLength())
+                resultingDay = ZonedDateTime.now(zoneId).getMonth().maxLength();
+        }
+        if (!localDate.isLeapYear()) {
+            if (day > ZonedDateTime.now(zoneId).getMonth().minLength())
+                resultingDay = ZonedDateTime.now(zoneId).getMonth().minLength();
+        }
+
+        return resultingDay;
     }
 }
