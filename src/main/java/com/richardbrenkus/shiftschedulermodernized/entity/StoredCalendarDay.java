@@ -37,15 +37,7 @@ public class StoredCalendarDay {
     @Builder.Default
     private Map<Integer, StoredUserSnapshot> assignmentsByShiftType = new HashMap<>();
 
-    public String getUsernameForShiftType(int shiftType) {
-        StoredUserSnapshot assignment = assignmentsByShiftType.get(shiftType);
-        return assignment == null ? "" : assignment.getUsername();
-    }
-
     public void putAssignment(int shiftType, long userId, String username, String name, String title) {
-        assignmentsByShiftType.put(
-                shiftType,
-                new StoredUserSnapshot(userId, username, name, title)
-        );
+        assignmentsByShiftType.put(shiftType, new StoredUserSnapshot(userId, username, name, title));
     }
 }

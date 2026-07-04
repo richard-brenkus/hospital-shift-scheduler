@@ -104,7 +104,11 @@
                 </th>
 
                 <th class="th-no-lines">
-                    <form th:action="@{/admin/show_full_statistics}" method="get">
+                    <form th:action="@{/admin/show_stored_full_statistics}" method="get">
+                        <input type="hidden"
+                               name="selectedMonth"
+                               th:value="${savedSchedule != null && savedSchedule.month != null ? savedSchedule.month : month}"/>
+
                         <button type="submit"
                                 class="standard-button"
                                 data-th-text="#{button.showFullStats}">

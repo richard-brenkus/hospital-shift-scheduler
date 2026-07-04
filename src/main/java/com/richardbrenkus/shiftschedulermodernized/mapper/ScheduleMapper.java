@@ -4,16 +4,20 @@ import com.richardbrenkus.shiftschedulermodernized.algorithm.CalendarDay;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleCalendar;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ShiftAssignment;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.*;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.UserStatViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
+import com.richardbrenkus.shiftschedulermodernized.entity.UserStatEntity;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.SavedScheduleDayView;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.SavedScheduleShiftAssignmentView;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.SavedScheduleView;
+import com.richardbrenkus.shiftschedulermodernized.entity.StoredUserSnapshot;
+
+import java.util.*;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -21,21 +25,13 @@ public class ScheduleMapper {
 
     private final UserRepository userRepository;
 
-    public ScheduleEditForm toEditForm(
-            ScheduleCalendar calendar,
-            CalculationProfileForm calculationProfileForm,
-            List<Integer> shiftTypes
-    ) {
+    public ScheduleEditForm toEditForm(ScheduleCalendar calendar, CalculationProfileForm calculationProfileForm, List<Integer> shiftTypes) {
         ScheduleEditForm form = ScheduleEditForm.builder()
                 .month(calculationProfileForm.getCalculationMonth())
                 .shiftCountCap(calculationProfileForm.getShiftCountCap())
                 .gapBetweenShifts(calculationProfileForm.getGapBetweenShifts())
                 .sortByDatesAmount(calculationProfileForm.isSortByDatesAmount())
-                .forceFillShiftTypes(new ArrayList<>(
-                        calculationProfileForm.getForceFillShiftTypes() == null
-                                ? List.of()
-                                : calculationProfileForm.getForceFillShiftTypes()
-                ))
+                .forceFillShiftTypes(new ArrayList<>(calculationProfileForm.getForceFillShiftTypes() == null? List.of() : calculationProfileForm.getForceFillShiftTypes()))
                 .overrideUserShiftRequestExceptNoDates(calendar.isOverrideUserShiftRequestExceptNoDates())
                 .overrideUserShiftRequestAll(calendar.isOverrideUserShiftRequestAll())
                 .overrideShiftCountCap(calendar.isOverrideShiftCountCap())
@@ -61,8 +57,7 @@ public class ScheduleMapper {
 
                 User assignedUser = existingAssignment == null ? null : existingAssignment.getUser();
 
-                dayForm.getAssignments().add(
-                        ShiftAssignmentForm.builder()
+                dayForm.getAssignments().add(ShiftAssignmentForm.builder()
                                 .shiftType(shiftType)
                                 .userId(assignedUser == null ? null : assignedUser.getId())
                                 .name(assignedUser == null ? "" : assignedUser.getName())
@@ -77,34 +72,8 @@ public class ScheduleMapper {
         return form;
     }
 
-    private ScheduleDayForm toDayForm(CalendarDay day) {
-        List<ShiftAssignmentForm> assignmentForms = day.getAssignments() == null
-                ? new ArrayList<>()
-                : day.getAssignments()
-                .stream()
-                .sorted(Comparator.comparingInt(ShiftAssignment::getShiftType))
-                .map(this::toAssignmentForm)
-                .toList();
-
-        return ScheduleDayForm.builder()
-                .date(day.getDate())
-                .weekendOrHoliday(day.isWeekendOrHoliday())
-                .assignments(new ArrayList<>(assignmentForms))
-                .build();
-    }
-
-    private ShiftAssignmentForm toAssignmentForm(ShiftAssignment assignment) {
-        return ShiftAssignmentForm.builder()
-                .shiftType(assignment.getShiftType())
-                .userId(assignment.getUser() == null ? null : assignment.getUser().getId())
-                .build();
-    }
-
     @Transactional(readOnly = true)
-    public ScheduleCalendar toScheduleCalendar(
-            ScheduleEditForm form,
-            CalculationProfileForm calculationProfile
-    ) {
+    public ScheduleCalendar toScheduleCalendar(ScheduleEditForm form, CalculationProfileForm calculationProfile) {
         if (form == null) {
             throw new IllegalArgumentException("Schedule edit form must not be null");
         }
@@ -127,6 +96,153 @@ public class ScheduleMapper {
                 .overrideHasShiftRequest(form.isOverrideHasShiftRequest())
                 .overridePreviousMonthValid(form.isOverridePreviousMonthValid())
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public ScheduleCalendar toScheduleCalendar(SavedScheduleView savedScheduleView) {
+        if (savedScheduleView == null) {
+            throw new IllegalArgumentException("Saved schedule view must not be null");
+        }
+
+        if (savedScheduleView.getMonth() == null) {
+            throw new IllegalArgumentException("Saved schedule month must not be null");
+        }
+
+        List<CalendarDay> days = savedScheduleView.getDays() == null
+                ? new ArrayList<>()
+                : savedScheduleView.getDays()
+                .stream()
+                .filter(Objects::nonNull)
+                .map(this::toCalendarDay)
+                .toList();
+
+        return ScheduleCalendar.builder()
+                .month(savedScheduleView.getMonth())
+                .days(new ArrayList<>(days))
+                .build();
+    }
+
+    public UserStatEntity toUserStatEntity(UserStatViewRecord record) {
+        if (record == null) {
+            throw new IllegalArgumentException("UserStatViewRecord must not be null");
+        }
+
+        Long userId = record.user() == null ? null : record.user().getId();
+        String username = record.user() == null ? null : record.user().getUsername();
+
+        return UserStatEntity.builder()
+                .yearMonth(record.month())
+                .userId(userId)
+                .username(username)
+                .name(record.name())
+                .shiftType(record.shiftType())
+                .requestedWeekdays(record.requestedWeekdays())
+                .requestedWeekends(record.requestedWeekends())
+                .calculatedWeekdays(record.calculatedWeekdays())
+                .calculatedWeekends(record.calculatedWeekends())
+                .remainingWeekdays(record.remainingWeekdays())
+                .remainingWeekends(record.remainingWeekends())
+                .anyDateSelected(record.anyDateSelected())
+                .requestedDateDays(record.requestedDateDays())
+                .assignedWeekdays(record.assignedWeekdays())
+                .assignedWeekends(record.assignedWeekends())
+                .assignedTotal(record.assignedTotal())
+                .assignedTotalAllShiftTypes(record.assignedTotalAllShiftTypes())
+                .assignedDateDays(record.assignedDateDays())
+                .build();
+    }
+
+    public UserStatViewRecord toUserStatViewRecord(UserStatEntity entity) {
+        if (entity == null) {
+            throw new IllegalArgumentException("UserStatEntity must not be null");
+        }
+
+        User user = entity.getUserId() == null
+                ? null
+                : userRepository.findById(entity.getUserId()).orElse(null);
+
+        return UserStatViewRecord.builder()
+                .user(user)
+                .name(entity.getName())
+                .shiftType(entity.getShiftType())
+                .requestedWeekdays(entity.getRequestedWeekdays())
+                .requestedWeekends(entity.getRequestedWeekends())
+                .calculatedWeekdays(entity.getCalculatedWeekdays())
+                .calculatedWeekends(entity.getCalculatedWeekends())
+                .remainingWeekdays(entity.getRemainingWeekdays())
+                .remainingWeekends(entity.getRemainingWeekends())
+                .anyDateSelected(entity.isAnyDateSelected())
+                .requestedDateDays(entity.getRequestedDateDays())
+                .assignedWeekdays(entity.getAssignedWeekdays())
+                .assignedWeekends(entity.getAssignedWeekends())
+                .assignedTotal(entity.getAssignedTotal())
+                .assignedTotalAllShiftTypes(entity.getAssignedTotalAllShiftTypes())
+                .assignedDateDays(entity.getAssignedDateDays())
+                .month(entity.getYearMonth())
+                .build();
+    }
+
+
+    private CalendarDay toCalendarDay(SavedScheduleDayView savedDay) {
+        if (savedDay.getDate() == null) {
+            throw new IllegalArgumentException("Saved schedule day date must not be null");
+        }
+
+        List<ShiftAssignment> assignments = savedDay.getAssignments() == null
+                ? new ArrayList<>()
+                : savedDay.getAssignments()
+                .stream()
+                .filter(Objects::nonNull)
+                .map(this::toShiftAssignment)
+                .filter(Objects::nonNull)
+                .toList();
+
+        return CalendarDay.builder()
+                .date(savedDay.getDate())
+                .weekendOrHoliday(savedDay.isWeekendOrHoliday())
+                .assignments(new ArrayList<>(assignments))
+                .build();
+    }
+
+    private ShiftAssignment toShiftAssignment(SavedScheduleShiftAssignmentView savedAssignment) {
+        if (savedAssignment == null || savedAssignment.getUser() == null) {
+            return null;
+        }
+
+        User user = resolveUser(savedAssignment.getUser());
+
+        if (user == null) {
+            throw new IllegalStateException(
+                    "Cannot restore saved schedule. User not found: "
+                            + savedAssignment.getDisplayName()
+            );
+        }
+
+        return ShiftAssignment.builder()
+                .shiftType(savedAssignment.getShiftType())
+                .user(user)
+                .build();
+    }
+
+    private User resolveUser(StoredUserSnapshot userSnapshot) {
+        if (userSnapshot == null) {
+            return null;
+        }
+
+        if (userSnapshot.getUserId() != null) {
+            Optional<User> userById = userRepository.findById(userSnapshot.getUserId());
+
+            if (userById.isPresent()) {
+                return userById.get();
+            }
+        }
+
+        if (userSnapshot.getUsername() == null || userSnapshot.getUsername().isBlank()) {
+            return null;
+        }
+
+        return userRepository.findByUsername(userSnapshot.getUsername())
+                .orElse(null);
     }
 
     private CalendarDay toCalendarDay(ScheduleDayForm form) {

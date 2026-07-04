@@ -75,8 +75,7 @@ public class StoredScheduleService {
 
         String monthYearId = toMonthYearId(month);
 
-        List<StoredCalendarDay> storedDays =
-                storedCalendarDayRepository.findByMonthYearIdOrderByDayIntegerAsc(monthYearId);
+        List<StoredCalendarDay> storedDays = storedCalendarDayRepository.findByMonthYearIdOrderByDayIntegerAsc(monthYearId);
 
         List<Integer> shiftTypes = shiftTypeService.getShiftTypes();
 

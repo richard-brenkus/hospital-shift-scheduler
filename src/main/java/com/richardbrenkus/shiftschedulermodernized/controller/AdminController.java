@@ -361,11 +361,7 @@ public class AdminController {
     }
 
     @PostMapping("/admin/evaluate_edit")
-    public String evaluateEdit(
-            Model model,
-            HttpSession session,
-            @ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm
-    ) {
+    public String evaluateEdit(Model model, HttpSession session, @ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm) {
         ScheduleValidationResult validationResult = scheduleValidationService.validateSchedule(scheduleEditForm);
 
         userStatisticService.storeFullStatisticsInSession(session, validationResult, scheduleEditForm);
@@ -376,51 +372,51 @@ public class AdminController {
     }
 
     @PostMapping("/admin/recalculate_schedule")
-    public String recalculateSchedule(
-            Model model,
-            HttpSession session,
-            @ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm
-    ) {
+    public String recalculateSchedule(Model model, HttpSession session, @ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm) {
         CalculationProfileForm calculationProfileForm = scheduleEditForm.toCalculationProfileForm();
 
         return calculateSchedule(model, session, calculationProfileForm);
     }
 
-    @GetMapping("/admin/show_full_statistics")
-    public String showFullStats(Model model, HttpSession session) {
+    @GetMapping("/admin/show_full_current_statistics")
+    public String showFullCurrentStats(Model model, HttpSession session) {
         userStatisticService.addFullStatisticsToModel(model, session, shiftTypeService.getShiftTypes());
 
         return "admin/full_monthly_statistics";
     }
 
+    @GetMapping("/admin/show_stored_full_statistics")
+    public String showStoredFullStatistics(Model model, @RequestParam("selectedMonth") YearMonth selectedMonth) {
+        Map<Integer, Set<UserStatViewRecord>> stats = userStatisticService.findViewRecordsByYearMonth(selectedMonth);
+
+        model.addAttribute("fullUserStatsByShiftType", stats);
+        model.addAttribute("shiftTypes", shiftTypeService.getShiftTypes());
+        model.addAttribute("statsExist",
+                stats.values().stream().anyMatch(set -> set != null && !set.isEmpty()));
+        model.addAttribute("month", selectedMonth);
+        model.addAttribute("year", selectedMonth.getYear());
+        model.addAttribute("monthInt", selectedMonth.getMonthValue());
+
+        return "admin/full_monthly_statistics";
+    }
+
     @PostMapping("/admin/save_schedule")
-    public String saveSchedule(
-            Model model,
-            HttpSession session,
-            @ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm
-    ) {
-        ScheduleValidationResult validationResult =
-                scheduleValidationService.validateSchedule(scheduleEditForm);
+    public String saveSchedule(Model model, HttpSession session, @ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm) {
+        ScheduleValidationResult validationResult = scheduleValidationService.validateSchedule(scheduleEditForm);
 
         if (validationResult.isErrorsExist()) {
-            userStatisticService.storeFullStatisticsInSession(
-                    session,
-                    validationResult,
-                    scheduleEditForm
-            );
+            userStatisticService.storeFullStatisticsInSession(session, validationResult, scheduleEditForm);
 
             addScheduleTableAttributes(model, scheduleEditForm, validationResult);
 
             return "admin/schedule_table";
         }
 
-        ScheduleCalendar calendar =
-                scheduleMapper.toScheduleCalendar(
-                        scheduleEditForm,
-                        scheduleEditForm.toCalculationProfileForm()
-                );
+        ScheduleCalendar calendar = scheduleMapper.toScheduleCalendar(scheduleEditForm, scheduleEditForm.toCalculationProfileForm());
 
         storedScheduleService.saveSchedule(calendar);
+
+        userStatisticService.replaceStatsForMonth(scheduleEditForm.getMonth(), validationResult.getFullUserStatsByShiftType());
 
         return "redirect:/admin/show_saved_calendars";
     }
@@ -437,20 +433,13 @@ public class AdminController {
 
     @GetMapping("/admin/show_saved_calendars")
     public String showSavedCalendars(Model model) {
-        addSavedCalendarSelectionAttributes(
-                model,
-                SavedCalendarSelectionForm.builder().build(),
-                true
-        );
+        addSavedCalendarSelectionAttributes(model, SavedCalendarSelectionForm.builder().build(), true);
 
         return "admin/show_saved_calendars";
     }
 
     @PostMapping("/admin/show_saved_calendars")
-    public String showSavedCalendarsPost(
-            Model model,
-            @ModelAttribute("savedCalendarSelectionForm") SavedCalendarSelectionForm form
-    ) {
+    public String showSavedCalendarsPost(Model model, @ModelAttribute("savedCalendarSelectionForm") SavedCalendarSelectionForm form) {
         YearMonth selectedMonth = form.getSelectedMonth();
 
         if (selectedMonth == null || !storedScheduleService.existsByMonth(selectedMonth)) {
@@ -458,8 +447,7 @@ public class AdminController {
             return "admin/show_saved_calendars";
         }
 
-        SavedScheduleView savedScheduleView =
-                storedScheduleService.loadSavedScheduleView(selectedMonth);
+        SavedScheduleView savedScheduleView = storedScheduleService.loadSavedScheduleView(selectedMonth);
 
         model.addAttribute("savedSchedule", savedScheduleView);
         model.addAttribute("calendar", savedScheduleView);
@@ -509,7 +497,7 @@ public class AdminController {
         model.addAttribute("shiftTypes", shiftTypeService.getShiftTypes());
         model.addAttribute("users", userService.findAllUsersForSelectionByNameAsc());
 
-        Set<String> usersWithNoRequest = scheduleValidationService.returnUsersWithNoRequest();
+        Set<String> usersWithNoRequest = userStatisticService.returnUsersWithNoRequest();
 
         model.addAttribute("usersWithNoRequest", usersWithNoRequest);
         model.addAttribute("usersWithNoRequestString", String.join(", ", usersWithNoRequest));

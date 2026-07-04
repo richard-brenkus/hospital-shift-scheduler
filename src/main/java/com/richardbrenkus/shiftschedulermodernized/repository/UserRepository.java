@@ -1,6 +1,7 @@
 package com.richardbrenkus.shiftschedulermodernized.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import org.springframework.data.domain.Sort;
@@ -13,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 public interface UserRepository extends CrudRepository<User, Long> {
 
     User getUserByUsername(String username);
+
+    Optional<User> findByUsername(String username);
 
     User getUserById(Long id);
 
