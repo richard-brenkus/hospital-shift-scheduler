@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Scheduled tasks</title>
+
+    <link rel="stylesheet" th:href="@{/styles/main.css}"/>
+</head>
+
+<body>
+
+<button class="openbtn standard-button" onclick="openNav()">Menu</button>
+
+<h1 class="centered"
+    data-th-text="#{scheduledTasks.header}">
+    Scheduled tasks
+</h1>
+
+<!-- =========================================================
+     SEND REMINDER TASK
+     ========================================================= -->
+
+<h2 class="centered"
+    data-th-text="#{scheduledTasks.header.reminder}">
+    Remind users to submit a shift request
+</h2>
+
+<table class="table-with-lines centered">
+
+    <colgroup>
+        <col class="col-50">
+        <col class="col-50">
+    </colgroup>
+
+    <thead>
+    <tr>
+        <th data-th-text="#{scheduledTasks.item}">Item</th>
+        <th data-th-text="#{scheduledTasks.value}">Value</th>
+    </tr>
+    </thead>
+
+    <tbody>
+
+    <tr th:if="${sendReminderTaskForm.sendReminderTaskActive}">
+        <td data-th-text="#{scheduledTasks.status}">Status</td>
+        <td data-th-text="#{scheduledTasks.activeTask}">Active task</td>
+    </tr>
+
+    <tr th:unless="${sendReminderTaskForm.sendReminderTaskActive}">
+        <td data-th-text="#{scheduledTasks.status}">Status</td>
+        <td data-th-text="#{scheduledTasks.reminder.noneActive}">
+            There is no active reminder task.
+        </td>
+    </tr>
+
+    <tr th:if="${sendReminderTaskForm.sendReminderTaskActive}">
+        <td data-th-text="#{reminderTaskInfo.startSending}">Start sending</td>
+        <td>
+            <span th:text="${sendReminderTaskForm.startSendingRemindersDay}">1</span>.
+            <span th:text="${#temporals.monthName(#temporals.createNow())}">July</span>
+            <span th:text="${#temporals.year(#temporals.createNow())}">2026</span>
+            <span data-th-text="#{preposition.at}">at</span>
+            <span th:text="${#numbers.formatInteger(sendReminderTaskForm.startSendingRemindersHour, 2)}">08</span>:<span
+                th:text="${#numbers.formatInteger(sendReminderTaskForm.startSendingRemindersMinute, 2)}">00</span>
+        </td>
+    </tr>
+
+    <tr th:if="${sendReminderTaskForm.sendReminderTaskActive}">
+        <td data-th-text="#{reminderTaskInfo.frequency}">Frequency</td>
+        <td>
+            <span th:text="${sendReminderTaskForm.reminderSendingFrequencyInDays}">1</span>
+            <span data-th-text="#{reminderTaskInfo.days}">day(s)</span>
+        </td>
+    </tr>
+
+    <tr th:if="${sendReminderTaskForm.sendReminderTaskActive}">
+        <td data-th-text="#{reminderTaskInfo.repetitions}">Repetitions</td>
+        <td th:text="${sendReminderTaskForm.reminderRepetitions}">1</td>
+    </tr>
+
+    <tr th:if="${sendReminderTaskForm.sendReminderTaskActive}">
+        <td data-th-text="#{reminderTaskInfo.deadline}">Final submission day</td>
+        <td th:text="${sendReminderTaskForm.finalSubmissionDay}">15</td>
+    </tr>
+
+    </tbody>
+
+</table>
+
+<br>
+
+<form th:action="@{/admin/send_reminder_task}"
+      method="post"
+      th:object="${sendReminderTaskForm}">
+
+    <table class="table-with-lines centered">
+
+        <colgroup>
+            <col class="col-50">
+            <col class="col-50">
+        </colgroup>
+
+        <thead>
+        <tr>
+            <th data-th-text="#{scheduledTasks.setting}">Setting</th>
+            <th data-th-text="#{scheduledTasks.value}">Value</th>
+        </tr>
+        </thead>
+
+        <tbody>
+
+        <tr>
+            <td>
+                <label for="sendReminderTaskActive"
+                       data-th-text="#{scheduledTasks.reminder.active}">
+                    Reminder task active:
+                </label>
+            </td>
+            <td>
+                <input id="sendReminderTaskActive"
+                       type="checkbox"
+                       th:field="*{sendReminderTaskActive}"/>
+            </td>
+        </tr>
+
+        <tr>
+            <td th:classappend="${hasDayError} ? ' error-red'">
+                <label for="startSendingRemindersDay"
+                       data-th-text="#{scheduledTasks.reminder.send.label}">
+                    Send reminder email on day:
+                </label>
+            </td>
+            <td>
+                <select id="startSendingRemindersDay"
+                        th:field="*{startSendingRemindersDay}">
+                    <option th:each="day : ${daysList}"
+                            th:value="${day}"
+                            th:text="${day}">
+                        1
+                    </option>
+                </select>
+
+                <span class="error-red"
+                      th:if="${hasDayError}"
+                      data-th-text="#{scheduledTasks.reminder.send.before.error}">
+                    must be before final submission day
+                </span>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <label for="startSendingRemindersHour"
+                       data-th-text="#{scheduledTasks.reminder.hour}">
+                    at hour:
+                </label>
+            </td>
+            <td>
+                <select id="startSendingRemindersHour"
+                        th:field="*{startSendingRemindersHour}">
+                    <option th:each="hour : ${hoursList}"
+                            th:value="${hour}"
+                            th:text="${hour}">
+                        8
+                    </option>
+                </select>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <label for="startSendingRemindersMinute"
+                       data-th-text="#{scheduledTasks.reminder.minute}">
+                    at minute:
+                </label>
+            </td>
+            <td>
+                <select id="startSendingRemindersMinute"
+                        th:field="*{startSendingRemindersMinute}">
+                    <option th:each="minute : ${minutesList}"
+                            th:value="${minute}"
+                            th:text="${minute}">
+                        0
+                    </option>
+                </select>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <label for="reminderSendingFrequencyInDays"
+                       data-th-text="#{scheduledTasks.reminder.resend}">
+                    Resend in how many days:
+                </label>
+            </td>
+            <td>
+                <select id="reminderSendingFrequencyInDays"
+                        th:field="*{reminderSendingFrequencyInDays}">
+                    <option th:each="frequency : ${frequencyList}"
+                            th:value="${frequency}"
+                            th:text="${frequency}">
+                        1
+                    </option>
+                </select>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <label for="reminderRepetitions"
+                       data-th-text="#{scheduledTasks.reminder.repetitions}">
+                    Repetitions:
+                </label>
+            </td>
+            <td>
+                <select id="reminderRepetitions"
+                        th:field="*{reminderRepetitions}">
+                    <option th:each="repetition : ${repetitionsList}"
+                            th:value="${repetition}"
+                            th:text="${repetition}">
+                        1
+                    </option>
+                </select>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <label for="finalSubmissionDay"
+                       data-th-text="#{scheduledTasks.reminder.final}">
+                    Final submission day:
+                </label>
+            </td>
+            <td>
+                <select id="finalSubmissionDay"
+                        th:field="*{finalSubmissionDay}">
+                    <option th:each="day : ${finalSubmissionDaysList}"
+                            th:value="${day}"
+                            th:text="${day}">
+                        15
+                    </option>
+                </select>
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="2" class="centered">
+                <button type="submit"
+                        class="table-button button-green"
+                        data-th-text="#{button.save}">
+                    Save
+                </button>
+            </td>
+        </tr>
+
+        </tbody>
+
+    </table>
+
+</form>
+
+<br>
+
+<!-- =========================================================
+     CLEANUP TASK
+     ========================================================= -->
+
+<h2 class="centered"
+    data-th-text="#{scheduledTasks.header.cleanup}">
+    Delete all requests
+</h2>
+
+<table class="table-with-lines centered">
+
+    <colgroup>
+        <col class="col-30">
+        <col class="col-70">
+    </colgroup>
+
+    <thead>
+    <tr>
+        <th data-th-text="#{scheduledTasks.item}">Item</th>
+        <th data-th-text="#{scheduledTasks.value}">Value</th>
+    </tr>
+    </thead>
+
+    <tbody>
+
+    <tr th:if="${cleanupTaskForm.cleanupTaskActive}">
+        <td data-th-text="#{scheduledTasks.status}">Status</td>
+        <td data-th-text="#{scheduledTasks.activeTask}">Active task</td>
+    </tr>
+
+    <tr th:unless="${cleanupTaskForm.cleanupTaskActive}">
+        <td data-th-text="#{scheduledTasks.status}">Status</td>
+        <td data-th-text="#{scheduledTasks.cleanup.noneActive}">
+            There is no active cleanup task.
+        </td>
+    </tr>
+
+    <tr th:if="${cleanupTaskForm.cleanupTaskActive}">
+        <td data-th-text="#{cleanupTaskInfo.scheduled}">Scheduled cleanup</td>
+        <td>
+            <span th:text="${cleanupTaskForm.cleanupDay}">1</span>.
+            <span th:text="${#temporals.monthName(#temporals.createNow())}">July</span>
+            <span th:text="${#temporals.year(#temporals.createNow())}">2026</span>
+            <span data-th-text="#{preposition.at}">at</span>
+            <span th:text="${#numbers.formatInteger(cleanupTaskForm.cleanupHour, 2)}">22</span>:<span
+                th:text="${#numbers.formatInteger(cleanupTaskForm.cleanupMinute, 2)}">00</span>
+        </td>
+    </tr>
+
+    </tbody>
+
+</table>
+
+<br>
+
+<form th:action="@{/admin/cleanup_task}"
+      method="post"
+      th:object="${cleanupTaskForm}">
+
+    <table class="table-with-lines centered">
+
+        <colgroup>
+            <col class="col-30">
+            <col class="col-70">
+        </colgroup>
+
+        <thead>
+        <tr>
+            <th data-th-text="#{scheduledTasks.setting}">Setting</th>
+            <th data-th-text="#{scheduledTasks.value}">Value</th>
+        </tr>
+        </thead>
+
+        <tbody>
+
+        <tr>
+            <td>
+                <label for="cleanupTaskActive"
+                       data-th-text="#{scheduledTasks.cleanup.active}">
+                    Cleanup task active:
+                </label>
+            </td>
+            <td>
+                <input id="cleanupTaskActive"
+                       type="checkbox"
+                       th:field="*{cleanupTaskActive}"/>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <label for="cleanupDay"
+                       data-th-text="#{scheduledTasks.cleanup.day}">
+                    Delete on day:
+                </label>
+            </td>
+            <td>
+                <select id="cleanupDay"
+                        th:field="*{cleanupDay}">
+                    <option th:each="day : ${daysList}"
+                            th:value="${day}"
+                            th:text="${day}">
+                        1
+                    </option>
+                </select>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <label for="cleanupHour"
+                       data-th-text="#{scheduledTasks.cleanup.hour}">
+                    at hour:
+                </label>
+            </td>
+            <td>
+                <select id="cleanupHour"
+                        th:field="*{cleanupHour}">
+                    <option th:each="hour : ${hoursList}"
+                            th:value="${hour}"
+                            th:text="${hour}">
+                        22
+                    </option>
+                </select>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <label for="cleanupMinute"
+                       data-th-text="#{scheduledTasks.cleanup.minute}">
+                    at minute:
+                </label>
+            </td>
+            <td>
+                <select id="cleanupMinute"
+                        th:field="*{cleanupMinute}">
+                    <option th:each="minute : ${minutesList}"
+                            th:value="${minute}"
+                            th:text="${minute}">
+                        0
+                    </option>
+                </select>
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="2" class="centered">
+                <button type="submit"
+                        class="table-button button-green"
+                        data-th-text="#{button.save}">
+                    Save
+                </button>
+            </td>
+        </tr>
+
+        </tbody>
+
+    </table>
+
+</form>
+
+<br>
+
+<div class="centered"
+     data-th-text="#{scheduledTasks.infoText}">
+    In case the selected day exceeds the number of days in a month,
+    the task will be carried out on the month's last day.
+</div>
+
+<br>
+
+<div class="centered">
+    <form th:action="@{/admin/adminIndex}" method="get">
+        <button class="standard-button"
+                type="submit"
+                data-th-text="#{button.backToHomePage}">
+            Go back
+        </button>
+    </form>
+</div>
+
+<div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
+
+<script>
+
+    function openNav() {
+        document.getElementById("adminSidebar").style.width = "250px";
+    }
+
+    function closeNav() {
+        document.getElementById("adminSidebar").style.width = "0";
+    }
+
+</script>
+
+</body>
+</html>

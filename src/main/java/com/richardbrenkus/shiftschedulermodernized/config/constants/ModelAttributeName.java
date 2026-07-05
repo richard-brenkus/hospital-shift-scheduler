@@ -14,8 +14,8 @@ public final class ModelAttributeName {
     public static final String REMINDER_FREQUENCY = "reminderFrequency";
     public static final String CLEANUP_DATE_TIME = "cleanupDateTime";
     public static final String REMINDER_START = "reminderStart";
-    public static final String REMINDER_DEADLINE = "reminderDeadline";
-    public static final String REMINDER_TASK = "reminderTask";
+    public static final String REMINDER_DEADLINE = "reminderFinalSubmissionDay";
+    public static final String REMINDER_TASK = "sendReminderTask";
     public static final String CLEANUP_TASK = "cleanupTask";
 
     // User

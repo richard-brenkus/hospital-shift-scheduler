@@ -33,7 +33,7 @@ public class AdminController {
 
     private final LandingPageService landingPageService;
     private final UserService userService;
-    private final ScheduledTasksService scheduledTasksService;
+    private final PlannedTasksService plannedTasksService;
     private final ShiftTypeService shiftTypeService;
     private final ShiftRequestService shiftRequestService;
     private final PrepareModelService prepareModelService;
@@ -58,18 +58,20 @@ public class AdminController {
         model.addAttribute(ModelAttributeName.SHIFT_REQUEST_COUNT, landingPageRecord.shiftRequestCount());
         model.addAttribute(ModelAttributeName.PERCENTAGE, landingPageRecord.percentage());
 
-        ScheduledTasksRecord scheduledTasksRecord = scheduledTasksService.getScheduledTasksRecord();
-        model.addAttribute(ModelAttributeName.REMINDER_DEADLINE, scheduledTasksRecord.reminderDeadline());
-        model.addAttribute(ModelAttributeName.REMINDER_IS_ACTIVE, scheduledTasksRecord.reminderIsActive());
-        model.addAttribute(ModelAttributeName.REMINDER_TASK_INFO, scheduledTasksRecord.reminderTaskInfo());
-        model.addAttribute(ModelAttributeName.REMINDER_TASK, scheduledTasksRecord.reminderTask());
-        model.addAttribute(ModelAttributeName.REMINDER_START, scheduledTasksRecord.reminderStart());
-        model.addAttribute(ModelAttributeName.REMINDER_FREQUENCY, scheduledTasksRecord.reminderFrequency());
-        model.addAttribute(ModelAttributeName.REMINDER_REPETITIONS, scheduledTasksRecord.reminderRepetitions());
-        model.addAttribute(ModelAttributeName.CLEANUP_TASK_INFO, scheduledTasksRecord.cleanupTaskInfo());
-        model.addAttribute(ModelAttributeName.CLEANUP_IS_ACTIVE, scheduledTasksRecord.cleanupIsActive());
-        model.addAttribute(ModelAttributeName.CLEANUP_DATE_TIME, scheduledTasksRecord.cleanupDateTime());
-        model.addAttribute(ModelAttributeName.CLEANUP_TASK, scheduledTasksRecord.cleanupTask());
+        SendReminderTaskRecord sendReminderTaskRecord = plannedTasksService.getSendReminderTaskRecord();
+        model.addAttribute(ModelAttributeName.REMINDER_TASK, sendReminderTaskRecord);
+        model.addAttribute(ModelAttributeName.REMINDER_DEADLINE, sendReminderTaskRecord.reminderFinalSubmissionDay());
+        model.addAttribute(ModelAttributeName.REMINDER_IS_ACTIVE, sendReminderTaskRecord.reminderIsActive());
+        //model.addAttribute(ModelAttributeName.REMINDER_TASK_INFO, sendReminderTaskRecord.reminderTaskInfo());
+        model.addAttribute(ModelAttributeName.REMINDER_START, sendReminderTaskRecord);
+        model.addAttribute(ModelAttributeName.REMINDER_FREQUENCY, sendReminderTaskRecord.reminderFrequency());
+        model.addAttribute(ModelAttributeName.REMINDER_REPETITIONS, sendReminderTaskRecord.reminderRepetitions());
+
+        CleanupTaskRecord cleanupTaskRecord = plannedTasksService.getCleanupTaskRecord();
+        model.addAttribute(ModelAttributeName.CLEANUP_TASK, cleanupTaskRecord);
+        //model.addAttribute(ModelAttributeName.CLEANUP_TASK_INFO, cleanupTaskRecord.cleanupTaskInfo());
+        model.addAttribute(ModelAttributeName.CLEANUP_IS_ACTIVE, cleanupTaskRecord.cleanupIsActive());
+        model.addAttribute(ModelAttributeName.CLEANUP_DATE_TIME, cleanupTaskRecord.cleanupDateTime());
 
         return "admin/adminIndex";
     }
@@ -469,23 +471,14 @@ public class AdminController {
 
         String filename = spreadsheetService.createFileName(selectedMonth);
 
-        response.setContentType(
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        );
-        response.setHeader(
-                "Content-Disposition",
-                "attachment; filename=\"" + filename + "\""
-        );
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
 
         spreadsheetService.writeSavedSchedule(response.getOutputStream(), selectedMonth);
     }
 
 
-    private void addSavedCalendarSelectionAttributes(
-            Model model,
-            SavedCalendarSelectionForm form,
-            boolean calendarExists
-    ) {
+    private void addSavedCalendarSelectionAttributes(Model model, SavedCalendarSelectionForm form, boolean calendarExists) {
         model.addAttribute("savedCalendarSelectionForm", form);
         model.addAttribute("monthOptions", storedScheduleService.getSelectableMonthOptions());
         model.addAttribute("calendarExists", calendarExists);

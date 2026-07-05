@@ -28,10 +28,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final LandingPageService landingPageService;
     private final UserService userService;
     private final PrepareModelService prepareModelService;
-    private final ScheduledTasksService scheduledTasksService;
     private final ShiftRequestService shiftRequestService;
     private final ShiftRequestMapper shiftRequestMapper;
 
