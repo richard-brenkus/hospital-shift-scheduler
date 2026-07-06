@@ -19,13 +19,13 @@ public class PlannedTasksController {
 
     private final PlannedTasksService plannedTasksService;
 
-    @GetMapping("/admin/scheduled_tasks")
+    @GetMapping("/admin/planned_tasks")
     public String showScheduledEvents(Model model) {
 
         prefillPage(model);
         model.addAttribute("hasDayError", false);
 
-        return "admin/scheduled_tasks";
+        return "admin/planned_tasks";
     }
 
     @PostMapping("/admin/cleanup_task")
@@ -38,7 +38,7 @@ public class PlannedTasksController {
         prefillPage(model);
         model.addAttribute("hasDayError", false);
 
-        return "admin/scheduled_tasks";
+        return "admin/planned_tasks";
     }
 
     @PostMapping("/admin/send_reminder_task")
@@ -53,7 +53,7 @@ public class PlannedTasksController {
             bindingResult.rejectValue("startSendingRemindersDay", "error.startSendingRemindersDay", "must be before final submission day");
             model.addAttribute("hasDayError", true);
 
-            return "/admin/scheduled_tasks";
+            return "/admin/planned_tasks";
         }
 
         plannedTasksService.saveSendReminderTask(sendReminderTaskForm);
@@ -61,7 +61,7 @@ public class PlannedTasksController {
         prefillPage(model);
         model.addAttribute("hasDayError", false);
 
-        return "admin/scheduled_tasks";
+        return "admin/planned_tasks";
     }
 
 
