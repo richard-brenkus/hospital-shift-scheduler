@@ -6,136 +6,210 @@ import com.richardbrenkus.shiftschedulermodernized.dto.view.CleanupTaskRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.SendReminderTaskRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.CleanupTask;
 import com.richardbrenkus.shiftschedulermodernized.entity.SendReminderTask;
-import com.richardbrenkus.shiftschedulermodernized.mapper.PlannedTaskMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.CleanupTaskRepository;
 import com.richardbrenkus.shiftschedulermodernized.repository.SendReminderTaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.YearMonth;
 import java.util.Comparator;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PlannedTasksService {
 
     private final CleanupTaskRepository cleanupTaskRepository;
     private final SendReminderTaskRepository sendReminderTaskRepository;
-    private final PlannedTaskMapper plannedTaskMapper;
 
-    public void saveCleanupTask(CleanupTaskForm cleanupTaskForm) {
+    public void saveCleanupTask(CleanupTaskForm form) {
 
-        List<CleanupTask> cleanupTaskList = cleanupTaskRepository.findByIsActive();
+        if (!form.isCleanupTaskActive()) {
+            deactivateAllCleanupTasks();
+            return;
+        }
 
-        CleanupTask cleanupTask = cleanupTaskList.stream().min(Comparator.comparing(CleanupTask::getCreationTime)).orElse(new CleanupTask());
+        CleanupTask task = getActiveCleanupTaskOrNull();
 
-        LocalDateTime cleanupDateTime = LocalDateTime.of(LocalDateTime.now().getYear(), LocalDateTime.now().getMonth(), cleanupTaskForm.getCleanupDay(), cleanupTaskForm.getCleanupHour(), cleanupTaskForm.getCleanupMinute());
+        if (task == null) {
+            task = getExistingCleanupTaskOrNew();
+        }
 
-        cleanupTask.setExecutionTime(cleanupDateTime);
-        cleanupTask.setActive(true);
-        cleanupTask.setCreationTime(LocalDateTime.now());
-        cleanupTaskRepository.save(cleanupTask);
+        deactivateAllCleanupTasks();
+
+        task.setActive(true);
+        task.setExecutionTime(toCurrentMonthDateTime(
+                form.getCleanupDay(),
+                form.getCleanupHour(),
+                form.getCleanupMinute()
+        ));
+
+        if (task.getCreationTime() == null) {
+            task.setCreationTime(LocalDateTime.now());
+        }
+
+        cleanupTaskRepository.save(task);
     }
 
-    public void saveSendReminderTask(SendReminderTaskForm sendReminderTaskForm) {
+    public void saveSendReminderTask(SendReminderTaskForm form) {
 
-        List<SendReminderTask> sendReminderTaskList = sendReminderTaskRepository.findByIsActive();
-        SendReminderTask sendReminderTask = sendReminderTaskList.stream().min(Comparator.comparing(SendReminderTask::getCreationTime)).orElse(new SendReminderTask());
+        if (!form.isSendReminderTaskActive()) {
+            deactivateAllSendReminderTasks();
+            return;
+        }
 
-        LocalDateTime startSendingTime = LocalDateTime.of(LocalDateTime.now().getYear(), LocalDateTime.now().getMonth(), sendReminderTaskForm.getStartSendingRemindersDay(), sendReminderTaskForm.getStartSendingRemindersHour(), sendReminderTaskForm.getStartSendingRemindersMinute());
+        SendReminderTask task = getActiveSendReminderTaskOrNull();
 
-        sendReminderTask.setStartSendingTime(startSendingTime);
-        sendReminderTask.setActive(true);
-        sendReminderTask.setRepetitions(sendReminderTaskForm.getReminderRepetitions());
-        sendReminderTask.setFrequencyInDays(sendReminderTaskForm.getReminderSendingFrequencyInDays());
+        if (task == null) {
+            task = getExistingSendReminderTaskOrNew();
+        }
 
-        sendReminderTaskRepository.save(sendReminderTask);
+        deactivateAllSendReminderTasks();
+
+        task.setActive(true);
+        task.setStartSendingTime(toCurrentMonthDateTime(
+                form.getStartSendingRemindersDay(),
+                form.getStartSendingRemindersHour(),
+                form.getStartSendingRemindersMinute()
+        ));
+        task.setRepetitions(form.getReminderRepetitions());
+        task.setFrequencyInDays(form.getReminderSendingFrequencyInDays());
+        task.setFinalSubmissionDay(form.getFinalSubmissionDay());
+
+        if (task.getCreationTime() == null) {
+            task.setCreationTime(LocalDateTime.now());
+        }
+
+        sendReminderTaskRepository.save(task);
     }
 
-    public boolean hasDayError(SendReminderTaskForm sendReminderTaskForm) {
-
-        return sendReminderTaskForm.getStartSendingRemindersDay() != 0 && sendReminderTaskForm.getStartSendingRemindersDay() >= sendReminderTaskForm.getFinalSubmissionDay();
+    public boolean hasDayError(SendReminderTaskForm form) {
+        return form.isSendReminderTaskActive()
+                && form.getStartSendingRemindersDay() != 0
+                && form.getStartSendingRemindersDay() >= form.getFinalSubmissionDay();
     }
 
     public CleanupTaskForm getCleanupTaskForm() {
+        CleanupTaskForm form = new CleanupTaskForm();
 
-        CleanupTaskForm cleanupTaskForm = new CleanupTaskForm();
+        CleanupTask task = getActiveCleanupTaskOrNull();
 
-        CleanupTask cleanupTask = getCleanupTask();
-
-        if (cleanupTask.isActive()) {
-            cleanupTaskForm.setCleanupTaskActive(true);
-            cleanupTaskForm.setCleanupDay(cleanupTask.getExecutionTime().getDayOfMonth());
-            cleanupTaskForm.setCleanupHour(cleanupTask.getExecutionTime().getHour());
-            cleanupTaskForm.setCleanupMinute(cleanupTask.getExecutionTime().getMinute());
+        if (task != null && task.getExecutionTime() != null) {
+            form.setCleanupTaskActive(true);
+            form.setCleanupDay(task.getExecutionTime().getDayOfMonth());
+            form.setCleanupHour(task.getExecutionTime().getHour());
+            form.setCleanupMinute(task.getExecutionTime().getMinute());
         }
 
-        return cleanupTaskForm;
+        return form;
     }
 
     public SendReminderTaskForm getSendReminderTaskForm() {
+        SendReminderTaskForm form = new SendReminderTaskForm();
 
-        SendReminderTaskForm sendReminderTaskForm = new SendReminderTaskForm();
+        SendReminderTask task = getActiveSendReminderTaskOrNull();
 
-        SendReminderTask sendReminderTask = getSendReminderTask();
-
-
-        if (sendReminderTask.isActive()) {
-            sendReminderTaskForm.setSendReminderTaskActive(true);
-            sendReminderTaskForm.setReminderRepetitions(sendReminderTask.getRepetitions());
-            sendReminderTaskForm.setReminderSendingFrequencyInDays(sendReminderTask.getFrequencyInDays());
-            sendReminderTaskForm.setStartSendingRemindersDay(sendReminderTask.getStartSendingTime().getDayOfMonth());
-            sendReminderTaskForm.setStartSendingRemindersHour(sendReminderTask.getStartSendingTime().getHour());
-            sendReminderTaskForm.setStartSendingRemindersMinute(sendReminderTask.getStartSendingTime().getMinute());
+        if (task != null && task.getStartSendingTime() != null) {
+            form.setSendReminderTaskActive(true);
+            form.setStartSendingRemindersDay(task.getStartSendingTime().getDayOfMonth());
+            form.setStartSendingRemindersHour(task.getStartSendingTime().getHour());
+            form.setStartSendingRemindersMinute(task.getStartSendingTime().getMinute());
+            form.setReminderSendingFrequencyInDays(task.getFrequencyInDays());
+            form.setReminderRepetitions(task.getRepetitions());
+            form.setFinalSubmissionDay(task.getFinalSubmissionDay());
         }
 
-        return sendReminderTaskForm;
+        return form;
     }
 
     public CleanupTaskRecord getCleanupTaskRecord() {
+        CleanupTask task = getActiveCleanupTaskOrNull();
 
-        CleanupTask cleanupTask = getCleanupTask();
+        if (task == null || task.getExecutionTime() == null) {
+            return new CleanupTaskRecord(false, null);
+        }
 
-        return plannedTaskMapper.entityToCleanupTaskRecord(cleanupTask);
+        return new CleanupTaskRecord(true, task.getExecutionTime());
     }
 
     public SendReminderTaskRecord getSendReminderTaskRecord() {
+        SendReminderTask task = getActiveSendReminderTaskOrNull();
 
-        SendReminderTask sendReminderTask = getSendReminderTask();
-
-        return plannedTaskMapper.entityToSendReminderTaskRecord(sendReminderTask);
-    }
-
-    private CleanupTask getCleanupTask() {
-
-        List<CleanupTask> cleanupTaskList = cleanupTaskRepository.findByIsActive();
-
-        return cleanupTaskList.stream().min(Comparator.comparing(CleanupTask::getCreationTime)).orElse(new CleanupTask());
-    }
-
-    private SendReminderTask getSendReminderTask() {
-        List<SendReminderTask> sendReminderTaskList = sendReminderTaskRepository.findByIsActive();
-
-        return sendReminderTaskList.stream().min(Comparator.comparing(SendReminderTask::getCreationTime)).orElse(new SendReminderTask());
-    }
-
-    public int returnVerifiedDay(int day, LocalDate localDate, ZoneId zoneId) {
-
-        int resultingDay = day;
-
-        if (localDate.isLeapYear()) {
-            if (day > ZonedDateTime.now(zoneId).getMonth().maxLength())
-                resultingDay = ZonedDateTime.now(zoneId).getMonth().maxLength();
-        }
-        if (!localDate.isLeapYear()) {
-            if (day > ZonedDateTime.now(zoneId).getMonth().minLength())
-                resultingDay = ZonedDateTime.now(zoneId).getMonth().minLength();
+        if (task == null || task.getStartSendingTime() == null) {
+            return new SendReminderTaskRecord(false, 0, 0, null, 0);
         }
 
-        return resultingDay;
+        return new SendReminderTaskRecord(
+                true,
+                task.getRepetitions(),
+                task.getFrequencyInDays(),
+                task.getStartSendingTime(),
+                task.getFinalSubmissionDay()
+        );
+    }
+
+    private void deactivateAllCleanupTasks() {
+        cleanupTaskRepository.findAll().forEach(task -> {
+            if (task.isActive()) {
+                task.setActive(false);
+                cleanupTaskRepository.save(task);
+            }
+        });
+    }
+
+    private void deactivateAllSendReminderTasks() {
+        sendReminderTaskRepository.findAll().forEach(task -> {
+            if (task.isActive()) {
+                task.setActive(false);
+                sendReminderTaskRepository.save(task);
+            }
+        });
+    }
+
+    private CleanupTask getExistingCleanupTaskOrNew() {
+        return cleanupTaskRepository.findAll().stream()
+                .min(Comparator.comparing(
+                        CleanupTask::getCreationTime,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                ))
+                .orElse(new CleanupTask());
+    }
+
+    private SendReminderTask getExistingSendReminderTaskOrNew() {
+        return sendReminderTaskRepository.findAll().stream()
+                .min(Comparator.comparing(
+                        SendReminderTask::getCreationTime,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                ))
+                .orElse(new SendReminderTask());
+    }
+
+    private CleanupTask getActiveCleanupTaskOrNull() {
+        return cleanupTaskRepository.findAll().stream()
+                .filter(CleanupTask::isActive)
+                .min(Comparator.comparing(
+                        CleanupTask::getCreationTime,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                ))
+                .orElse(null);
+    }
+
+    private SendReminderTask getActiveSendReminderTaskOrNull() {
+        return sendReminderTaskRepository.findAll().stream()
+                .filter(SendReminderTask::isActive)
+                .min(Comparator.comparing(
+                        SendReminderTask::getCreationTime,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                ))
+                .orElse(null);
+    }
+
+    private LocalDateTime toCurrentMonthDateTime(int requestedDay, int hour, int minute) {
+        YearMonth currentMonth = YearMonth.now();
+        int safeDay = Math.min(requestedDay, currentMonth.lengthOfMonth());
+
+        return currentMonth.atDay(safeDay).atTime(hour, minute);
     }
 }

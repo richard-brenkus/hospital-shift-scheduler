@@ -21,7 +21,6 @@ public class PlannedTasksController {
 
     @GetMapping("/admin/planned_tasks")
     public String showScheduledEvents(Model model) {
-
         prefillPage(model);
         model.addAttribute("hasDayError", false);
 
@@ -29,59 +28,64 @@ public class PlannedTasksController {
     }
 
     @PostMapping("/admin/cleanup_task")
-    public String postCleanupTask(Model model, @ModelAttribute("cleanupTaskForm") CleanupTaskForm cleanupTaskForm) {
-
-        prefillPage(model);
-
+    public String postCleanupTask(@ModelAttribute("cleanupTaskForm") CleanupTaskForm cleanupTaskForm) {
         plannedTasksService.saveCleanupTask(cleanupTaskForm);
-
-        prefillPage(model);
-        model.addAttribute("hasDayError", false);
-
-        return "admin/planned_tasks";
+        return "redirect:/admin/planned_tasks";
     }
 
     @PostMapping("/admin/send_reminder_task")
-    public String postSendReminderTask(Model model, @ModelAttribute("sendReminderTaskForm") SendReminderTaskForm sendReminderTaskForm, BindingResult bindingResult) {
-
-        prefillPage(model);
+    public String postSendReminderTask(Model model,
+                                       @ModelAttribute("sendReminderTaskForm") SendReminderTaskForm sendReminderTaskForm,
+                                       BindingResult bindingResult) {
 
         boolean hasDayError = plannedTasksService.hasDayError(sendReminderTaskForm);
 
         if (hasDayError) {
+            bindingResult.rejectValue(
+                    "startSendingRemindersDay",
+                    "error.startSendingRemindersDay",
+                    "must be before final submission day"
+            );
 
-            bindingResult.rejectValue("startSendingRemindersDay", "error.startSendingRemindersDay", "must be before final submission day");
+            prefillPageKeepingSubmittedReminderForm(model, sendReminderTaskForm);
             model.addAttribute("hasDayError", true);
 
-            return "/admin/planned_tasks";
+            return "admin/planned_tasks";
         }
 
         plannedTasksService.saveSendReminderTask(sendReminderTaskForm);
-
-        prefillPage(model);
-        model.addAttribute("hasDayError", false);
-
-        return "admin/planned_tasks";
+        return "redirect:/admin/planned_tasks";
     }
 
-
     private void prefillPage(Model model) {
+        model.addAttribute("cleanupTaskRecord", plannedTasksService.getCleanupTaskRecord());
+        model.addAttribute("sendReminderTaskRecord", plannedTasksService.getSendReminderTaskRecord());
 
-        CleanupTaskForm cleanupTaskForm = plannedTasksService.getCleanupTaskForm();
-        SendReminderTaskForm sendReminderTaskForm = plannedTasksService.getSendReminderTaskForm();
+        model.addAttribute("cleanupTaskForm", plannedTasksService.getCleanupTaskForm());
+        model.addAttribute("sendReminderTaskForm", plannedTasksService.getSendReminderTaskForm());
 
-        model.addAttribute("cleanupTaskForm", cleanupTaskForm);
-        model.addAttribute("sendReminderTaskForm", sendReminderTaskForm);
+        addSelectionLists(model);
+    }
+
+    private void prefillPageKeepingSubmittedReminderForm(Model model, SendReminderTaskForm submittedForm) {
+        model.addAttribute("cleanupTaskRecord", plannedTasksService.getCleanupTaskRecord());
+        model.addAttribute("sendReminderTaskRecord", plannedTasksService.getSendReminderTaskRecord());
+
+        model.addAttribute("cleanupTaskForm", plannedTasksService.getCleanupTaskForm());
+        model.addAttribute("sendReminderTaskForm", submittedForm);
+
+        addSelectionLists(model);
+    }
+
+    private void addSelectionLists(Model model) {
         model.addAttribute("daysList", IntStream.rangeClosed(1, 31).boxed().toList());
         model.addAttribute("hoursList", IntStream.rangeClosed(0, 23).boxed().toList());
         model.addAttribute("minutesList", IntStream.rangeClosed(0, 59).boxed().toList());
         model.addAttribute("repetitionsList", IntStream.rangeClosed(1, 10).boxed().toList());
         model.addAttribute("frequencyList", IntStream.rangeClosed(1, 31).boxed().toList());
         model.addAttribute("finalSubmissionDaysList", IntStream.rangeClosed(1, 31).boxed().toList());
-
     }
-
-
 }
+
 	
 

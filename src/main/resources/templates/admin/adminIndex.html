@@ -1,268 +1,261 @@
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+
 <head>
     <title>Admin index</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <link rel="stylesheet" th:href="@{/styles/main.css}"/>
 
+    <style>
+        .admin-index-wrapper {
+            max-width: 1150px;
+            margin: 0 auto;
+            padding: 0 1.5rem 3rem 1.5rem;
+        }
+
+        .admin-index-planned-tasks {
+            margin: 2.5rem auto 2rem auto;
+        }
+
+        .admin-index-task-table {
+            width: 760px;
+            max-width: 100%;
+            margin: 1.25rem auto;
+            table-layout: fixed;
+        }
+
+        .admin-index-task-table th,
+        .admin-index-task-table td {
+            vertical-align: middle;
+        }
+
+        .admin-index-task-label-column {
+            width: 65%;
+        }
+
+        .admin-index-task-value-column {
+            width: 35%;
+        }
+
+        .admin-index-task-label {
+            white-space: nowrap;
+        }
+
+        .admin-index-task-actions {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 850px) {
+            .admin-index-task-table {
+                width: 96%;
+            }
+
+            .admin-index-task-label {
+                white-space: normal;
+            }
+        }
+    </style>
 </head>
+
 <body>
+
 <button class="openbtn" onclick="openNav()">menu</button>
-<div class="centered">
+
+<div class="centered admin-index-wrapper">
+
     <h1>
         <span data-th-text="#{header.indexPage.admin}">Welcome, </span><span th:text="${displayName}"></span>
     </h1>
-    <br>
-    <div>
-		    	<span>
-    <label for="submittedRequests"
-           data-th-text="#{requestsInfo.indexPage}">
-        Submitted requests (admin excluded):
-    </label>
 
-    <progress id="submittedRequests"
-              th:value="${shiftRequestCount}"
-              th:max="${userCount}">
-    </progress>
-</span>
+    <br>
+
+    <div>
+        <span>
+            <label for="submittedRequests"
+                   data-th-text="#{requestsInfo.indexPage}">
+                Submitted requests (admin excluded):
+            </label>
+
+            <progress id="submittedRequests"
+                      th:value="${shiftRequestCount}"
+                      th:max="${userCount}">
+            </progress>
+        </span>
+
         <span th:text="${percentage}"> percentage</span>
     </div>
+
+    <section class="admin-index-planned-tasks">
+
+        <h2 class="centered"
+            data-th-text="#{scheduledTasks.header}">
+            Scheduled tasks
+        </h2>
+
+        <h3 class="centered"
+            data-th-text="#{scheduledTasks.header.reminder}">
+            Remind users to submit a shift request
+        </h3>
+
+        <table class="table-with-lines admin-index-task-table">
+            <colgroup>
+                <col class="admin-index-task-label-column">
+                <col class="admin-index-task-value-column">
+            </colgroup>
+
+            <thead>
+            <tr>
+                <th data-th-text="#{scheduledTasks.item}">Item</th>
+                <th data-th-text="#{scheduledTasks.value}">Value</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:if="${sendReminderTaskRecord.reminderIsActive}">
+                <td class="admin-index-task-label"
+                    data-th-text="#{scheduledTasks.status}">
+                    Status
+                </td>
+                <td data-th-text="#{scheduledTasks.activeTask}">
+                    Active task
+                </td>
+            </tr>
+
+            <tr th:unless="${sendReminderTaskRecord.reminderIsActive}">
+                <td class="admin-index-task-label"
+                    data-th-text="#{scheduledTasks.status}">
+                    Status
+                </td>
+                <td data-th-text="#{scheduledTasks.reminder.noneActive}">
+                    There is no active reminder task.
+                </td>
+            </tr>
+
+            <tr th:if="${sendReminderTaskRecord.reminderIsActive}">
+                <td class="admin-index-task-label"
+                    data-th-text="#{reminderTaskInfo.startSending}">
+                    Start sending
+                </td>
+                <td th:text="${#temporals.format(sendReminderTaskRecord.reminderStart, 'dd.MM.yyyy HH:mm')}">
+                    10.07.2026 08:00
+                </td>
+            </tr>
+
+            <tr th:if="${sendReminderTaskRecord.reminderIsActive}">
+                <td class="admin-index-task-label"
+                    data-th-text="#{reminderTaskInfo.frequency}">
+                    Frequency
+                </td>
+                <td>
+                    <span th:text="${sendReminderTaskRecord.reminderFrequency}">1</span>
+                    <span data-th-text="#{reminderTaskInfo.days}">day(s)</span>
+                </td>
+            </tr>
+
+            <tr th:if="${sendReminderTaskRecord.reminderIsActive}">
+                <td class="admin-index-task-label"
+                    data-th-text="#{reminderTaskInfo.repetitions}">
+                    Repetitions
+                </td>
+                <td th:text="${sendReminderTaskRecord.reminderRepetitions}">
+                    1
+                </td>
+            </tr>
+
+            <tr th:if="${sendReminderTaskRecord.reminderIsActive}">
+                <td class="admin-index-task-label"
+                    data-th-text="#{reminderTaskInfo.deadline}">
+                    Final submission day
+                </td>
+                <td th:text="${sendReminderTaskRecord.reminderFinalSubmissionDay}">
+                    15
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <h3 class="centered"
+            data-th-text="#{scheduledTasks.header.cleanup}">
+            Delete all requests
+        </h3>
+
+        <table class="table-with-lines admin-index-task-table">
+            <colgroup>
+                <col class="admin-index-task-label-column">
+                <col class="admin-index-task-value-column">
+            </colgroup>
+
+            <thead>
+            <tr>
+                <th data-th-text="#{scheduledTasks.item}">Item</th>
+                <th data-th-text="#{scheduledTasks.value}">Value</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:if="${cleanupTaskRecord.cleanupIsActive}">
+                <td class="admin-index-task-label"
+                    data-th-text="#{scheduledTasks.status}">
+                    Status
+                </td>
+                <td data-th-text="#{scheduledTasks.activeTask}">
+                    Active task
+                </td>
+            </tr>
+
+            <tr th:unless="${cleanupTaskRecord.cleanupIsActive}">
+                <td class="admin-index-task-label"
+                    data-th-text="#{scheduledTasks.status}">
+                    Status
+                </td>
+                <td data-th-text="#{scheduledTasks.cleanup.noneActive}">
+                    There is no active cleanup task.
+                </td>
+            </tr>
+
+            <tr th:if="${cleanupTaskRecord.cleanupIsActive}">
+                <td class="admin-index-task-label"
+                    data-th-text="#{cleanupTaskInfo.scheduled}">
+                    Scheduled cleanup
+                </td>
+                <td th:text="${#temporals.format(cleanupTaskRecord.cleanupDateTime, 'dd.MM.yyyy HH:mm')}">
+                    10.07.2026 22:00
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="admin-index-task-actions">
+            <form th:action="@{/admin/planned_tasks}" method="get">
+                <button class="standard-button"
+                        type="submit"
+                        data-th-text="#{sidebar.scheduledTasks}">
+                    Scheduled tasks
+                </button>
+            </form>
+        </div>
+
+    </section>
+
     <br>
-    <div>
-        <th:block th:if="${reminderIsActive == false}">
-            <span data-th-text="#{reminderTaskInfo.notScheduled}"></span>
-        </th:block>
 
-        <th:block th:if="${reminderIsActive == true}">
-            <span data-th-text="#{reminderTaskInfo.startSending}"></span>
-            <span th:switch="${reminderTask.day}">
-		                <span th:case="'1'" data-th-text="#{day.order.1}"></span>
-		                <span th:case="'2'" data-th-text="#{day.order.2}"></span>
-		                <span th:case="'3'" data-th-text="#{day.order.3}"></span>
-		               	<span th:case="'4'" data-th-text="#{day.order.4}"></span>
-		               	<span th:case="'5'" data-th-text="#{day.order.5}"></span>
-		               	<span th:case="'6'" data-th-text="#{day.order.6}"></span>
-		               	<span th:case="'7'" data-th-text="#{day.order.7}"></span>
-		               	<span th:case="'8'" data-th-text="#{day.order.8}"></span>
-		               	<span th:case="'9'" data-th-text="#{day.order.9}"></span>
-		               	<span th:case="'10'" data-th-text="#{day.order.10}"></span>
-		               	<span th:case="'11'" data-th-text="#{day.order.11}"></span>
-		               	<span th:case="'12'" data-th-text="#{day.order.12}"></span>
-		               	<span th:case="'13'" data-th-text="#{day.order.13}"></span>
-		                <span th:case="'14'" data-th-text="#{day.order.14}"></span>
-		                <span th:case="'15'" data-th-text="#{day.order.15}"></span>
-		               	<span th:case="'16'" data-th-text="#{day.order.16}"></span>
-		               	<span th:case="'17'" data-th-text="#{day.order.17}"></span>
-		               	<span th:case="'18'" data-th-text="#{day.order.18}"></span>
-		               	<span th:case="'19'" data-th-text="#{day.order.19}"></span>
-		               	<span th:case="'20'" data-th-text="#{day.order.20}"></span>
-		               	<span th:case="'21'" data-th-text="#{day.order.21}"></span>
-		               	<span th:case="'22'" data-th-text="#{day.order.22}"></span>
-		               	<span th:case="'23'" data-th-text="#{day.order.23}"></span>
-		               	<span th:case="'24'" data-th-text="#{day.order.24}"></span>
-		               	<span th:case="'25'" data-th-text="#{day.order.25}"></span>
-		               	<span th:case="'26'" data-th-text="#{day.order.26}"></span>
-		               	<span th:case="'27'" data-th-text="#{day.order.27}"></span>
-		               	<span th:case="'28'" data-th-text="#{day.order.28}"></span>
-		               	<span th:case="'29'" data-th-text="#{day.order.29}"></span>
-		               	<span th:case="'30'" data-th-text="#{day.order.30}"></span>
-		               	<span th:case="'31'" data-th-text="#{day.order.31}"></span>
-                <!-- * for default case -->
-		                <span th:case="*">undetermined</span>
-		            </span>
-
-            <span th:switch="${reminderTask.month}">
-		                <span th:case="'1'" data-th-text="#{month.january.d}"></span>
-		                <span th:case="'2'" data-th-text="#{month.february.d}"></span>
-		                <span th:case="'3'" data-th-text="#{month.march.d}"></span>
-		               	<span th:case="'4'" data-th-text="#{month.april.d}"></span>
-		               	<span th:case="'5'" data-th-text="#{month.may.d}"></span>
-		               	<span th:case="'6'" data-th-text="#{month.june.d}"></span>
-		               	<span th:case="'7'" data-th-text="#{month.july.d}"></span>
-		               	<span th:case="'8'" data-th-text="#{month.august.d}"></span>
-		               	<span th:case="'9'" data-th-text="#{month.september.d}"></span>
-		               	<span th:case="'10'" data-th-text="#{month.october.d}"></span>
-		               	<span th:case="'11'" data-th-text="#{month.november.d}"></span>
-		               	<span th:case="'12'" data-th-text="#{month.december.d}"></span>
-                <!-- * for default case -->
-		                <span th:case="*">undetermined</span>
-		            </span>
-
-            <span th:text="${reminderTask.year}"></span>
-            <span data-th-text="#{preposition.at}"></span>
-            <span th:text="${reminderTask.timeString}"></span>
-            <br>
-
-            <th:block th:if="${reminderRepetitions == 1}">
-                <span data-th-text="#{reminderTaskInfo.sendOnce}"></span>
-                <br>
-            </th:block>
-
-            <th:block th:if="${reminderRepetitions > 1 && reminderFrequency == 1}">
-                <span data-th-text="#{reminderTaskInfo.repetitions}"></span>
-                <span th:text="${reminderRepetitions}"> </span>
-                <span data-th-text="#{reminderTaskInfo.sendEveryDay}"></span>
-
-
-            </th:block>
-
-            <th:block th:if="${reminderRepetitions > 1 && reminderFrequency > 1}">
-                <span th:if="${reminderRepetitions > 1 && reminderFrequency > 1}"></span>
-                <span data-th-text="#{reminderTaskInfo.repetitions}"></span>
-                <span th:text="${reminderRepetitions}"></span>
-                <span data-th-text="#{reminderTaskInfo.frequency}"></span>
-                <span th:text="${reminderFrequency}"></span>
-                <span data-th-text="#{reminderTaskInfo.days}"></span>
-                <br>
-
-            </th:block>
-
-            <!-- FINAL SUBMISSION DAY !-->
-            <div>
-                <br>
-                <span data-th-text="#{reminderTaskInfo.deadline}"></span>
-                <br>
-                <span th:switch="${reminderTask.finalSubmissionDay}">
-			                <span th:case="'1'" data-th-text="#{day.order.1}"></span>
-			                <span th:case="'2'" data-th-text="#{day.order.2}"></span>
-			                <span th:case="'3'" data-th-text="#{day.order.3}"></span>
-			               	<span th:case="'4'" data-th-text="#{day.order.4}"></span>
-			               	<span th:case="'5'" data-th-text="#{day.order.5}"></span>
-			               	<span th:case="'6'" data-th-text="#{day.order.6}"></span>
-			               	<span th:case="'7'" data-th-text="#{day.order.7}"></span>
-			               	<span th:case="'8'" data-th-text="#{day.order.8}"></span>
-			               	<span th:case="'9'" data-th-text="#{day.order.9}"></span>
-			               	<span th:case="'10'" data-th-text="#{day.order.10}"></span>
-			               	<span th:case="'11'" data-th-text="#{day.order.11}"></span>
-			               	<span th:case="'12'" data-th-text="#{day.order.12}"></span>
-			               	<span th:case="'13'" data-th-text="#{day.order.13}"></span>
-			                <span th:case="'14'" data-th-text="#{day.order.14}"></span>
-			                <span th:case="'15'" data-th-text="#{day.order.15}"></span>
-			               	<span th:case="'16'" data-th-text="#{day.order.16}"></span>
-			               	<span th:case="'17'" data-th-text="#{day.order.17}"></span>
-			               	<span th:case="'18'" data-th-text="#{day.order.18}"></span>
-			               	<span th:case="'19'" data-th-text="#{day.order.19}"></span>
-			               	<span th:case="'20'" data-th-text="#{day.order.20}"></span>
-			               	<span th:case="'21'" data-th-text="#{day.order.21}"></span>
-			               	<span th:case="'22'" data-th-text="#{day.order.22}"></span>
-			               	<span th:case="'23'" data-th-text="#{day.order.23}"></span>
-			               	<span th:case="'24'" data-th-text="#{day.order.24}"></span>
-			               	<span th:case="'25'" data-th-text="#{day.order.25}"></span>
-			               	<span th:case="'26'" data-th-text="#{day.order.26}"></span>
-			               	<span th:case="'27'" data-th-text="#{day.order.27}"></span>
-			               	<span th:case="'28'" data-th-text="#{day.order.28}"></span>
-			               	<span th:case="'29'" data-th-text="#{day.order.29}"></span>
-			               	<span th:case="'30'" data-th-text="#{day.order.30}"></span>
-			               	<span th:case="'31'" data-th-text="#{day.order.31}"></span>
-                    <!-- * for default case -->
-			                <span th:case="*">undetermined</span>
-		            	</span>
-
-                <span th:switch="${reminderTask.month}">
-			                <span th:case="'1'" data-th-text="#{month.january.d}"></span>
-			                <span th:case="'2'" data-th-text="#{month.february.d}"></span>
-			                <span th:case="'3'" data-th-text="#{month.march.d}"></span>
-			               	<span th:case="'4'" data-th-text="#{month.april.d}"></span>
-			               	<span th:case="'5'" data-th-text="#{month.may.d}"></span>
-			               	<span th:case="'6'" data-th-text="#{month.june.d}"></span>
-			               	<span th:case="'7'" data-th-text="#{month.july.d}"></span>
-			               	<span th:case="'8'" data-th-text="#{month.august.d}"></span>
-			               	<span th:case="'9'" data-th-text="#{month.september.d}"></span>
-			               	<span th:case="'10'" data-th-text="#{month.october.d}"></span>
-			               	<span th:case="'11'" data-th-text="#{month.november.d}"></span>
-			               	<span th:case="'12'" data-th-text="#{month.december.d}"></span>
-                    <!-- * for default case -->
-			                <span th:case="*">undetermined</span>
-				            </span>
-
-                <span th:text="${reminderTask.year}"></span>
-                <span data-th-text="#{preposition.at}"></span>
-                <span th:text="${reminderTask.timeString}"></span>
-            </div>
-            <!-- FINAL SUBMISSION DAY end !-->
-
-        </th:block>
+    <div class="language-flags centered">
+        <span>
+            <a th:href="@{/(language=cz)}">
+                <img alt="CZ" class="flag" th:src="@{/images/cz.png}" title="Česky">
+            </a>
+        </span>
+        <span>
+            <a th:href="@{/(language=en)}">
+                <img alt="US" class="flag" th:src="@{/images/us.png}" title="English">
+            </a>
+        </span>
     </div>
-    <br>
-    <div>
-        <th:block th:if="${cleanupIsActive == false}" data-th-text="#{cleanupTaskInfo.notScheduled}"></th:block>
 
-        <th:block th:if="${cleanupIsActive == true}">
-            <span data-th-text="#{cleanupTaskInfo.scheduled}"></span>
-            <br>
-            <span th:switch="${cleanupTask.day}">
-		                <span th:case="'1'" data-th-text="#{day.order.1}"></span>
-		                <span th:case="'2'" data-th-text="#{day.order.2}"></span>
-		                <span th:case="'3'" data-th-text="#{day.order.3}"></span>
-		               	<span th:case="'4'" data-th-text="#{day.order.4}"></span>
-		               	<span th:case="'5'" data-th-text="#{day.order.5}"></span>
-		               	<span th:case="'6'" data-th-text="#{day.order.6}"></span>
-		               	<span th:case="'7'" data-th-text="#{day.order.7}"></span>
-		               	<span th:case="'8'" data-th-text="#{day.order.8}"></span>
-		               	<span th:case="'9'" data-th-text="#{day.order.9}"></span>
-		               	<span th:case="'10'" data-th-text="#{day.order.10}"></span>
-		               	<span th:case="'11'" data-th-text="#{day.order.11}"></span>
-		               	<span th:case="'12'" data-th-text="#{day.order.12}"></span>
-		               	<span th:case="'13'" data-th-text="#{day.order.13}"></span>
-		                <span th:case="'14'" data-th-text="#{day.order.14}"></span>
-		                <span th:case="'15'" data-th-text="#{day.order.15}"></span>
-		               	<span th:case="'16'" data-th-text="#{day.order.16}"></span>
-		               	<span th:case="'17'" data-th-text="#{day.order.17}"></span>
-		               	<span th:case="'18'" data-th-text="#{day.order.18}"></span>
-		               	<span th:case="'19'" data-th-text="#{day.order.19}"></span>
-		               	<span th:case="'20'" data-th-text="#{day.order.20}"></span>
-		               	<span th:case="'21'" data-th-text="#{day.order.21}"></span>
-		               	<span th:case="'22'" data-th-text="#{day.order.22}"></span>
-		               	<span th:case="'23'" data-th-text="#{day.order.23}"></span>
-		               	<span th:case="'24'" data-th-text="#{day.order.24}"></span>
-		               	<span th:case="'25'" data-th-text="#{day.order.25}"></span>
-		               	<span th:case="'26'" data-th-text="#{day.order.26}"></span>
-		               	<span th:case="'27'" data-th-text="#{day.order.27}"></span>
-		               	<span th:case="'28'" data-th-text="#{day.order.28}"></span>
-		               	<span th:case="'29'" data-th-text="#{day.order.29}"></span>
-		               	<span th:case="'30'" data-th-text="#{day.order.30}"></span>
-		               	<span th:case="'31'" data-th-text="#{day.order.31}"></span>
-                <!-- * for default case -->
-		                <span th:case="*">undetermined</span>
-		            </span>
-
-            <span th:switch="${cleanupTask.month}">
-		                <span th:case="'1'" data-th-text="#{month.january.d}"></span>
-		                <span th:case="'2'" data-th-text="#{month.february.d}"></span>
-		                <span th:case="'3'" data-th-text="#{month.march.d}"></span>
-		               	<span th:case="'4'" data-th-text="#{month.april.d}"></span>
-		               	<span th:case="'5'" data-th-text="#{month.may.d}"></span>
-		               	<span th:case="'6'" data-th-text="#{month.june.d}"></span>
-		               	<span th:case="'7'" data-th-text="#{month.july.d}"></span>
-		               	<span th:case="'8'" data-th-text="#{month.august.d}"></span>
-		               	<span th:case="'9'" data-th-text="#{month.september.d}"></span>
-		               	<span th:case="'10'" data-th-text="#{month.october.d}"></span>
-		               	<span th:case="'11'" data-th-text="#{month.november.d}"></span>
-		               	<span th:case="'12'" data-th-text="#{month.december.d}"></span>
-                <!-- * for default case -->
-		                <span th:case="*">undetermined</span>
-		            </span>
-            <span th:text="${cleanupTask.year}"></span>
-            <span data-th-text="#{preposition.at}"></span>
-            <span th:text="${cleanupTask.timeString}"></span>
-        </th:block>
-
-    </div>
     <br>
-	<div class="language-flags centered">
-		<span>
-			<a th:href="@{/(language=cz)}">
-				<img alt="CZ" class="flag" th:src="@{/images/cz.png}" title="Česky">
-			</a>
-		</span>
-		<span>
-			<a th:href="@{/(language=en)}">
-				<img alt="US" class="flag" th:src="@{/images/us.png}" title="English">
-			</a>
-		</span>
-	</div>
-    <br>
+
 </div>
 
 <div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>

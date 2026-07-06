@@ -58,20 +58,8 @@ public class AdminController {
         model.addAttribute(ModelAttributeName.SHIFT_REQUEST_COUNT, landingPageRecord.shiftRequestCount());
         model.addAttribute(ModelAttributeName.PERCENTAGE, landingPageRecord.percentage());
 
-        SendReminderTaskRecord sendReminderTaskRecord = plannedTasksService.getSendReminderTaskRecord();
-        model.addAttribute(ModelAttributeName.REMINDER_TASK, sendReminderTaskRecord);
-        model.addAttribute(ModelAttributeName.REMINDER_DEADLINE, sendReminderTaskRecord.reminderFinalSubmissionDay());
-        model.addAttribute(ModelAttributeName.REMINDER_IS_ACTIVE, sendReminderTaskRecord.reminderIsActive());
-        //model.addAttribute(ModelAttributeName.REMINDER_TASK_INFO, sendReminderTaskRecord.reminderTaskInfo());
-        model.addAttribute(ModelAttributeName.REMINDER_START, sendReminderTaskRecord);
-        model.addAttribute(ModelAttributeName.REMINDER_FREQUENCY, sendReminderTaskRecord.reminderFrequency());
-        model.addAttribute(ModelAttributeName.REMINDER_REPETITIONS, sendReminderTaskRecord.reminderRepetitions());
-
-        CleanupTaskRecord cleanupTaskRecord = plannedTasksService.getCleanupTaskRecord();
-        model.addAttribute(ModelAttributeName.CLEANUP_TASK, cleanupTaskRecord);
-        //model.addAttribute(ModelAttributeName.CLEANUP_TASK_INFO, cleanupTaskRecord.cleanupTaskInfo());
-        model.addAttribute(ModelAttributeName.CLEANUP_IS_ACTIVE, cleanupTaskRecord.cleanupIsActive());
-        model.addAttribute(ModelAttributeName.CLEANUP_DATE_TIME, cleanupTaskRecord.cleanupDateTime());
+        model.addAttribute("sendReminderTaskRecord", plannedTasksService.getSendReminderTaskRecord());
+        model.addAttribute("cleanupTaskRecord", plannedTasksService.getCleanupTaskRecord());
 
         return "admin/adminIndex";
     }

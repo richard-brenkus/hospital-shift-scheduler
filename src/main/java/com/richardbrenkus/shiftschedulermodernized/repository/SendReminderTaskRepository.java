@@ -12,7 +12,7 @@ import java.util.List;
 public interface SendReminderTaskRepository extends JpaRepository<SendReminderTask, Long> {
 
     @Transactional
-    @Query("SELECT s FROM CleanupTask s WHERE s.isActive = true")
+    @Query("SELECT s FROM SendReminderTask s WHERE s.isActive = true")
     List<SendReminderTask> findByIsActive();
 
 }
