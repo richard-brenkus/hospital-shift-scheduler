@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SendReminderTaskRepository extends JpaRepository<SendReminderTask, Long> {
@@ -14,5 +15,7 @@ public interface SendReminderTaskRepository extends JpaRepository<SendReminderTa
     @Transactional
     @Query("SELECT s FROM SendReminderTask s WHERE s.isActive = true")
     List<SendReminderTask> findByIsActive();
+
+    Optional<SendReminderTask> findFirstByIsActiveTrueOrderByStartSendingTimeAsc();
 
 }
