@@ -33,6 +33,9 @@ public interface UserRepository extends CrudRepository<User, Long> {
 
     boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
 
+    @Query("SELECT u FROM User u WHERE u.shiftRequest IS NULL")
+    List<User> findUsersWithoutActiveShiftRequest();
+
     @Modifying
     @Transactional
     @Query("update User u set u.username = :username where u.id = :id")

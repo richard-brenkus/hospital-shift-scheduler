@@ -81,6 +81,12 @@ public class ShiftRequestService {
         userRepository.save(user);
     }
 
+    @Transactional
+    public void deleteAllShiftRequests() {
+        userRepository.findAll().forEach(user -> user.setShiftRequest(null));
+        userRepository.saveAll(userRepository.findAll());
+    }
+
     private ShiftRequestValidationResult validateNoShiftsOnly(ShiftRequestForm form) {
 
         List<String> rejectedFields = new ArrayList<>();
