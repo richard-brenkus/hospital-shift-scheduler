@@ -414,11 +414,11 @@
 <br th:if="${isAdmin == true}">
 
 <div th:if="${isAdmin == true}" class="centered">
-    <form action="#" th:action="@{/admin/adminIndex}" method="get">
-        <button type="submit" class="standard-button" data-th-text="#{button.backToHomePage}">
-            Go back to index
-        </button>
-    </form>
+    <a th:href="@{/admin/adminIndex}"
+       class="standard-button button-link"
+       data-th-text="#{button.backToHomePage}">
+        Back to home page
+    </a>
 </div>
 
 <br>

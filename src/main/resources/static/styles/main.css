@@ -303,7 +303,7 @@ img.flag {
 }
 
 .button-green {
-    background-color: #3f8f4f;   /* muted green */
+    background-color: #3f8f4f;
     color: white;
 }
 
@@ -312,12 +312,95 @@ img.flag {
 }
 
 .button-orange {
-    background-color: #b56b2d;   /* muted orange */
+    background-color: #b56b2d;
     color: white;
 }
 
 .button-orange:hover {
     background-color: #cc7a34;
+}
+
+/* ============================================================
+   Planned tasks pages: adminIndex.html and planned_tasks.html
+   ============================================================ */
+
+.admin-index-wrapper,
+.planned-tasks-wrapper {
+    max-width: 1150px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.admin-index-planned-tasks {
+    margin: 2.5rem auto 2rem auto;
+}
+
+.planned-task-section {
+    margin: 2.25rem auto 4rem auto;
+}
+
+.planned-task-table {
+    width: 760px;
+    max-width: 100%;
+    margin: 1.25rem auto;
+    table-layout: fixed;
+}
+
+.planned-task-table th,
+.planned-task-table td {
+    vertical-align: middle;
+}
+
+.planned-task-label-column {
+    width: 65%;
+}
+
+.planned-task-value-column {
+    width: 35%;
+}
+
+.planned-task-table label,
+.planned-task-display-label {
+    white-space: nowrap;
+}
+
+.planned-task-table select {
+    min-width: 90px;
+}
+
+.planned-task-error {
+    display: block;
+    margin-top: 0.35rem;
+}
+
+.planned-task-actions {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.button-link {
+    display: inline-block;
+    text-decoration: none;
+    color: #ffffff;
+    background-color: #6b7280;
+    border-radius: 4px;
+    padding: 10px 20px;
+    margin: 4px 2px;
+}
+
+.button-link:hover {
+    background-color: #8a919c;
+}
+
+@media (max-width: 850px) {
+    .planned-task-table {
+        width: 96%;
+    }
+
+    .planned-task-table label,
+    .planned-task-display-label {
+        white-space: normal;
+    }
 }
 
 @media screen and (max-height: 450px) {

@@ -94,13 +94,11 @@
             <thead>
             <tr>
                 <th class="th-no-lines">
-                    <form th:action="@{/admin/adminIndex}" method="get">
-                        <button type="submit"
-                                class="standard-button"
-                                data-th-text="#{button.backToHomePage}">
-                            Go back
-                        </button>
-                    </form>
+                    <a th:href="@{/admin/adminIndex}"
+                       class="standard-button button-link"
+                       data-th-text="#{button.backToHomePage}">
+                        Back to home page
+                    </a>
                 </th>
 
                 <th class="th-no-lines">

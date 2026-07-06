@@ -84,17 +84,18 @@
 <br>
 
 <div class="centered">
-    <form th:if="${isAdmin}" th:action="@{/admin/adminIndex}" method="get">
-        <button type="submit" class="standard-button" data-th-text="#{button.backToHomePage}">
-            Back to home page
-        </button>
-    </form>
 
-    <form th:unless="${isAdmin}" th:action="@{/user/userIndex}" method="get">
-        <button type="submit" class="standard-button" data-th-text="#{button.backToHomePage}">
-            Back to home page
-        </button>
-    </form>
+    <a th:if="${isAdmin}" th:href="@{/admin/adminIndex}"
+       class="standard-button button-link"
+       data-th-text="#{button.backToHomePage}">
+        Back to home page
+    </a>
+
+    <a th:unless="${isAdmin}" th:href="@{/user/userIndex}"
+       class="standard-button button-link"
+       data-th-text="#{button.backToHomePage}">
+        Back to home page
+    </a>
 </div>
 
 <br>

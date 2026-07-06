@@ -32,13 +32,11 @@
 
     <br>
 
-    <form th:action="@{${redirectUrl}}" method="get">
-        <button type="submit"
-                class="standard-button"
-                data-th-text="#{button.backToHomePage}">
-            Go back
-        </button>
-    </form>
+    <a th:href="@{/admin/adminIndex}"
+       class="standard-button button-link"
+       data-th-text="#{button.backToHomePage}">
+        Back to home page
+    </a>
 
 </div>
 

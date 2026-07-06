@@ -130,13 +130,11 @@
 
         <br>
 
-        <form th:action="@{/admin/adminIndex}" method="get">
-            <button class="standard-button"
-                    type="submit"
-                    data-th-text="#{button.backToHomePage}">
-                Go back
-            </button>
-        </form>
+        <a th:href="@{/admin/adminIndex}"
+           class="standard-button button-link"
+           data-th-text="#{button.backToHomePage}">
+            Back to home page
+        </a>
 
     </div>
 

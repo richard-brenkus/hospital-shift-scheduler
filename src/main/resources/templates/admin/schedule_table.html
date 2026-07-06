@@ -406,13 +406,11 @@
         <div class="centered button-row"
              style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; align-items: center;">
 
-            <button type="submit"
-                    class="standard-button"
-                    th:formaction="@{/admin/adminIndex}"
-                    formmethod="get"
-                    data-th-text="#{button.backToHomePage}">
-                Go back
-            </button>
+            <a th:href="@{/admin/adminIndex}"
+               class="standard-button button-link"
+               data-th-text="#{button.backToHomePage}">
+                Back to home page
+            </a>
 
             <button type="submit"
                     class="standard-button"

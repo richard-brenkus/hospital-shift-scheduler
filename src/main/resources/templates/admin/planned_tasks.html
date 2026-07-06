@@ -8,68 +8,6 @@
     <title>Planned tasks</title>
 
     <link rel="stylesheet" th:href="@{/styles/main.css}"/>
-
-    <style>
-        .planned-tasks-wrapper {
-            max-width: 1150px;
-            margin: 0 auto;
-            padding: 0 1.5rem 3rem 1.5rem;
-        }
-
-        .planned-task-section {
-            margin: 2.25rem auto 4rem auto;
-        }
-
-        .planned-task-table {
-            width: 760px;
-            max-width: 100%;
-            margin: 1.25rem auto;
-            table-layout: fixed;
-        }
-
-        .planned-task-table th,
-        .planned-task-table td {
-            vertical-align: middle;
-        }
-
-        .planned-task-label-column {
-            width: 65%;
-        }
-
-        .planned-task-value-column {
-            width: 35%;
-        }
-
-        .planned-task-table label,
-        .planned-task-display-label {
-            white-space: nowrap;
-        }
-
-        .planned-task-table select {
-            min-width: 90px;
-        }
-
-        .planned-task-error {
-            display: block;
-            margin-top: 0.35rem;
-        }
-
-        .planned-task-actions {
-            text-align: center;
-            margin-top: 1rem;
-        }
-
-        @media (max-width: 850px) {
-            .planned-task-table {
-                width: 96%;
-            }
-
-            .planned-task-table label,
-            .planned-task-display-label {
-                white-space: normal;
-            }
-        }
-    </style>
 </head>
 
 <body>
@@ -94,13 +32,6 @@
                 <col class="planned-task-value-column">
             </colgroup>
 
-            <thead>
-            <tr>
-                <th data-th-text="#{scheduledTasks.item}">Item</th>
-                <th data-th-text="#{scheduledTasks.value}">Value</th>
-            </tr>
-            </thead>
-
             <tbody>
             <tr th:if="${sendReminderTaskRecord.reminderIsActive}">
                 <td class="planned-task-display-label" data-th-text="#{scheduledTasks.status}">Status</td>
@@ -113,7 +44,8 @@
             </tr>
 
             <tr th:if="${sendReminderTaskRecord.reminderIsActive}">
-                <td class="planned-task-display-label" data-th-text="#{reminderTaskInfo.startSending}">Start sending
+                <td class="planned-task-display-label" data-th-text="#{reminderTaskInfo.startSending}">
+                    Start sending
                 </td>
                 <td th:text="${#temporals.format(sendReminderTaskRecord.reminderStart, 'dd.MM.yyyy HH:mm')}">
                     10.07.2026 08:00
@@ -124,7 +56,7 @@
                 <td class="planned-task-display-label" data-th-text="#{reminderTaskInfo.frequency}">Frequency</td>
                 <td>
                     <span th:text="${sendReminderTaskRecord.reminderFrequency}">1</span>
-                    <span data-th-text="#{reminderTaskInfo.days}">day(s)</span>
+                    <!--span data-th-text="#{reminderTaskInfo.days}">day(s)</--span-->
                 </td>
             </tr>
 
@@ -134,8 +66,8 @@
             </tr>
 
             <tr th:if="${sendReminderTaskRecord.reminderIsActive}">
-                <td class="planned-task-display-label" data-th-text="#{reminderTaskInfo.deadline}">Final submission
-                    day
+                <td class="planned-task-display-label" data-th-text="#{reminderTaskInfo.deadline}">
+                    Final submission day
                 </td>
                 <td th:text="${sendReminderTaskRecord.reminderFinalSubmissionDay}">15</td>
             </tr>
@@ -148,13 +80,6 @@
                     <col class="planned-task-label-column">
                     <col class="planned-task-value-column">
                 </colgroup>
-
-                <thead>
-                <tr>
-                    <th data-th-text="#{scheduledTasks.setting}">Setting</th>
-                    <th data-th-text="#{scheduledTasks.value}">Value</th>
-                </tr>
-                </thead>
 
                 <tbody>
                 <tr>
@@ -208,8 +133,7 @@
                     </td>
                     <td>
                         <select id="startSendingRemindersMinute" th:field="*{startSendingRemindersMinute}">
-                            <option th:each="minute : ${minutesList}" th:value="${minute}" th:text="${minute}">0
-                            </option>
+                            <option th:each="minute : ${minutesList}" th:value="${minute}" th:text="${minute}">0</option>
                         </select>
                     </td>
                 </tr>
@@ -222,9 +146,7 @@
                     </td>
                     <td>
                         <select id="reminderSendingFrequencyInDays" th:field="*{reminderSendingFrequencyInDays}">
-                            <option th:each="frequency : ${frequencyList}" th:value="${frequency}"
-                                    th:text="${frequency}">1
-                            </option>
+                            <option th:each="frequency : ${frequencyList}" th:value="${frequency}" th:text="${frequency}">1</option>
                         </select>
                     </td>
                 </tr>
@@ -237,9 +159,7 @@
                     </td>
                     <td>
                         <select id="reminderRepetitions" th:field="*{reminderRepetitions}">
-                            <option th:each="repetition : ${repetitionsList}" th:value="${repetition}"
-                                    th:text="${repetition}">1
-                            </option>
+                            <option th:each="repetition : ${repetitionsList}" th:value="${repetition}" th:text="${repetition}">1</option>
                         </select>
                     </td>
                 </tr>
@@ -252,8 +172,7 @@
                     </td>
                     <td>
                         <select id="finalSubmissionDay" th:field="*{finalSubmissionDay}">
-                            <option th:each="day : ${finalSubmissionDaysList}" th:value="${day}" th:text="${day}">15
-                            </option>
+                            <option th:each="day : ${finalSubmissionDaysList}" th:value="${day}" th:text="${day}">15</option>
                         </select>
                     </td>
                 </tr>
@@ -282,13 +201,6 @@
                 <col class="planned-task-value-column">
             </colgroup>
 
-            <thead>
-            <tr>
-                <th data-th-text="#{scheduledTasks.item}">Item</th>
-                <th data-th-text="#{scheduledTasks.value}">Value</th>
-            </tr>
-            </thead>
-
             <tbody>
             <tr th:if="${cleanupTaskRecord.cleanupIsActive}">
                 <td class="planned-task-display-label" data-th-text="#{scheduledTasks.status}">Status</td>
@@ -301,7 +213,8 @@
             </tr>
 
             <tr th:if="${cleanupTaskRecord.cleanupIsActive}">
-                <td class="planned-task-display-label" data-th-text="#{cleanupTaskInfo.scheduled}">Planned cleanup
+                <td class="planned-task-display-label" data-th-text="#{cleanupTaskInfo.scheduled}">
+                    Planned cleanup
                 </td>
                 <td th:text="${#temporals.format(cleanupTaskRecord.cleanupDateTime, 'dd.MM.yyyy HH:mm')}">
                     10.07.2026 22:00
@@ -316,13 +229,6 @@
                     <col class="planned-task-label-column">
                     <col class="planned-task-value-column">
                 </colgroup>
-
-                <thead>
-                <tr>
-                    <th data-th-text="#{scheduledTasks.setting}">Setting</th>
-                    <th data-th-text="#{scheduledTasks.value}">Value</th>
-                </tr>
-                </thead>
 
                 <tbody>
                 <tr>
@@ -370,8 +276,7 @@
                     </td>
                     <td>
                         <select id="cleanupMinute" th:field="*{cleanupMinute}">
-                            <option th:each="minute : ${minutesList}" th:value="${minute}" th:text="${minute}">0
-                            </option>
+                            <option th:each="minute : ${minutesList}" th:value="${minute}" th:text="${minute}">0</option>
                         </select>
                     </td>
                 </tr>
@@ -396,11 +301,11 @@
     <br>
 
     <div class="centered planned-task-actions">
-        <form th:action="@{/admin/adminIndex}" method="get">
-            <button class="standard-button" type="submit" data-th-text="#{button.backToHomePage}">
-                Go back
-            </button>
-        </form>
+        <a th:href="@{/admin/adminIndex}"
+           class="standard-button button-link"
+           data-th-text="#{button.backToHomePage}">
+            Back to home page
+        </a>
     </div>
 </div>
 
