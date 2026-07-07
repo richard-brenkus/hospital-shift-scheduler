@@ -4,11 +4,12 @@ import com.richardbrenkus.shiftschedulermodernized.entity.CleanupTask;
 import com.richardbrenkus.shiftschedulermodernized.entity.SendReminderTask;
 import com.richardbrenkus.shiftschedulermodernized.repository.CleanupTaskRepository;
 import com.richardbrenkus.shiftschedulermodernized.repository.SendReminderTaskRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 @Service
@@ -19,15 +20,29 @@ public class PlannedTaskExecutorService {
     private final CleanupTaskRepository cleanupTaskRepository;
     private final SendReminderTaskRepository sendReminderTaskRepository;
     private final ShiftRequestService shiftRequestService;
-    private final SmtpEmailReminderService emailReminderService;
 
-    @Scheduled(fixedDelay = 60_000)
+    /*
+     * Spring profiles:
+     * dev  -> LoggingEmailReminderService
+     * prod -> SmtpEmailReminderService
+     */
+    private final EmailReminderService emailReminderService;
+
+    /*
+     * Timezone-aware application clock.
+     * Defined in TimeConfig from app.time-zone.
+     */
+    private final Clock applicationClock;
+
+    @Scheduled(fixedDelayString = "${planned-tasks.executor.fixed-delay-ms:60000}")
     public void executeDueTasks() {
-        executeCleanupTaskIfDue();
-        executeReminderTaskIfDue();
+        LocalDateTime now = LocalDateTime.now(applicationClock);
+
+        executeCleanupTaskIfDue(now);
+        executeReminderTaskIfDue(now);
     }
 
-    private void executeCleanupTaskIfDue() {
+    private void executeCleanupTaskIfDue(LocalDateTime now) {
         CleanupTask task = cleanupTaskRepository
                 .findFirstByIsActiveTrueOrderByExecutionTimeAsc()
                 .orElse(null);
@@ -36,7 +51,7 @@ public class PlannedTaskExecutorService {
             return;
         }
 
-        if (task.getExecutionTime().isAfter(LocalDateTime.now())) {
+        if (task.getExecutionTime().isAfter(now)) {
             return;
         }
 
@@ -46,7 +61,7 @@ public class PlannedTaskExecutorService {
         cleanupTaskRepository.save(task);
     }
 
-    private void executeReminderTaskIfDue() {
+    private void executeReminderTaskIfDue(LocalDateTime now) {
         SendReminderTask task = sendReminderTaskRepository
                 .findFirstByIsActiveTrueOrderByStartSendingTimeAsc()
                 .orElse(null);
@@ -55,7 +70,7 @@ public class PlannedTaskExecutorService {
             return;
         }
 
-        if (task.getStartSendingTime().isAfter(LocalDateTime.now())) {
+        if (task.getStartSendingTime().isAfter(now)) {
             return;
         }
 
@@ -66,9 +81,7 @@ public class PlannedTaskExecutorService {
         if (task.getCounter() >= task.getRepetitions()) {
             task.setActive(false);
         } else {
-            task.setStartSendingTime(
-                    task.getStartSendingTime().plusDays(task.getFrequencyInDays())
-            );
+            task.setStartSendingTime(task.getStartSendingTime().plusDays(task.getFrequencyInDays()));
         }
 
         sendReminderTaskRepository.save(task);
