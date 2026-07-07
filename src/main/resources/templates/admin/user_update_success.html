@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
@@ -13,47 +14,57 @@
 
 <button class="openbtn" onclick="openNav()">menu</button>
 
-<div class="centered">
+<main class="centered user-update-success-wrapper">
 
-    <h1 th:if="${actionType == 'update'}"
-        data-th-text="#{update.success.header}">
-        User details updated successfully!
-    </h1>
+    <header class="page-header">
 
-    <h1 th:if="${actionType == 'add'}"
-        data-th-text="#{add.success.header}">
-        The new user has been registered successfully!
-    </h1>
+        <h1 th:if="${actionType == 'update'}"
+            data-th-text="#{update.success.header}">
+            User details updated successfully!
+        </h1>
 
-    <br>
+        <h1 th:if="${actionType == 'add'}"
+            data-th-text="#{add.success.header}">
+            The new user has been registered successfully!
+        </h1>
 
-    <form th:action="@{/admin/register_user}" method="get">
-        <button type="submit"
-                class="standard-button"
-                data-th-text="#{button.registerAnother}">
-            Register new user
-        </button>
-    </form>
+    </header>
 
-    <br>
+    <nav class="page-actions user-update-success-actions centered">
 
-    <form th:action="@{/admin/all_users_list}" method="get">
-        <button type="submit"
-                class="standard-button"
-                data-th-text="#{button.showUsers}">
-            Show users
-        </button>
-    </form>
+        <form th:action="@{/admin/register_user}"
+              method="get"
+              class="inline-action-form">
 
-    <br>
+            <button type="submit"
+                    class="standard-button"
+                    data-th-text="#{button.registerAnother}">
+                Register new user
+            </button>
 
-    <a th:href="@{/admin/adminIndex}"
-       class="standard-button button-link"
-       data-th-text="#{button.backToHomePage}">
-        Back to home page
-    </a>
+        </form>
 
-</div>
+        <form th:action="@{/admin/all_users_list}"
+              method="get"
+              class="inline-action-form">
+
+            <button type="submit"
+                    class="standard-button"
+                    data-th-text="#{button.showUsers}">
+                Show users
+            </button>
+
+        </form>
+
+        <a th:href="@{/admin/adminIndex}"
+           class="standard-button button-link"
+           data-th-text="#{button.backToHomePage}">
+            Back to home page
+        </a>
+
+    </nav>
+
+</main>
 
 <div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
 

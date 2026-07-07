@@ -1,9 +1,12 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
+
     <link rel="stylesheet" th:href="@{/styles/main.css}"/>
+
     <title>Delete user</title>
 </head>
 
@@ -11,65 +14,93 @@
 
 <button class="openbtn" onclick="openNav()">menu</button>
 
-<div class="centered">
-    <h1 data-th-text="#{deleteUser.header}">Delete user</h1>
+<main class="centered delete-user-wrapper">
 
-    <form th:action="@{/admin/delete_user}" method="post">
-        <table class="table-no-lines">
-            <tr>
-                <td class="td-no-lines">
-                    <label for="userId" data-th-text="#{deleteUser.select}">
-                        Select user
-                    </label>
-                </td>
-            </tr>
+    <header class="page-header">
+        <h1 data-th-text="#{deleteUser.header}">
+            Delete user
+        </h1>
+    </header>
 
-            <tr>
-                <td class="td-no-lines">
-                    <select id="userId" name="userId" required>
-                        <option value="" data-th-text="#{deleteUser.select}">
+    <section class="page-section">
+
+        <form th:action="@{/admin/delete_user}"
+              method="post"
+              class="delete-user-form">
+
+            <table class="table-no-lines delete-user-table">
+
+                <tbody>
+
+                <tr>
+                    <td class="td-no-lines delete-user-cell">
+                        <label for="userId"
+                               data-th-text="#{deleteUser.select}">
                             Select user
-                        </option>
+                        </label>
+                    </td>
+                </tr>
 
-                        <option th:each="user : ${users}"
-                                th:value="${user.id}"
-                                th:text="${user.name + ' (' + user.username + ')'}">
-                            User name
-                        </option>
-                    </select>
-                </td>
-            </tr>
+                <tr>
+                    <td class="td-no-lines delete-user-cell">
+                        <select id="userId" name="userId" required>
+                            <option value=""
+                                    data-th-text="#{deleteUser.select}">
+                                Select user
+                            </option>
 
-            <tr>
-                <td class="td-no-lines">
-                    <button type="submit"
-                            class="standard-button"
-                            data-th-text="#{button.delete}"
-                            th:data-confirm-message="#{userTable.confirmDelete}"
-                            onclick="return confirm(this.dataset.confirmMessage);">
-                        Delete
-                    </button>
-                </td>
-            </tr>
-        </table>
-    </form>
+                            <option th:each="user : ${users}"
+                                    th:value="${user.id}"
+                                    th:text="${user.name + ' (' + user.username + ')'}">
+                                User name
+                            </option>
+                        </select>
+                    </td>
+                </tr>
 
-    <br>
+                <tr>
+                    <td class="td-no-lines delete-user-cell">
+                        <button type="submit"
+                                class="standard-button button-orange"
+                                data-th-text="#{button.delete}"
+                                th:data-confirm-message="#{userTable.confirmDelete}"
+                                onclick="return confirm(this.dataset.confirmMessage);">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
 
-    <form th:action="@{/admin/all_users_list}" method="get">
-        <button type="submit" class="standard-button" data-th-text="#{button.showUsers}">
-            Show users
-        </button>
-    </form>
+                </tbody>
 
-    <br>
+            </table>
 
-    <a th:href="@{/admin/adminIndex}"
-       class="standard-button button-link"
-       data-th-text="#{button.backToHomePage}">
-        Back to home page
-    </a>
-</div>
+        </form>
+
+    </section>
+
+    <nav class="page-actions centered">
+
+        <form th:action="@{/admin/all_users_list}"
+              method="get"
+              class="inline-action-form">
+
+            <button type="submit"
+                    class="standard-button"
+                    data-th-text="#{button.showUsers}">
+                Show users
+            </button>
+
+        </form>
+
+        <a th:href="@{/admin/adminIndex}"
+           class="standard-button button-link"
+           data-th-text="#{button.backToHomePage}">
+            Back to home page
+        </a>
+
+    </nav>
+
+</main>
 
 <div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
 

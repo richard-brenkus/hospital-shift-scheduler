@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="https://www.thymeleaf.org">
+
 <head>
     <title>Request Summary</title>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link rel="stylesheet" th:href="@{/styles/main.css}"/>
@@ -10,103 +11,143 @@
 
 <body>
 
-<div class="centered">
-    <h1>
-        <span data-th-text="#{requestSummary.header}">Request summary of: </span>
-        <span th:text="${displayName}"></span>
-    </h1>
+<main class="centered shift-request-summary-wrapper">
 
-</div>
+    <header class="page-header">
+        <h1>
+            <span data-th-text="#{requestSummary.header}">Request summary of: </span>
+            <span th:text="${displayName}"></span>
+        </h1>
+    </header>
 
-<br>
+    <section class="page-section"
+             th:if="${submittedShiftRequestRecord != null}">
 
-<div class="centered" th:if="${submittedShiftRequestRecord != null}">
-    <table class="table-with-lines centered">
-        <colgroup>
-            <col class="col-10">
-            <col class="col-56">
-            <col class="col-10">
-            <col class="col-10">
-            <col class="col-7">
-            <col th:if="${isAdmin}" class="col-7">
-        </colgroup>
+        <div class="shift-request-summary-table-wrapper">
 
-        <thead>
-        <tr>
-            <th class="centered" data-th-text="#{label.shiftType}">Shift type</th>
-            <th class="centered" data-th-text="#{label.stringDatesYes}">Dates YES</th>
-            <th data-th-text="#{label.weekdayCount}">Weekday count</th>
-            <th data-th-text="#{label.weekendCount}">Weekend count</th>
-            <th data-th-text="#{label.anyDateSelected}">Any date</th>
-            <th th:if="${isAdmin}" data-th-text="#{label.priority}">Priority</th>
-        </tr>
-        </thead>
+            <table class="table-with-lines shift-request-summary-table">
+                <colgroup>
+                    <col class="col-10">
+                    <col class="col-56">
+                    <col class="col-10">
+                    <col class="col-10">
+                    <col class="col-7">
+                    <col th:if="${isAdmin}" class="col-7">
+                </colgroup>
 
-        <tbody>
-        <tr th:each="preference : ${submittedShiftRequestRecord.preferences}"
-            th:if="${preference.noShiftRequested == false}">
-            <td>
-                <span data-th-text="#{'shiftType' + ${preference.shiftType}}">Shift type</span>
-                <span th:text="${preference.shiftType}"></span>
-            </td>
-            <td th:text="${preference.stringDatesYes}"></td>
-            <td class="centered" th:text="${preference.weekdayCount}"></td>
-            <td class="centered" th:text="${preference.weekendCount}"></td>
-            <td class="centered" th:if="${preference.anyDateSelected}"><b>X</b></td>
-            <td th:unless="${preference.anyDateSelected}"></td>
-            <td class="centered" th:if="${isAdmin}" th:text="${preference.priority}"></td>
-        </tr>
-        </tbody>
-    </table>
+                <thead>
+                <tr>
+                    <th class="centered" data-th-text="#{label.shiftType}">
+                        Shift type
+                    </th>
+                    <th class="centered" data-th-text="#{label.stringDatesYes}">
+                        Dates YES
+                    </th>
+                    <th data-th-text="#{label.weekdayCount}">
+                        Weekday count
+                    </th>
+                    <th data-th-text="#{label.weekendCount}">
+                        Weekend count
+                    </th>
+                    <th data-th-text="#{label.anyDateSelected}">
+                        Any date
+                    </th>
+                    <th th:if="${isAdmin}" data-th-text="#{label.priority}">
+                        Priority
+                    </th>
+                </tr>
+                </thead>
 
-    <div th:if="${!#strings.isEmpty(submittedShiftRequestRecord.stringDatesNo)}">
-        <br>
-        <table class="table-no-lines">
-            <tr>
-                <td class="td-no-lines right-aligned electric-blue">
-                    <b data-th-text="#{label.stringDatesNo}">Dates NO:</b>
-                </td>
-                <td class="td-no-lines left-aligned electric-blue"
-                    th:text="${submittedShiftRequestRecord.stringDatesNo}">
-                </td>
-            </tr>
-        </table>
-        <br>
-    </div>
-</div>
+                <tbody>
+                <tr th:each="preference : ${submittedShiftRequestRecord.preferences}"
+                    th:if="${preference.noShiftRequested == false}">
+                    <td>
+                        <span data-th-text="#{'shiftType' + ${preference.shiftType}}">Shift type</span>
+                        <span th:text="${preference.shiftType}"></span>
+                    </td>
 
-<div class="centered" th:if="${submittedShiftRequestRecord == null}">
-    <p data-th-text="#{userIndex.noValidRequest}">
-        The user doesn't have a shift request in the system. Please submit a shift request first.
-    </p>
-</div>
+                    <td th:text="${preference.stringDatesYes}"></td>
 
-<br>
+                    <td class="centered" th:text="${preference.weekdayCount}"></td>
 
-<div class="centered">
+                    <td class="centered" th:text="${preference.weekendCount}"></td>
 
-    <a th:if="${isAdmin}" th:href="@{/admin/adminIndex}"
-       class="standard-button button-link"
-       data-th-text="#{button.backToHomePage}">
-        Back to home page
-    </a>
+                    <td class="centered" th:if="${preference.anyDateSelected}">
+                        <b>X</b>
+                    </td>
 
-    <a th:unless="${isAdmin}" th:href="@{/user/userIndex}"
-       class="standard-button button-link"
-       data-th-text="#{button.backToHomePage}">
-        Back to home page
-    </a>
-</div>
+                    <td th:unless="${preference.anyDateSelected}"></td>
 
-<br>
+                    <td class="centered" th:if="${isAdmin}" th:text="${preference.priority}"></td>
+                </tr>
+                </tbody>
+            </table>
 
-<div class="centered">
-    <form th:action="@{/logout}" method="post">
-        <button type="submit" class="standard-button" data-th-text="#{button.signout}">
-            Sign out
-        </button>
-    </form>
-</div>
+        </div>
+
+        <div class="shift-request-dates-no"
+             th:if="${!#strings.isEmpty(submittedShiftRequestRecord.stringDatesNo)}">
+
+            <table class="table-no-lines shift-request-dates-no-table">
+                <tbody>
+                <tr>
+                    <td class="td-no-lines right-aligned electric-blue">
+                        <b data-th-text="#{label.stringDatesNo}">
+                            Dates NO:
+                        </b>
+                    </td>
+
+                    <td class="td-no-lines left-aligned electric-blue"
+                        th:text="${submittedShiftRequestRecord.stringDatesNo}">
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+        </div>
+
+    </section>
+
+    <section class="page-section"
+             th:if="${submittedShiftRequestRecord == null}">
+
+        <p data-th-text="#{userIndex.noValidRequest}">
+            The user doesn't have a shift request in the system. Please submit a shift request first.
+        </p>
+
+    </section>
+
+    <nav class="page-actions centered">
+
+        <a th:if="${isAdmin}"
+           th:href="@{/admin/adminIndex}"
+           class="standard-button button-link"
+           data-th-text="#{button.backToHomePage}">
+            Back to home page
+        </a>
+
+        <a th:unless="${isAdmin}"
+           th:href="@{/user/userIndex}"
+           class="standard-button button-link"
+           data-th-text="#{button.backToHomePage}">
+            Back to home page
+        </a>
+
+        <form th:action="@{/logout}"
+              method="post"
+              class="inline-action-form">
+
+            <button type="submit"
+                    class="standard-button"
+                    data-th-text="#{button.signout}">
+                Sign out
+            </button>
+
+        </form>
+
+    </nav>
+
+</main>
 
 </body>
 </html>

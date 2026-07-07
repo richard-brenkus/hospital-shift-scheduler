@@ -10,6 +10,7 @@
     <link rel="stylesheet" th:href="@{/styles/main.css}"/>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+
     <link rel="stylesheet"
           type="text/css"
           href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.css">
@@ -21,129 +22,132 @@
             $("#myTable").DataTable();
         });
     </script>
-
 </head>
 
 <body>
 
 <button class="openbtn standard-button" onclick="openNav()">Menu</button>
 
-<div th:switch="${users}">
+<main class="users-list-wrapper">
 
-    <h1 th:case="null"
-        data-th-text="#{users.header.noneFound}">
-        No users found!
-    </h1>
+    <section th:switch="${users}">
 
-    <div th:case="*">
-
-        <h1 class="centered"
-            data-th-text="#{users.header}">
-            Users
+        <h1 th:case="null"
+            class="centered"
+            data-th-text="#{users.header.noneFound}">
+            No users found!
         </h1>
 
-        <table class="table-with-lines table-narrow" id="myTable">
+        <div th:case="*">
 
-            <colgroup>
-                <col class="col-30">
-                <col class="col-25">
-                <col class="col-25">
-                <col class="col-10">
-                <col class="col-10">
-            </colgroup>
+            <header class="page-header centered">
+                <h1 data-th-text="#{users.header}">
+                    Users
+                </h1>
+            </header>
 
-            <thead>
-            <tr>
-                <th data-th-text="#{users.name}">Name</th>
-                <th data-th-text="#{users.username}">Username</th>
-                <th data-th-text="#{users.email}">Email</th>
-                <th data-th-text="#{users.shiftRequest}">Request</th>
-                <th data-th-text="#{users.show}">Show</th>
-            </tr>
-            </thead>
+            <section class="page-section users-list-section">
 
-            <tbody>
+                <table class="table-with-lines users-list-table" id="myTable">
 
-            <tr th:each="user : ${users}">
+                    <colgroup>
+                        <col class="col-30">
+                        <col class="col-25">
+                        <col class="col-25">
+                        <col class="col-10">
+                        <col class="col-10">
+                    </colgroup>
 
-                <td th:text="${user.name}"></td>
+                    <thead>
+                    <tr>
+                        <th data-th-text="#{users.name}">Name</th>
+                        <th data-th-text="#{users.username}">Username</th>
+                        <th data-th-text="#{users.email}">Email</th>
+                        <th data-th-text="#{users.shiftRequest}">Request</th>
+                        <th data-th-text="#{users.show}">Show</th>
+                    </tr>
+                    </thead>
 
-                <td th:text="${user.username}"></td>
+                    <tbody>
 
-                <td th:text="${user.email}"></td>
+                    <tr th:each="user : ${users}">
 
-                <!-- Create or Edit shift request -->
+                        <td th:text="${user.name}"></td>
 
-                <td th:with="buttonLabel=${user.hasShiftRequest} ? #{users.edit} : #{users.new}">
+                        <td th:text="${user.username}"></td>
 
-                    <form th:action="@{/admin/update_shift_request}"
-                          method="post">
+                        <td th:text="${user.email}"></td>
 
-                        <input type="hidden"
-                               name="id"
-                               th:value="${user.userId}"/>
+                        <td th:with="buttonLabel=${user.hasShiftRequest} ? #{users.edit} : #{users.new}">
 
-                        <button type="submit"
-                                class="table-button"
-                                th:classappend="${user.hasShiftRequest} ? ' button-orange' : ' button-green'"
-                                th:text="${buttonLabel}">
-                            Shift request
-                        </button>
+                            <form th:action="@{/admin/update_shift_request}"
+                                  method="post">
 
-                    </form>
+                                <input type="hidden"
+                                       name="id"
+                                       th:value="${user.userId}"/>
 
-                </td>
+                                <button type="submit"
+                                        class="table-button"
+                                        th:classappend="${user.hasShiftRequest} ? ' button-orange' : ' button-green'"
+                                        th:text="${buttonLabel}">
+                                    Shift request
+                                </button>
 
+                            </form>
 
-                <!-- Show existing shift request -->
+                        </td>
 
-                <td>
+                        <td>
 
-                    <div th:if="${user.hasShiftRequest}"
-                         class="centered">
+                            <div th:if="${user.hasShiftRequest}"
+                                 class="centered">
 
-                        <form target="_blank"
-                              th:action="@{/admin/show_request_summary}"
-                              method="post">
+                                <form target="_blank"
+                                      th:action="@{/admin/show_request_summary}"
+                                      method="post">
 
-                            <input type="hidden"
-                                   name="userId"
-                                   th:value="${user.userId}"/>
+                                    <input type="hidden"
+                                           name="userId"
+                                           th:value="${user.userId}"/>
 
-                            <button class="table-button"
-                                    type="submit"
-                                    data-th-text="#{users.show}">
-                                Show
-                            </button>
+                                    <button class="table-button"
+                                            type="submit"
+                                            data-th-text="#{users.show}">
+                                        Show
+                                    </button>
 
-                        </form>
+                                </form>
 
-                    </div>
+                            </div>
 
-                </td>
+                        </td>
 
-            </tr>
+                    </tr>
 
-            </tbody>
+                    </tbody>
 
-        </table>
+                </table>
 
-        <br>
+            </section>
 
-        <a th:href="@{/admin/adminIndex}"
-           class="standard-button button-link"
-           data-th-text="#{button.backToHomePage}">
-            Back to home page
-        </a>
+            <nav class="page-actions centered">
+                <a th:href="@{/admin/adminIndex}"
+                   class="standard-button button-link"
+                   data-th-text="#{button.backToHomePage}">
+                    Back to home page
+                </a>
+            </nav>
 
-    </div>
+        </div>
 
-</div>
+    </section>
+
+</main>
 
 <div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
 
 <script>
-
     function openNav() {
         document.getElementById("adminSidebar").style.width = "250px";
     }
@@ -151,7 +155,6 @@
     function closeNav() {
         document.getElementById("adminSidebar").style.width = "0";
     }
-
 </script>
 
 </body>

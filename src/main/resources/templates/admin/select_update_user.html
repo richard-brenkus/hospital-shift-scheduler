@@ -1,9 +1,12 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
+
     <link rel="stylesheet" th:href="@{/styles/main.css}"/>
+
     <title>Update user</title>
 </head>
 
@@ -11,57 +14,76 @@
 
 <button class="openbtn" onclick="openNav()">menu</button>
 
-<div class="centered">
-    <h1 data-th-text="#{updateSelect.header}">
-        Edit user details
-    </h1>
-</div>
+<main class="centered select-update-user-wrapper">
 
-<br>
+    <header class="page-header">
+        <h1 data-th-text="#{updateSelect.header}">
+            Edit user details
+        </h1>
+    </header>
 
-<div class="centered">
-    <form action="#" th:action="@{/admin/select_update_user}" method="post" th:object="${updatedUser}">
-        <table class="table-no-lines">
-            <tr>
-                <td class="td-no-lines">
-                    <label for="updatedUserSelect" data-th-text="#{updateSelect.select}">
-                        Select user
-                    </label>
-                </td>
-            </tr>
+    <section class="page-section">
 
-            <tr>
-                <td class="td-no-lines">
-                    <select id="updatedUserSelect" th:field="*{id}">
-                        <option value="" data-th-text="#{updateSelect.select}">
+        <form th:action="@{/admin/select_update_user}"
+              method="post"
+              th:object="${updatedUser}"
+              class="select-update-user-form">
+
+            <table class="table-no-lines select-update-user-table">
+
+                <tbody>
+
+                <tr>
+                    <td class="td-no-lines select-update-user-cell">
+                        <label for="updatedUserSelect"
+                               data-th-text="#{updateSelect.select}">
                             Select user
-                        </option>
+                        </label>
+                    </td>
+                </tr>
 
-                        <option th:each="user : ${users}"
-                                th:value="${user.id}"
-                                th:text="${user.name}">
-                            User name
-                        </option>
-                    </select>
-                </td>
-            </tr>
-        </table>
+                <tr>
+                    <td class="td-no-lines select-update-user-cell">
+                        <select id="updatedUserSelect" th:field="*{id}">
+                            <option value=""
+                                    data-th-text="#{updateSelect.select}">
+                                Select user
+                            </option>
 
-        <br>
+                            <option th:each="user : ${users}"
+                                    th:value="${user.id}"
+                                    th:text="${user.name}">
+                                User name
+                            </option>
+                        </select>
+                    </td>
+                </tr>
 
-        <button type="submit" class="standard-button" data-th-text="#{button.update}">
-            Update
-        </button>
-    </form>
+                </tbody>
 
-    <br>
+            </table>
 
-    <a th:href="@{/admin/adminIndex}"
-       class="standard-button button-link"
-       data-th-text="#{button.backToHomePage}">
-        Back to home page
-    </a>
-</div>
+            <div class="form-actions">
+                <button type="submit"
+                        class="standard-button"
+                        data-th-text="#{button.update}">
+                    Update
+                </button>
+            </div>
+
+        </form>
+
+    </section>
+
+    <nav class="page-actions centered">
+        <a th:href="@{/admin/adminIndex}"
+           class="standard-button button-link"
+           data-th-text="#{button.backToHomePage}">
+            Back to home page
+        </a>
+    </nav>
+
+</main>
 
 <div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
 

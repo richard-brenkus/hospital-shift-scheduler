@@ -1,74 +1,96 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
+
     <link rel="stylesheet" th:href="@{/styles/main.css}"/>
+
     <title>Update shift request</title>
 </head>
+
 <body>
 
 <button class="openbtn" onclick="openNav()">menu</button>
 
-<div class="centered">
-    <h1 data-th-text="#{updateRequestSelect.header}">Update shift request</h1>
+<main class="centered update-shift-request-wrapper">
 
-    <form action="#"
-          th:action="@{/admin/update_shift_request}"
-          method="post"
-          th:object="${updatedUser}">
+    <header class="page-header">
+        <h1 data-th-text="#{updateRequestSelect.header}">
+            Update shift request
+        </h1>
+    </header>
 
-        <table class="table-no-lines table-narrow">
-            <tr>
-                <td class="td-no-lines">
-                    <label for="requestUserSelect"
-                           data-th-text="#{updateRequestSelect.select}">
-                        Select the user whose shift request you would like to edit
-                    </label>
-                </td>
-            </tr>
+    <section class="page-section">
 
-            <tr>
-                <td class="td-no-lines">
-                    <select id="requestUserSelect"
-                            th:field="*{id}">
-                        <option value=""
-                                data-th-text="#{updateRequestSelect.requester}">
-                            Select requester
-                        </option>
+        <form th:action="@{/admin/update_shift_request}"
+              method="post"
+              th:object="${updatedUser}"
+              class="update-shift-request-form">
 
-                        <option th:each="user : ${users}"
-                                th:value="${user.id}"
-                                th:text="${user.name}">
-                        </option>
-                    </select>
-                </td>
+            <table class="table-no-lines update-shift-request-table">
 
-                <td class="td-no-lines error-red"
-                    th:if="${#fields.hasErrors('id')}"
-                    th:errors="*{id}">
-                    User error
-                </td>
-            </tr>
-        </table>
+                <tbody>
 
-        <br>
+                <tr>
+                    <td class="td-no-lines update-shift-request-label-cell">
+                        <label for="requestUserSelect"
+                               data-th-text="#{updateRequestSelect.select}">
+                            Select the user whose shift request you would like to edit
+                        </label>
+                    </td>
+                </tr>
 
-        <button type="submit"
-                class="standard-button"
-                data-th-text="#{button.update}">
-            Update
-        </button>
-    </form>
+                <tr>
+                    <td class="td-no-lines update-shift-request-input-cell">
+                        <select id="requestUserSelect"
+                                th:field="*{id}">
+                            <option value=""
+                                    data-th-text="#{updateRequestSelect.requester}">
+                                Select requester
+                            </option>
 
-    <br>
+                            <option th:each="user : ${users}"
+                                    th:value="${user.id}"
+                                    th:text="${user.name}">
+                                User name
+                            </option>
+                        </select>
+                    </td>
 
-    <a th:href="@{/admin/adminIndex}"
-       class="standard-button button-link"
-       data-th-text="#{button.backToHomePage}">
-        Back to home page
-    </a>
-</div>
+                    <td class="td-no-lines error-red update-shift-request-error-cell"
+                        th:if="${#fields.hasErrors('id')}"
+                        th:errors="*{id}">
+                        User error
+                    </td>
+                </tr>
+
+                </tbody>
+
+            </table>
+
+            <div class="form-actions">
+                <button type="submit"
+                        class="standard-button"
+                        data-th-text="#{button.update}">
+                    Update
+                </button>
+            </div>
+
+        </form>
+
+    </section>
+
+    <nav class="page-actions centered">
+        <a th:href="@{/admin/adminIndex}"
+           class="standard-button button-link"
+           data-th-text="#{button.backToHomePage}">
+            Back to home page
+        </a>
+    </nav>
+
+</main>
 
 <div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
 

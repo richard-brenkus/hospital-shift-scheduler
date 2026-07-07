@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
 
 <head>
     <title>Admin index</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
     <link rel="stylesheet" th:href="@{/styles/main.css}"/>
 </head>
 
@@ -12,16 +12,17 @@
 
 <button class="openbtn" onclick="openNav()">menu</button>
 
-<div class="centered admin-index-wrapper">
+<main class="admin-index-wrapper centered">
 
-    <h1>
-        <span data-th-text="#{header.indexPage.admin}">Welcome, </span><span th:text="${displayName}"></span>
-    </h1>
+    <header class="page-header">
+        <h1>
+            <span data-th-text="#{header.indexPage.admin}">Welcome, </span>
+            <span th:text="${displayName}"></span>
+        </h1>
+    </header>
 
-    <br>
-
-    <div>
-        <span>
+    <section class="page-section">
+        <div class="admin-index-progress">
             <label for="submittedRequests"
                    data-th-text="#{requestsInfo.indexPage}">
                 Submitted requests (admin excluded):
@@ -31,10 +32,10 @@
                       th:value="${shiftRequestCount}"
                       th:max="${userCount}">
             </progress>
-        </span>
 
-        <span th:text="${percentage}"> percentage</span>
-    </div>
+            <span th:text="${percentage}"> percentage</span>
+        </div>
+    </section>
 
     <section class="admin-index-planned-tasks">
 
@@ -43,124 +44,130 @@
             Scheduled tasks
         </h2>
 
-        <h3 class="centered"
-            data-th-text="#{scheduledTasks.header.reminder}">
-            Remind users to submit a shift request
-        </h3>
+        <section class="planned-task-section planned-task-section-compact">
 
-        <table class="table-with-lines planned-task-table">
-            <colgroup>
-                <col class="planned-task-label-column">
-                <col class="planned-task-value-column">
-            </colgroup>
+            <h3 class="centered"
+                data-th-text="#{scheduledTasks.header.reminder}">
+                Remind users to submit a shift request
+            </h3>
 
-            <tbody>
-            <tr th:if="${sendReminderTaskRecord.reminderIsActive}">
-                <td class="planned-task-display-label"
-                    data-th-text="#{scheduledTasks.status}">
-                    Status
-                </td>
-                <td data-th-text="#{scheduledTasks.activeTask}">
-                    Active task
-                </td>
-            </tr>
+            <table class="table-with-lines planned-task-table">
+                <colgroup>
+                    <col class="planned-task-label-column">
+                    <col class="planned-task-value-column">
+                </colgroup>
 
-            <tr th:unless="${sendReminderTaskRecord.reminderIsActive}">
-                <td class="planned-task-display-label"
-                    data-th-text="#{scheduledTasks.status}">
-                    Status
-                </td>
-                <td data-th-text="#{scheduledTasks.reminder.noneActive}">
-                    There is no active reminder task.
-                </td>
-            </tr>
+                <tbody>
+                <tr th:if="${sendReminderTaskRecord.reminderIsActive}">
+                    <td class="planned-task-display-label"
+                        data-th-text="#{scheduledTasks.status}">
+                        Status
+                    </td>
+                    <td data-th-text="#{scheduledTasks.activeTask}">
+                        Active task
+                    </td>
+                </tr>
 
-            <tr th:if="${sendReminderTaskRecord.reminderIsActive}">
-                <td class="planned-task-display-label"
-                    data-th-text="#{reminderTaskInfo.startSending}">
-                    Start sending
-                </td>
-                <td th:text="${#temporals.format(sendReminderTaskRecord.reminderStart, 'dd.MM.yyyy HH:mm')}">
-                    10.07.2026 08:00
-                </td>
-            </tr>
-            </tbody>
-        </table>
+                <tr th:unless="${sendReminderTaskRecord.reminderIsActive}">
+                    <td class="planned-task-display-label"
+                        data-th-text="#{scheduledTasks.status}">
+                        Status
+                    </td>
+                    <td data-th-text="#{scheduledTasks.reminder.noneActive}">
+                        There is no active reminder task.
+                    </td>
+                </tr>
 
-        <h3 class="centered"
-            data-th-text="#{scheduledTasks.header.cleanup}">
-            Delete all requests
-        </h3>
+                <tr th:if="${sendReminderTaskRecord.reminderIsActive}">
+                    <td class="planned-task-display-label"
+                        data-th-text="#{reminderTaskInfo.startSending}">
+                        Start sending
+                    </td>
+                    <td th:text="${#temporals.format(sendReminderTaskRecord.reminderStart, 'dd.MM.yyyy HH:mm')}">
+                        10.07.2026 08:00
+                    </td>
+                </tr>
+                </tbody>
+            </table>
 
-        <table class="table-with-lines planned-task-table">
-            <colgroup>
-                <col class="planned-task-label-column">
-                <col class="planned-task-value-column">
-            </colgroup>
+        </section>
 
-            <tbody>
-            <tr th:if="${cleanupTaskRecord.cleanupIsActive}">
-                <td class="planned-task-display-label"
-                    data-th-text="#{scheduledTasks.status}">
-                    Status
-                </td>
-                <td data-th-text="#{scheduledTasks.activeTask}">
-                    Active task
-                </td>
-            </tr>
+        <section class="planned-task-section planned-task-section-compact">
 
-            <tr th:unless="${cleanupTaskRecord.cleanupIsActive}">
-                <td class="planned-task-display-label"
-                    data-th-text="#{scheduledTasks.status}">
-                    Status
-                </td>
-                <td data-th-text="#{scheduledTasks.cleanup.noneActive}">
-                    There is no active cleanup task.
-                </td>
-            </tr>
+            <h3 class="centered"
+                data-th-text="#{scheduledTasks.header.cleanup}">
+                Delete all requests
+            </h3>
 
-            <tr th:if="${cleanupTaskRecord.cleanupIsActive}">
-                <td class="planned-task-display-label"
-                    data-th-text="#{cleanupTaskInfo.scheduled}">
-                    Scheduled cleanup
-                </td>
-                <td th:text="${#temporals.format(cleanupTaskRecord.cleanupDateTime, 'dd.MM.yyyy HH:mm')}">
-                    10.07.2026 22:00
-                </td>
-            </tr>
-            </tbody>
-        </table>
+            <table class="table-with-lines planned-task-table">
+                <colgroup>
+                    <col class="planned-task-label-column">
+                    <col class="planned-task-value-column">
+                </colgroup>
+
+                <tbody>
+                <tr th:if="${cleanupTaskRecord.cleanupIsActive}">
+                    <td class="planned-task-display-label"
+                        data-th-text="#{scheduledTasks.status}">
+                        Status
+                    </td>
+                    <td data-th-text="#{scheduledTasks.activeTask}">
+                        Active task
+                    </td>
+                </tr>
+
+                <tr th:unless="${cleanupTaskRecord.cleanupIsActive}">
+                    <td class="planned-task-display-label"
+                        data-th-text="#{scheduledTasks.status}">
+                        Status
+                    </td>
+                    <td data-th-text="#{scheduledTasks.cleanup.noneActive}">
+                        There is no active cleanup task.
+                    </td>
+                </tr>
+
+                <tr th:if="${cleanupTaskRecord.cleanupIsActive}">
+                    <td class="planned-task-display-label"
+                        data-th-text="#{cleanupTaskInfo.scheduled}">
+                        Scheduled cleanup
+                    </td>
+                    <td th:text="${#temporals.format(cleanupTaskRecord.cleanupDateTime, 'dd.MM.yyyy HH:mm')}">
+                        10.07.2026 22:00
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+        </section>
 
         <div class="planned-task-actions">
             <form th:action="@{/admin/calculate_schedule_select}" method="get">
                 <button class="standard-button"
                         type="submit"
                         data-th-text="#{sidebar.calculateSchedule}">
-                    New schedule calcution
+                    New schedule calculation
                 </button>
             </form>
         </div>
 
     </section>
 
-    <br>
+    <section class="language-section">
+        <div class="language-flags centered">
+            <span>
+                <a th:href="@{/(language=cz)}">
+                    <img alt="CZ" class="flag" th:src="@{/images/cz.png}" title="Česky">
+                </a>
+            </span>
+            <span>
+                <a th:href="@{/(language=en)}">
+                    <img alt="US" class="flag" th:src="@{/images/us.png}" title="English">
+                </a>
+            </span>
+        </div>
+    </section>
 
-    <div class="language-flags centered">
-        <span>
-            <a th:href="@{/(language=cz)}">
-                <img alt="CZ" class="flag" th:src="@{/images/cz.png}" title="Česky">
-            </a>
-        </span>
-        <span>
-            <a th:href="@{/(language=en)}">
-                <img alt="US" class="flag" th:src="@{/images/us.png}" title="English">
-            </a>
-        </span>
-    </div>
-
-    <br>
-
-</div>
+</main>
 
 <div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
 

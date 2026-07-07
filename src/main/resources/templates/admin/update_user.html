@@ -1,167 +1,250 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta charset="UTF-8">
+
     <link rel="stylesheet" th:href="@{/styles/main.css}"/>
-    <title>User Registration</title>
+
+    <title>User update</title>
 </head>
+
 <body>
+
 <button class="openbtn" onclick="openNav()">menu</button>
 
-<div class="centered">
-   <form action="#" th:action="@{/admin/update_user}" method="post" th:object="${userUpdateForm}">
-        <table class="table-no-lines">
-            <tr>
-                <td class="td-no-lines">
-                    <label for="title" data-th-text="#{register.title}">Title:</label>
-                </td>
-                <td class="td-no-lines">
-                    <input type="text" id="title" th:field="*{title}"/>
-                </td>
-                <td class="td-no-lines" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">
-                    Title Error
-                </td>
-            </tr>
+<main id="main" class="centered update-user-wrapper">
 
-            <tr>
-                <td class="td-no-lines">
-                    <label for="name" data-th-text="#{register.name}">Name:</label>
-                </td>
-                <td class="td-no-lines">
-                    <input type="text" id="name" th:field="*{name}"/>
-                </td>
-                <td class="td-no-lines" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">
-                    Name Error
-                </td>
-            </tr>
+    <section class="page-section">
 
-            <tr>
-                <td class="td-no-lines">
-                    <label for="username" data-th-text="#{register.username}">Username:</label>
-                </td>
-                <td class="td-no-lines">
-                    <input type="text" id="username" th:field="*{username}"/>
-                </td>
-                <td class="td-no-lines" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">
-                    Username Error
-                </td>
-            </tr>
+        <form th:action="@{/admin/update_user}"
+              method="post"
+              th:object="${userUpdateForm}"
+              class="update-user-form">
 
-            <tr th:if="*{id != null}">
-                <td class="td-no-lines">
-                    <label for="userId" data-th-text="#{register.id}">ID:</label>
-                </td>
-                <td class="td-no-lines">
-                    <input type="text" id="userId" th:readonly="true" th:field="*{id}"/>
-                </td>
-                <td class="td-no-lines" th:if="${#fields.hasErrors('id')}" th:errors="*{id}">
-                    ID Error
-                </td>
-            </tr>
+            <table class="table-no-lines update-user-table">
 
-            <tr>
-                <td class="td-no-lines">
-                    <label for="birthday" data-th-text="#{register.birth}">Date of birth:</label>
-                </td>
-                <td class="td-no-lines">
-                    <input type="text" id="birthday" th:field="*{birthday}"/>
-                </td>
-                <td class="td-no-lines" th:if="${#fields.hasErrors('birthday')}" th:errors="*{birthday}">
-                    Birthday Error
-                </td>
-            </tr>
+                <tbody>
 
-            <tr>
-                <td class="td-no-lines">
-                    <label for="email" data-th-text="#{register.email}">Email:</label>
-                </td>
-                <td class="td-no-lines">
-                    <input type="text" id="email" th:field="*{email}"/>
-                </td>
-                <td class="td-no-lines" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">
-                    Email Error
-                </td>
-            </tr>
-
-            <tr>
-                <td class="td-no-lines">
-                    <label for="note" data-th-text="#{register.note}">Note:</label>
-                </td>
-                <td class="td-no-lines">
-                    <input type="text" id="note" th:field="*{note}"/>
-                </td>
-                <td class="td-no-lines" th:if="${#fields.hasErrors('note')}" th:errors="*{note}">
-                    Note Error
-                </td>
-            </tr>
-
-            <tr>
-                <td class="td-no-lines">
-                    <label for="profession" data-th-text="#{register.profession}">Profession:</label>
-                </td>
-                <td class="td-no-lines">
-                    <select th:field="*{profession}" id="profession">
-                        <option value="" data-th-text="#{register.selectProfession}">Select profession</option>
-                        <option th:each="profession : ${professions}"
-                                th:value="${profession.name()}"
-                                th:text="#{__${'profession.' + profession.name()}__}">
-                            Profession
-                        </option>
-                    </select>
-                </td>
-                <td class="td-no-lines" th:if="${#fields.hasErrors('profession')}" th:errors="*{profession}">
-                    Profession Error
-                </td>
-            </tr>
-
-            <tr>
-                <td class="td-no-lines">
-                    <label data-th-text="#{register.allowedShiftTypes}">Allowed shift types:</label>
-                </td>
-
-                <td class="td-no-lines">
-                    <div th:each="shiftType : ${shiftTypes}">
-                        <label>
-                            <input type="checkbox"
-                                   th:id="'shiftType-' + ${shiftType}"
-                                   th:value="${shiftType}"
-                                   th:field="*{allowedShiftTypes}"/>
+                <tr>
+                    <td class="td-no-lines update-user-label-cell">
+                        <label for="title" data-th-text="#{register.title}">
+                            Title:
                         </label>
+                    </td>
 
-                        <label th:for="'shiftType-' + ${shiftType}">
-                            <span th:text="#{__${'shiftType' + shiftType}__}">Shift type</span>
-                            <span th:text="${shiftType}">1</span>
+                    <td class="td-no-lines update-user-input-cell">
+                        <input type="text" id="title" th:field="*{title}"/>
+                    </td>
+
+                    <td class="td-no-lines error-red update-user-error-cell"
+                        th:if="${#fields.hasErrors('title')}"
+                        th:errors="*{title}">
+                        Title Error
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="td-no-lines update-user-label-cell">
+                        <label for="name" data-th-text="#{register.name}">
+                            Name:
                         </label>
-                    </div>
-                </td>
+                    </td>
 
-                <td class="td-no-lines"
-                    th:if="${#fields.hasErrors('allowedShiftTypes')}"
-                    th:errors="*{allowedShiftTypes}"
-                    data-th-text="#{register.selectOne}">
-                    Select at least one
-                </td>
-            </tr>
-        </table>
+                    <td class="td-no-lines update-user-input-cell">
+                        <input type="text" id="name" th:field="*{name}"/>
+                    </td>
 
-        <br>
-        <br>
+                    <td class="td-no-lines error-red update-user-error-cell"
+                        th:if="${#fields.hasErrors('name')}"
+                        th:errors="*{name}">
+                        Name Error
+                    </td>
+                </tr>
 
-        <button type="submit" class="standard-button" data-th-text="#{register.update}">
-            Update user
-        </button>
+                <tr>
+                    <td class="td-no-lines update-user-label-cell">
+                        <label for="username" data-th-text="#{register.username}">
+                            Username:
+                        </label>
+                    </td>
 
-        <br>
-        <br>
-    </form>
+                    <td class="td-no-lines update-user-input-cell">
+                        <input type="text" id="username" th:field="*{username}"/>
+                    </td>
 
-    <a th:href="@{/admin/adminIndex}"
-       class="standard-button button-link"
-       data-th-text="#{button.backToHomePage}">
-        Back to home page
-    </a>
-</div>
+                    <td class="td-no-lines error-red update-user-error-cell"
+                        th:if="${#fields.hasErrors('username')}"
+                        th:errors="*{username}">
+                        Username Error
+                    </td>
+                </tr>
+
+                <tr th:if="*{id != null}">
+                    <td class="td-no-lines update-user-label-cell">
+                        <label for="userId" data-th-text="#{register.id}">
+                            ID:
+                        </label>
+                    </td>
+
+                    <td class="td-no-lines update-user-input-cell">
+                        <input type="text"
+                               id="userId"
+                               th:readonly="true"
+                               th:field="*{id}"/>
+                    </td>
+
+                    <td class="td-no-lines error-red update-user-error-cell"
+                        th:if="${#fields.hasErrors('id')}"
+                        th:errors="*{id}">
+                        ID Error
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="td-no-lines update-user-label-cell">
+                        <label for="birthday" data-th-text="#{register.birth}">
+                            Date of birth:
+                        </label>
+                    </td>
+
+                    <td class="td-no-lines update-user-input-cell">
+                        <input type="text" id="birthday" th:field="*{birthday}"/>
+                    </td>
+
+                    <td class="td-no-lines error-red update-user-error-cell"
+                        th:if="${#fields.hasErrors('birthday')}"
+                        th:errors="*{birthday}">
+                        Birthday Error
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="td-no-lines update-user-label-cell">
+                        <label for="email" data-th-text="#{register.email}">
+                            Email:
+                        </label>
+                    </td>
+
+                    <td class="td-no-lines update-user-input-cell">
+                        <input type="text" id="email" th:field="*{email}"/>
+                    </td>
+
+                    <td class="td-no-lines error-red update-user-error-cell"
+                        th:if="${#fields.hasErrors('email')}"
+                        th:errors="*{email}">
+                        Email Error
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="td-no-lines update-user-label-cell">
+                        <label for="note" data-th-text="#{register.note}">
+                            Note:
+                        </label>
+                    </td>
+
+                    <td class="td-no-lines update-user-input-cell">
+                        <input type="text" id="note" th:field="*{note}"/>
+                    </td>
+
+                    <td class="td-no-lines error-red update-user-error-cell"
+                        th:if="${#fields.hasErrors('note')}"
+                        th:errors="*{note}">
+                        Note Error
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="td-no-lines update-user-label-cell">
+                        <label for="profession" data-th-text="#{register.profession}">
+                            Profession:
+                        </label>
+                    </td>
+
+                    <td class="td-no-lines update-user-input-cell">
+                        <select th:field="*{profession}" id="profession">
+                            <option value="" data-th-text="#{register.selectProfession}">
+                                Select profession
+                            </option>
+
+                            <option th:each="profession : ${professions}"
+                                    th:value="${profession.name()}"
+                                    th:text="#{__${'profession.' + profession.name()}__}">
+                                Profession
+                            </option>
+                        </select>
+                    </td>
+
+                    <td class="td-no-lines error-red update-user-error-cell"
+                        th:if="${#fields.hasErrors('profession')}"
+                        th:errors="*{profession}">
+                        Profession Error
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="td-no-lines update-user-label-cell update-user-top-aligned">
+                        <span data-th-text="#{register.allowedShiftTypes}">
+                            Allowed shift types:
+                        </span>
+                    </td>
+
+                    <td class="td-no-lines update-user-input-cell">
+                        <div class="checkbox-list">
+                            <div th:each="shiftType : ${shiftTypes}"
+                                 class="checkbox-list-item">
+
+                                <label>
+                                    <input type="checkbox"
+                                           th:id="'shiftType-' + ${shiftType}"
+                                           th:value="${shiftType}"
+                                           th:field="*{allowedShiftTypes}"/>
+                                </label>
+
+                                <label th:for="'shiftType-' + ${shiftType}">
+                                    <span th:text="#{__${'shiftType' + shiftType}__}">Shift type</span>
+                                    <span th:text="${shiftType}">1</span>
+                                </label>
+
+                            </div>
+                        </div>
+                    </td>
+
+                    <td class="td-no-lines error-red update-user-error-cell"
+                        th:if="${#fields.hasErrors('allowedShiftTypes')}"
+                        th:errors="*{allowedShiftTypes}"
+                        data-th-text="#{register.selectOne}">
+                        Select at least one
+                    </td>
+                </tr>
+
+                </tbody>
+
+            </table>
+
+            <div class="form-actions">
+                <button type="submit"
+                        class="standard-button"
+                        data-th-text="#{register.update}">
+                    Update user
+                </button>
+            </div>
+
+        </form>
+
+    </section>
+
+    <nav class="page-actions centered">
+        <a th:href="@{/admin/adminIndex}"
+           class="standard-button button-link"
+           data-th-text="#{button.backToHomePage}">
+            Back to home page
+        </a>
+    </nav>
+
+</main>
 
 <div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
 
@@ -182,5 +265,6 @@
         }
     }
 </script>
+
 </body>
 </html>

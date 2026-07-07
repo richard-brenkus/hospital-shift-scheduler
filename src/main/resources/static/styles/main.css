@@ -224,24 +224,77 @@ img.flag {
     height: auto;
 }
 
-.col-4 { width: 4%; }
-.col-5 { width: 5%; }
-.col-7 { width: 7%; }
-.col-10 { width: 10%; }
-.col-12-5 { width: 12.5%; }
-.col-15 { width: 15%; }
-.col-16 { width: 16%; }
-.col-18 { width: 18%; }
-.col-20 { width: 20%; }
-.col-21 { width: 21%; }
-.col-22 { width: 22%; }
-.col-25 { width: 25%; }
-.col-28 { width: 28%; }
-.col-30 { width: 30%; }
-.col-33 { width: 33%; }
-.col-34 { width: 34%; }
-.col-50 { width: 50%; }
-.col-56 { width: 56%; }
+.col-4 {
+    width: 4%;
+}
+
+.col-5 {
+    width: 5%;
+}
+
+.col-7 {
+    width: 7%;
+}
+
+.col-10 {
+    width: 10%;
+}
+
+.col-12-5 {
+    width: 12.5%;
+}
+
+.col-15 {
+    width: 15%;
+}
+
+.col-16 {
+    width: 16%;
+}
+
+.col-18 {
+    width: 18%;
+}
+
+.col-20 {
+    width: 20%;
+}
+
+.col-21 {
+    width: 21%;
+}
+
+.col-22 {
+    width: 22%;
+}
+
+.col-25 {
+    width: 25%;
+}
+
+.col-28 {
+    width: 28%;
+}
+
+.col-30 {
+    width: 30%;
+}
+
+.col-33 {
+    width: 33%;
+}
+
+.col-34 {
+    width: 34%;
+}
+
+.col-50 {
+    width: 50%;
+}
+
+.col-56 {
+    width: 56%;
+}
 
 .left-aligned {
     text-align: left;
@@ -412,3 +465,1779 @@ img.flag {
         font-size: 18px;
     }
 }
+
+/* ============================================================
+   Modern layout utilities
+   ============================================================ */
+
+.section-spacer {
+    height: 24px;
+}
+
+.section-spacer-small {
+    height: 12px;
+}
+
+.section-spacer-large {
+    height: 48px;
+}
+
+.page-header {
+    margin-bottom: 1.5rem;
+}
+
+.page-section {
+    margin: 1.5rem auto;
+}
+
+.language-section {
+    margin-top: 2.5rem;
+}
+
+/* ============================================================
+   Admin index
+   ============================================================ */
+
+.admin-index-progress {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
+.planned-task-section-compact {
+    margin: 1.5rem auto 2.25rem auto;
+}
+
+@media (max-width: 650px) {
+    .admin-index-progress {
+        flex-direction: column;
+    }
+}
+
+/* ============================================================
+   Users list page
+   ============================================================ */
+
+.users-list-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.users-list-section {
+    overflow-x: auto;
+}
+
+.users-list-table {
+    width: 100%;
+    margin: 1.5rem auto;
+}
+
+.users-list-table form {
+    margin: 0;
+}
+
+.page-actions {
+    margin-top: 1.5rem;
+}
+
+/*
+   DataTables adds its own wrapper around #myTable.
+   These rules keep its controls readable on the dark app background.
+*/
+.dataTables_wrapper {
+    color: #f2f2f2;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    color: #f2f2f2;
+    margin: 0.75rem 0;
+}
+
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+    background-color: #eceff1;
+    color: #1f2226;
+    border: 1px solid #6b7280;
+    border-radius: 4px;
+    padding: 4px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: #f2f2f2 !important;
+    background-color: #4a5058;
+    border: 1px solid #1f2226;
+    border-radius: 4px;
+    margin: 0 2px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    color: #ffffff !important;
+    background: #6b7280 !important;
+    border: 1px solid #1f2226;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    color: #ffffff !important;
+    background: #6b7280 !important;
+    border: 1px solid #1f2226;
+}
+
+@media (max-width: 850px) {
+    .users-list-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+
+    .users-list-table {
+        min-width: 760px;
+    }
+}
+
+/* ============================================================
+   Calculate schedule select page
+   ============================================================ */
+
+.calculate-schedule-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.calculate-schedule-section {
+    margin: 1.5rem auto;
+}
+
+.calculate-schedule-table {
+    width: 640px;
+    max-width: 100%;
+    margin: 1.25rem auto;
+}
+
+.calculate-schedule-label-cell {
+    width: 65%;
+    text-align: right;
+    white-space: nowrap;
+    padding-right: 1rem;
+}
+
+.calculate-schedule-input-cell {
+    width: 35%;
+    text-align: left;
+    padding-left: 1rem;
+}
+
+.calculate-schedule-input-cell select {
+    min-width: 160px;
+}
+
+.checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    align-items: flex-start;
+}
+
+.checkbox-list-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.page-actions {
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 700px) {
+    .calculate-schedule-table {
+        width: 96%;
+    }
+
+    .calculate-schedule-label-cell,
+    .calculate-schedule-input-cell {
+        width: 50%;
+        white-space: normal;
+    }
+
+    .calculate-schedule-input-cell select {
+        min-width: 120px;
+    }
+
+    .checkbox-list-item {
+        white-space: normal;
+    }
+}
+
+/* ============================================================
+   Calculate schedule select page
+   ============================================================ */
+
+.calculate-schedule-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.calculate-schedule-section {
+    margin: 1.5rem auto;
+}
+
+.calculate-schedule-table {
+    width: 640px;
+    max-width: 100%;
+    margin: 1.25rem auto;
+}
+
+.calculate-schedule-label-cell {
+    width: 65%;
+    text-align: right;
+    white-space: nowrap;
+    padding-right: 1rem;
+}
+
+.calculate-schedule-input-cell {
+    width: 35%;
+    text-align: left;
+    padding-left: 1rem;
+}
+
+.calculate-schedule-input-cell select {
+    min-width: 160px;
+}
+
+.checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    align-items: flex-start;
+}
+
+.checkbox-list-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.page-actions {
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 700px) {
+    .calculate-schedule-table {
+        width: 96%;
+    }
+
+    .calculate-schedule-label-cell,
+    .calculate-schedule-input-cell {
+        width: 50%;
+        white-space: normal;
+    }
+
+    .calculate-schedule-input-cell select {
+        min-width: 120px;
+    }
+
+    .checkbox-list-item {
+        white-space: normal;
+    }
+}
+
+/* ============================================================
+   Change user password page
+   ============================================================ */
+
+.password-change-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.selected-user-info {
+    margin: 1rem auto 1.5rem auto;
+}
+
+.password-change-form {
+    margin: 0 auto;
+}
+
+.password-change-table {
+    width: 680px;
+    max-width: 100%;
+    margin: 1.25rem auto;
+}
+
+.password-change-label-cell {
+    width: 35%;
+    text-align: right;
+    white-space: nowrap;
+    padding-right: 1rem;
+}
+
+.password-change-input-cell {
+    width: 35%;
+    text-align: left;
+}
+
+.password-change-input-cell input {
+    width: 100%;
+    min-width: 220px;
+}
+
+.password-change-error-cell {
+    width: 30%;
+    text-align: left;
+}
+
+.inline-action-form {
+    display: inline-block;
+    margin: 0;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 750px) {
+    .password-change-table {
+        width: 96%;
+    }
+
+    .password-change-label-cell,
+    .password-change-input-cell,
+    .password-change-error-cell {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding-right: 0;
+    }
+
+    .password-change-input-cell input {
+        min-width: 0;
+    }
+}
+
+/* ============================================================
+   Delete shift request page
+   ============================================================ */
+
+.delete-shift-request-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.delete-shift-request-form {
+    margin: 0 auto;
+}
+
+.delete-shift-request-table {
+    width: 420px;
+    max-width: 100%;
+    margin: 1.25rem auto;
+}
+
+.delete-shift-request-cell {
+    text-align: center;
+}
+
+.delete-shift-request-cell select {
+    min-width: 260px;
+}
+
+@media (max-width: 550px) {
+    .delete-shift-request-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+
+    .delete-shift-request-table {
+        width: 96%;
+    }
+
+    .delete-shift-request-cell select {
+        min-width: 0;
+        width: 100%;
+    }
+}
+
+/* ============================================================
+   Delete user page
+   ============================================================ */
+
+.delete-user-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.delete-user-form {
+    margin: 0 auto;
+}
+
+.delete-user-table {
+    width: 460px;
+    max-width: 100%;
+    margin: 1.25rem auto;
+}
+
+.delete-user-cell {
+    text-align: center;
+}
+
+.delete-user-cell select {
+    min-width: 300px;
+}
+
+.inline-action-form {
+    display: inline-block;
+    margin: 0;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 550px) {
+    .delete-user-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+
+    .delete-user-table {
+        width: 96%;
+    }
+
+    .delete-user-cell select {
+        min-width: 0;
+        width: 100%;
+    }
+}
+
+/* ============================================================
+   Full monthly statistics page
+   ============================================================ */
+
+.full-stats-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.full-stats-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin: 1.5rem auto;
+}
+
+.full-stats-table {
+    min-width: 1100px;
+    margin: 0 auto;
+}
+
+.full-stats-table th,
+.full-stats-table td {
+    vertical-align: middle;
+}
+
+.full-stats-actions {
+    margin-top: 3rem;
+}
+
+.inline-action-form {
+    display: inline-block;
+    margin: 0;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/*
+   DataTables dark-theme support.
+   If these rules already exist from all_users_list.html modernization,
+   keep only one copy in main.css.
+*/
+.dataTables_wrapper {
+    color: #f2f2f2;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    color: #f2f2f2;
+    margin: 0.75rem 0;
+}
+
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+    background-color: #eceff1;
+    color: #1f2226;
+    border: 1px solid #6b7280;
+    border-radius: 4px;
+    padding: 4px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: #f2f2f2 !important;
+    background-color: #4a5058;
+    border: 1px solid #1f2226;
+    border-radius: 4px;
+    margin: 0 2px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    color: #ffffff !important;
+    background: #6b7280 !important;
+    border: 1px solid #1f2226;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    color: #ffffff !important;
+    background: #6b7280 !important;
+    border: 1px solid #1f2226;
+}
+
+@media (max-width: 850px) {
+    .full-stats-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+}
+
+/* ============================================================
+   Planned tasks page
+   ============================================================ */
+
+.planned-tasks-wrapper {
+    max-width: 1150px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.planned-task-section {
+    margin: 2.25rem auto 4rem auto;
+}
+
+.planned-task-form {
+    margin: 0 auto;
+}
+
+.planned-task-table {
+    width: 760px;
+    max-width: 100%;
+    margin: 1.25rem auto;
+    table-layout: fixed;
+}
+
+.planned-task-table th,
+.planned-task-table td {
+    vertical-align: middle;
+}
+
+.planned-task-label-column {
+    width: 65%;
+}
+
+.planned-task-value-column {
+    width: 35%;
+}
+
+.planned-task-table label,
+.planned-task-display-label {
+    white-space: nowrap;
+}
+
+.planned-task-table select {
+    min-width: 90px;
+}
+
+.planned-task-error {
+    display: block;
+    margin-top: 0.35rem;
+}
+
+.planned-task-info {
+    max-width: 760px;
+    margin: 0 auto 1.5rem auto;
+}
+
+.planned-task-actions {
+    margin-top: 1.5rem;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 850px) {
+    .planned-tasks-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+
+    .planned-task-table {
+        width: 96%;
+    }
+
+    .planned-task-table label,
+    .planned-task-display-label {
+        white-space: normal;
+    }
+}
+
+/* ============================================================
+   Register user page
+   ============================================================ */
+
+.register-user-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.register-user-form {
+    margin: 0 auto;
+}
+
+.register-user-table {
+    width: 860px;
+    max-width: 100%;
+    margin: 1.25rem auto;
+}
+
+.register-user-label-cell {
+    width: 28%;
+    text-align: right;
+    white-space: nowrap;
+    padding-right: 1rem;
+}
+
+.register-user-input-cell {
+    width: 42%;
+    text-align: left;
+}
+
+.register-user-error-cell {
+    width: 30%;
+    text-align: left;
+}
+
+.register-user-input-cell input:not([type="checkbox"]),
+.register-user-input-cell select {
+    width: 100%;
+    min-width: 260px;
+}
+
+.register-user-top-aligned {
+    vertical-align: top;
+}
+
+.checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    align-items: flex-start;
+}
+
+.checkbox-list-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 850px) {
+    .register-user-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+
+    .register-user-table {
+        width: 96%;
+    }
+
+    .register-user-label-cell,
+    .register-user-input-cell,
+    .register-user-error-cell {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding-right: 0;
+    }
+
+    .register-user-input-cell input:not([type="checkbox"]),
+    .register-user-input-cell select {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .checkbox-list {
+        align-items: center;
+    }
+
+    .checkbox-list-item {
+        white-space: normal;
+    }
+}
+
+/* ============================================================
+   Schedule tablet table
+   ============================================================ */
+
+.schedule-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    margin: 1.5rem auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.schedule-edit-table {
+    width: max-content;
+    min-width: 100%;
+    table-layout: auto;
+    margin: 0 auto;
+}
+
+.schedule-edit-table th,
+.schedule-edit-table td {
+    min-width: 150px;
+    max-width: 180px;
+    box-sizing: border-box;
+    vertical-align: middle;
+}
+
+.schedule-edit-table th:first-child,
+.schedule-edit-table td:first-child {
+    min-width: 70px;
+    max-width: 90px;
+}
+
+.schedule-edit-table select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    display: block;
+}
+
+.schedule-edit-table label {
+    display: block;
+    width: 100%;
+}
+
+/*
+   Keep the action buttons usable below a horizontally scrolling table.
+*/
+.schedule-button-row {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 1.5rem auto;
+}
+
+/*
+   Mobile: do not squeeze the schedule table.
+   Let it scroll horizontally instead.
+*/
+@media (max-width: 850px) {
+    .schedule-table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .schedule-edit-table {
+        min-width: max-content;
+    }
+
+    .schedule-edit-table th,
+    .schedule-edit-table td {
+        min-width: 145px;
+        max-width: 170px;
+    }
+
+    .schedule-edit-table th:first-child,
+    .schedule-edit-table td:first-child {
+        min-width: 60px;
+        max-width: 80px;
+    }
+
+    .schedule-edit-table select {
+        font-size: 0.85rem;
+        padding: 4px;
+    }
+}
+
+@media (max-width: 500px) {
+    .schedule-edit-table th,
+    .schedule-edit-table td {
+        min-width: 135px;
+        max-width: 160px;
+    }
+
+    .schedule-edit-table select {
+        font-size: 0.8rem;
+        padding: 3px;
+    }
+}
+
+/* ============================================================
+   Saved schedule page
+   ============================================================ */
+
+.saved-schedule-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.saved-schedule-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin: 1.5rem auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.saved-schedule-table {
+    min-width: 900px;
+    margin: 0 auto;
+}
+
+.saved-schedule-table th,
+.saved-schedule-table td {
+    vertical-align: middle;
+}
+
+.saved-schedule-actions {
+    margin-top: 3rem;
+}
+
+.inline-action-form {
+    display: inline-block;
+    margin: 0;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 850px) {
+    .saved-schedule-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+
+    .saved-schedule-table {
+        min-width: 760px;
+    }
+}
+
+/* ============================================================
+   Select update user page
+   ============================================================ */
+
+.select-update-user-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.select-update-user-form {
+    margin: 0 auto;
+}
+
+.select-update-user-table {
+    width: 420px;
+    max-width: 100%;
+    margin: 1.25rem auto;
+}
+
+.select-update-user-cell {
+    text-align: center;
+}
+
+.select-update-user-cell select {
+    min-width: 260px;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 550px) {
+    .select-update-user-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+
+    .select-update-user-table {
+        width: 96%;
+    }
+
+    .select-update-user-cell select {
+        min-width: 0;
+        width: 100%;
+    }
+}
+
+/* ============================================================
+   Select user for password change page
+   ============================================================ */
+
+.select-password-user-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.select-password-user-form {
+    margin: 0 auto;
+}
+
+.select-password-user-table {
+    width: 520px;
+    max-width: 100%;
+    margin: 1.25rem auto;
+}
+
+.select-password-user-cell {
+    text-align: center;
+}
+
+.select-password-user-cell select {
+    min-width: 300px;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 600px) {
+    .select-password-user-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+
+    .select-password-user-table {
+        width: 96%;
+    }
+
+    .select-password-user-cell select {
+        min-width: 0;
+        width: 100%;
+    }
+}
+
+/* ============================================================
+   Show saved schedules page
+   ============================================================ */
+
+.show-saved-schedules-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.show-saved-schedules-message {
+    max-width: 620px;
+    margin: 1rem auto;
+}
+
+.show-saved-schedules-form {
+    margin: 0 auto;
+}
+
+.show-saved-schedules-table {
+    width: 520px;
+    max-width: 100%;
+    margin: 1.25rem auto;
+}
+
+.show-saved-schedules-label-cell {
+    width: 45%;
+    text-align: right;
+    white-space: nowrap;
+    padding-right: 1rem;
+}
+
+.show-saved-schedules-input-cell {
+    width: 55%;
+    text-align: left;
+}
+
+.show-saved-schedules-input-cell select {
+    min-width: 180px;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 600px) {
+    .show-saved-schedules-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+
+    .show-saved-schedules-table {
+        width: 96%;
+    }
+
+    .show-saved-schedules-label-cell,
+    .show-saved-schedules-input-cell {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding-right: 0;
+    }
+
+    .show-saved-schedules-input-cell select {
+        min-width: 0;
+        width: 100%;
+    }
+}
+
+/* ============================================================
+   Update shift request selection page
+   ============================================================ */
+
+.update-shift-request-wrapper {
+    max-width: 850px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.update-shift-request-form {
+    margin: 0 auto;
+}
+
+.update-shift-request-table {
+    width: 620px;
+    max-width: 100%;
+    margin: 1.25rem auto;
+}
+
+.update-shift-request-label-cell,
+.update-shift-request-input-cell {
+    text-align: center;
+}
+
+.update-shift-request-input-cell select {
+    min-width: 300px;
+}
+
+.update-shift-request-error-cell {
+    text-align: left;
+    min-width: 180px;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 650px) {
+    .update-shift-request-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+
+    .update-shift-request-table {
+        width: 96%;
+    }
+
+    .update-shift-request-input-cell,
+    .update-shift-request-error-cell {
+        display: block;
+        width: 100%;
+        text-align: center;
+    }
+
+    .update-shift-request-input-cell select {
+        min-width: 0;
+        width: 100%;
+    }
+}
+
+/* ============================================================
+   Update user page
+   ============================================================ */
+
+.update-user-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.update-user-form {
+    margin: 0 auto;
+}
+
+.update-user-table {
+    width: 860px;
+    max-width: 100%;
+    margin: 1.25rem auto;
+}
+
+.update-user-label-cell {
+    width: 28%;
+    text-align: right;
+    white-space: nowrap;
+    padding-right: 1rem;
+}
+
+.update-user-input-cell {
+    width: 42%;
+    text-align: left;
+}
+
+.update-user-error-cell {
+    width: 30%;
+    text-align: left;
+}
+
+.update-user-input-cell input:not([type="checkbox"]),
+.update-user-input-cell select {
+    width: 100%;
+    min-width: 260px;
+}
+
+.update-user-top-aligned {
+    vertical-align: top;
+}
+
+.checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    align-items: flex-start;
+}
+
+.checkbox-list-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 850px) {
+    .update-user-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+
+    .update-user-table {
+        width: 96%;
+    }
+
+    .update-user-label-cell,
+    .update-user-input-cell,
+    .update-user-error-cell {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding-right: 0;
+    }
+
+    .update-user-input-cell input:not([type="checkbox"]),
+    .update-user-input-cell select {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .checkbox-list {
+        align-items: center;
+    }
+
+    .checkbox-list-item {
+        white-space: normal;
+    }
+}
+
+/* ============================================================
+   User delete success page
+   ============================================================ */
+
+.user-delete-success-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.success-message {
+    max-width: 620px;
+    margin: 1rem auto;
+}
+
+.user-delete-success-actions {
+    margin-top: 2rem;
+}
+
+.inline-action-form {
+    display: inline-block;
+    margin: 0;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+    .user-delete-success-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+}
+
+/* ============================================================
+   User change password page
+   ============================================================ */
+
+.change-password-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.change-password-form {
+    margin: 0 auto;
+}
+
+.change-password-table {
+    width: 760px;
+    max-width: 100%;
+    margin: 1.25rem auto;
+}
+
+.change-password-label-cell {
+    width: 35%;
+    text-align: right;
+    white-space: nowrap;
+    padding-right: 1rem;
+}
+
+.change-password-input-cell {
+    width: 35%;
+    text-align: left;
+}
+
+.change-password-input-cell input {
+    width: 100%;
+    min-width: 220px;
+}
+
+.change-password-error-cell {
+    width: 30%;
+    text-align: left;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 750px) {
+    .change-password-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+
+    .change-password-table {
+        width: 96%;
+    }
+
+    .change-password-label-cell,
+    .change-password-input-cell,
+    .change-password-error-cell {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding-right: 0;
+    }
+
+    .change-password-input-cell input {
+        min-width: 0;
+    }
+}
+
+/* ============================================================
+   Password changed success page
+   ============================================================ */
+
+.password-changed-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.password-changed-message {
+    max-width: 620px;
+    margin: 1.5rem auto;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 600px) {
+    .password-changed-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+}
+
+/* ============================================================
+   Shift request deleted success page
+   ============================================================ */
+
+.shift-request-deleted-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.shift-request-deleted-message {
+    max-width: 620px;
+    margin: 1.5rem auto;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 600px) {
+    .shift-request-deleted-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+}
+
+/* ============================================================
+   Shift request summary page
+   ============================================================ */
+
+.shift-request-summary-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.shift-request-summary-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin: 1.5rem auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.shift-request-summary-table {
+    width: 100%;
+    min-width: 900px;
+    margin: 0 auto;
+}
+
+.shift-request-summary-table th,
+.shift-request-summary-table td {
+    vertical-align: middle;
+}
+
+.shift-request-dates-no {
+    margin: 1.5rem auto;
+}
+
+.shift-request-dates-no-table {
+    width: 760px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.inline-action-form {
+    display: inline-block;
+    margin: 0;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 850px) {
+    .shift-request-summary-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+
+    .shift-request-summary-table {
+        min-width: 760px;
+    }
+
+    .shift-request-dates-no-table {
+        width: 96%;
+    }
+}
+
+/* ============================================================
+   User index page
+   ============================================================ */
+
+.user-index-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.user-index-header {
+    margin-bottom: 2rem;
+}
+
+.shift-request-form {
+    margin: 0 auto;
+}
+
+.validation-messages {
+    max-width: 900px;
+    margin: 1rem auto;
+}
+
+.validation-messages p {
+    margin: 0.5rem auto;
+}
+
+.shift-preference-section {
+    margin: 1.75rem auto;
+}
+
+.shift-preference-details {
+    margin-top: 0.75rem;
+}
+
+.user-index-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin: 0.75rem auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.shift-preference-choice-table,
+.shift-preference-details-table,
+.dates-no-table,
+.current-request-table {
+    width: 760px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.shift-preference-details-table {
+    min-width: 760px;
+}
+
+.current-request-table {
+    min-width: 900px;
+}
+
+.shift-preference-details-table th,
+.shift-preference-details-table td,
+.current-request-table th,
+.current-request-table td {
+    vertical-align: middle;
+}
+
+.shift-preference-details-table input[type="text"],
+.dates-no-table input[type="text"] {
+    min-width: 240px;
+}
+
+.shift-preference-details-table select {
+    min-width: 80px;
+}
+
+.current-request-section {
+    margin-top: 2.5rem;
+}
+
+.current-request-dates-no {
+    margin: 1.5rem auto;
+}
+
+.current-request-dates-no-table {
+    width: 760px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.user-index-actions {
+    margin-top: 1.5rem;
+}
+
+.inline-action-form {
+    display: inline-block;
+    margin: 0;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 850px) {
+    .user-index-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+
+    .shift-preference-choice-table,
+    .dates-no-table,
+    .current-request-dates-no-table {
+        width: 96%;
+    }
+
+    .shift-preference-details-table {
+        min-width: 680px;
+    }
+
+    .current-request-table {
+        min-width: 760px;
+    }
+
+    .shift-preference-details-table input[type="text"],
+    .dates-no-table input[type="text"] {
+        min-width: 200px;
+    }
+}
+
+@media (max-width: 500px) {
+    .shift-preference-details-table {
+        min-width: 620px;
+    }
+
+    .current-request-table {
+        min-width: 700px;
+    }
+
+    .shift-preference-details-table input[type="text"],
+    .dates-no-table input[type="text"] {
+        min-width: 170px;
+    }
+}
+
+/* ============================================================
+   403 / access denied page
+   ============================================================ */
+
+.access-denied-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.access-denied-message {
+    max-width: 620px;
+    margin: 1.5rem auto;
+}
+
+.inline-action-form {
+    display: inline-block;
+    margin: 0;
+}
+
+.page-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 600px) {
+    .access-denied-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+}
+
+/* ============================================================
+   Login page
+   ============================================================ */
+
+.login-wrapper {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem 1.5rem;
+}
+
+.login-form {
+    width: 360px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.login-field {
+    margin: 1rem auto;
+}
+
+.login-field input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.65rem;
+    font-size: 1rem;
+}
+
+.login-message-section {
+    min-height: 2rem;
+    margin: 1rem auto;
+}
+
+.login-message {
+    max-width: 420px;
+    margin: 0.75rem auto;
+    padding: 0.6rem;
+    border-radius: 4px;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 500px) {
+    .login-wrapper {
+        padding: 0 0.75rem 2rem 0.75rem;
+    }
+
+    .login-form {
+        width: 96%;
+    }
+}
+
+

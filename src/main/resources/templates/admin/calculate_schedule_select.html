@@ -1,9 +1,14 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
-    <title data-th-text="#{calcSchedMenu.title}">Calculate schedule</title>
+
+    <title data-th-text="#{calcSchedMenu.title}">
+        Calculate schedule
+    </title>
+
     <link rel="stylesheet" th:href="@{/styles/main.css}"/>
 </head>
 
@@ -11,135 +16,150 @@
 
 <button class="openbtn" onclick="openNav()">menu</button>
 
-<div id="main" class="centered">
+<main id="main" class="centered calculate-schedule-wrapper">
 
-    <h1 data-th-text="#{calcSchedMenu.header}">
-        Calculate schedule
-    </h1>
+    <header class="page-header">
+        <h1 data-th-text="#{calcSchedMenu.header}">
+            Calculate schedule
+        </h1>
+    </header>
 
-    <form th:action="@{/admin/new_calculation}"
-          method="post"
-          th:object="${calculationProfileForm}">
+    <section class="page-section calculate-schedule-section">
 
-        <table class="table-no-lines">
+        <form th:action="@{/admin/new_calculation}"
+              method="post"
+              th:object="${calculationProfileForm}">
 
-            <tr>
-                <td class="td-no-lines">
-                    <label for="calculationMonth"
-                           data-th-text="#{calcSchedMenu.forMonth}">
-                        Calculate for month:
-                    </label>
-                </td>
+            <table class="table-no-lines calculate-schedule-table">
 
-                <td class="td-no-lines">
-                    <select id="calculationMonth"
-                            th:field="*{calculationMonth}">
-                        <option th:each="monthOption : ${monthOptions}"
-                                th:value="${monthOption.value}"
-                                th:text="${monthOption.label}">
-                        </option>
-                    </select>
-                </td>
-            </tr>
+                <tbody>
 
-            <tr>
-                <td class="td-no-lines">
-                    <label for="shiftCap"
-                           data-th-text="#{calcSchedMenu.shiftCap}">
-                        Shift count cap:
-                    </label>
-                </td>
-
-                <td class="td-no-lines">
-                    <select id="shiftCap"
-                            th:field="*{shiftCountCap}">
-                        <option th:each="shiftCount : ${shiftCountMaxList}"
-                                th:value="${shiftCount}"
-                                th:text="${shiftCount}">
-                        </option>
-                    </select>
-                </td>
-            </tr>
-
-            <tr>
-                <td class="td-no-lines">
-                    <label for="minGap"
-                           data-th-text="#{calcSchedMenu.minGap}">
-                        Minimal gap between two shifts:
-                    </label>
-                </td>
-
-                <td class="td-no-lines">
-                    <select id="minGap"
-                            th:field="*{gapBetweenShifts}">
-                        <option th:each="minimalGap : ${gapBetweenShiftsList}"
-                                th:value="${minimalGap}"
-                                th:text="${minimalGap}">
-                        </option>
-                    </select>
-                </td>
-            </tr>
-
-            <tr>
-                <td class="td-no-lines">
-                    <label for="sortByDates"
-                           data-th-text="#{calcSchedMenu.sortByDates}">
-                        Sort by dates amount:
-                    </label>
-                </td>
-
-                <td class="td-no-lines">
-                    <input type="checkbox"
-                           id="sortByDates"
-                           th:field="*{sortByDatesAmount}"/>
-                </td>
-            </tr>
-
-            <tr>
-                <td class="td-no-lines">
-                    <label th:text="#{calcSchedMenu.calculationTypePriority}">
-                        Calculation type priority:
-                    </label>
-                </td>
-
-                <td class="td-no-lines">
-                    <div th:each="shiftType : ${shiftTypes}">
-                        <label>
-                            <input type="checkbox"
-                                   th:id="${'forceFill' + shiftType}"
-                                   th:field="*{forceFillShiftTypes}"
-                                   th:value="${shiftType}"/>
+                <tr>
+                    <td class="td-no-lines calculate-schedule-label-cell">
+                        <label for="calculationMonth"
+                               data-th-text="#{calcSchedMenu.forMonth}">
+                            Calculate for month:
                         </label>
+                    </td>
 
-                        <label th:for="${'forceFill' + shiftType}"
-                               th:text="|#{calcSchedMenu.forceFill} ${shiftType}|">
-                            Force fill
+                    <td class="td-no-lines calculate-schedule-input-cell">
+                        <select id="calculationMonth"
+                                th:field="*{calculationMonth}">
+                            <option th:each="monthOption : ${monthOptions}"
+                                    th:value="${monthOption.value}"
+                                    th:text="${monthOption.label}">
+                            </option>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="td-no-lines calculate-schedule-label-cell">
+                        <label for="shiftCap"
+                               data-th-text="#{calcSchedMenu.shiftCap}">
+                            Shift count cap:
                         </label>
-                    </div>
-                </td>
-            </tr>
+                    </td>
 
-        </table>
+                    <td class="td-no-lines calculate-schedule-input-cell">
+                        <select id="shiftCap"
+                                th:field="*{shiftCountCap}">
+                            <option th:each="shiftCount : ${shiftCountMaxList}"
+                                    th:value="${shiftCount}"
+                                    th:text="${shiftCount}">
+                            </option>
+                        </select>
+                    </td>
+                </tr>
 
-        <br>
+                <tr>
+                    <td class="td-no-lines calculate-schedule-label-cell">
+                        <label for="minGap"
+                               data-th-text="#{calcSchedMenu.minGap}">
+                            Minimal gap between two shifts:
+                        </label>
+                    </td>
 
-        <button type="submit"
-                class="standard-button"
-                data-th-text="#{calcSchedMenu.calculate}">
-            Calculate
-        </button>
+                    <td class="td-no-lines calculate-schedule-input-cell">
+                        <select id="minGap"
+                                th:field="*{gapBetweenShifts}">
+                            <option th:each="minimalGap : ${gapBetweenShiftsList}"
+                                    th:value="${minimalGap}"
+                                    th:text="${minimalGap}">
+                            </option>
+                        </select>
+                    </td>
+                </tr>
 
-    </form>
+                <tr>
+                    <td class="td-no-lines calculate-schedule-label-cell">
+                        <label for="sortByDates"
+                               data-th-text="#{calcSchedMenu.sortByDates}">
+                            Sort by dates amount:
+                        </label>
+                    </td>
 
-    <br>
+                    <td class="td-no-lines calculate-schedule-input-cell">
+                        <input type="checkbox"
+                               id="sortByDates"
+                               th:field="*{sortByDatesAmount}"/>
+                    </td>
+                </tr>
 
-    <a th:href="@{/admin/adminIndex}"
-       class="standard-button button-link"
-       data-th-text="#{button.backToHomePage}">
-        Back to home page
-    </a>
+                <tr>
+                    <td class="td-no-lines calculate-schedule-label-cell">
+                        <span data-th-text="#{calcSchedMenu.calculationTypePriority}">
+                            Calculation type priority:
+                        </span>
+                    </td>
 
-</div>
+                    <td class="td-no-lines calculate-schedule-input-cell">
+                        <div class="checkbox-list">
+                            <div th:each="shiftType : ${shiftTypes}"
+                                 class="checkbox-list-item">
+
+                                <label>
+                                    <input type="checkbox"
+                                           th:id="${'forceFill' + shiftType}"
+                                           th:field="*{forceFillShiftTypes}"
+                                           th:value="${shiftType}"/>
+                                </label>
+
+                                <label th:for="${'forceFill' + shiftType}"
+                                       th:text="|#{calcSchedMenu.forceFill} ${shiftType}|">
+                                    Force fill
+                                </label>
+
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+                </tbody>
+
+            </table>
+
+            <div class="form-actions">
+                <button type="submit"
+                        class="standard-button"
+                        data-th-text="#{calcSchedMenu.calculate}">
+                    Calculate
+                </button>
+            </div>
+
+        </form>
+
+    </section>
+
+    <nav class="page-actions centered">
+        <a th:href="@{/admin/adminIndex}"
+           class="standard-button button-link"
+           data-th-text="#{button.backToHomePage}">
+            Back to home page
+        </a>
+    </nav>
+
+</main>
 
 <div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
 

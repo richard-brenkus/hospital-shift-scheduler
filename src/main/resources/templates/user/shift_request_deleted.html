@@ -1,5 +1,6 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
@@ -14,31 +15,33 @@
 
 <body>
 
-<div class="centered">
+<main class="centered shift-request-deleted-wrapper">
 
-    <h1 data-th-text="#{shiftRequest.delete.success.header}">
-        Shift request deleted successfully
-    </h1>
+    <header class="page-header">
+        <h1 data-th-text="#{shiftRequest.delete.success.header}">
+            Shift request deleted successfully
+        </h1>
+    </header>
 
-    <br>
+    <section class="page-section shift-request-deleted-message">
+        <p data-th-text="#{shiftRequest.delete.success.message}">
+            The shift request has been deleted successfully.
+        </p>
 
-    <p data-th-text="#{shiftRequest.delete.success.message}">
-        The shift request has been deleted successfully.
-    </p>
+        <p data-th-text="#{shiftRequest.delete.success.redirect}">
+            You will be redirected shortly.
+        </p>
+    </section>
 
-    <p data-th-text="#{shiftRequest.delete.success.redirect}">
-        You will be redirected shortly.
-    </p>
+    <nav class="page-actions centered">
+        <a th:href="@{/admin/adminIndex}"
+           class="standard-button button-link"
+           data-th-text="#{button.backToHomePage}">
+            Back to home page
+        </a>
+    </nav>
 
-    <br>
-
-    <a th:href="@{/admin/adminIndex}"
-       class="standard-button button-link"
-       data-th-text="#{button.backToHomePage}">
-        Back to home page
-    </a>
-
-</div>
+</main>
 
 </body>
 </html>

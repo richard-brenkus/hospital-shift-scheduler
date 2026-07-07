@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Planned tasks</title>
+    <title data-th-text="#{scheduledTasks.header}">
+        Planned tasks
+    </title>
 
     <link rel="stylesheet" th:href="@{/styles/main.css}"/>
 </head>
@@ -14,11 +16,13 @@
 
 <button class="openbtn standard-button" onclick="openNav()">Menu</button>
 
-<div class="planned-tasks-wrapper">
+<main class="planned-tasks-wrapper">
 
-    <h1 class="centered" data-th-text="#{scheduledTasks.header}">
-        Planned tasks
-    </h1>
+    <header class="page-header centered">
+        <h1 data-th-text="#{scheduledTasks.header}">
+            Planned tasks
+        </h1>
+    </header>
 
     <section class="planned-task-section">
 
@@ -34,13 +38,21 @@
 
             <tbody>
             <tr th:if="${sendReminderTaskRecord.reminderIsActive}">
-                <td class="planned-task-display-label" data-th-text="#{scheduledTasks.status}">Status</td>
-                <td data-th-text="#{scheduledTasks.activeTask}">Active task</td>
+                <td class="planned-task-display-label" data-th-text="#{scheduledTasks.status}">
+                    Status
+                </td>
+                <td data-th-text="#{scheduledTasks.activeTask}">
+                    Active task
+                </td>
             </tr>
 
             <tr th:unless="${sendReminderTaskRecord.reminderIsActive}">
-                <td class="planned-task-display-label" data-th-text="#{scheduledTasks.status}">Status</td>
-                <td data-th-text="#{scheduledTasks.reminder.noneActive}">There is no active reminder task.</td>
+                <td class="planned-task-display-label" data-th-text="#{scheduledTasks.status}">
+                    Status
+                </td>
+                <td data-th-text="#{scheduledTasks.reminder.noneActive}">
+                    There is no active reminder task.
+                </td>
             </tr>
 
             <tr th:if="${sendReminderTaskRecord.reminderIsActive}">
@@ -53,28 +65,39 @@
             </tr>
 
             <tr th:if="${sendReminderTaskRecord.reminderIsActive}">
-                <td class="planned-task-display-label" data-th-text="#{reminderTaskInfo.frequency}">Frequency</td>
+                <td class="planned-task-display-label" data-th-text="#{reminderTaskInfo.frequency}">
+                    Frequency
+                </td>
                 <td>
                     <span th:text="${sendReminderTaskRecord.reminderFrequency}">1</span>
-                    <!--span data-th-text="#{reminderTaskInfo.days}">day(s)</--span-->
                 </td>
             </tr>
 
             <tr th:if="${sendReminderTaskRecord.reminderIsActive}">
-                <td class="planned-task-display-label" data-th-text="#{reminderTaskInfo.repetitions}">Repetitions</td>
-                <td th:text="${sendReminderTaskRecord.reminderRepetitions}">1</td>
+                <td class="planned-task-display-label" data-th-text="#{reminderTaskInfo.repetitions}">
+                    Repetitions
+                </td>
+                <td th:text="${sendReminderTaskRecord.reminderRepetitions}">
+                    1
+                </td>
             </tr>
 
             <tr th:if="${sendReminderTaskRecord.reminderIsActive}">
                 <td class="planned-task-display-label" data-th-text="#{reminderTaskInfo.deadline}">
                     Final submission day
                 </td>
-                <td th:text="${sendReminderTaskRecord.reminderFinalSubmissionDay}">15</td>
+                <td th:text="${sendReminderTaskRecord.reminderFinalSubmissionDay}">
+                    15
+                </td>
             </tr>
             </tbody>
         </table>
 
-        <form th:action="@{/admin/send_reminder_task}" method="post" th:object="${sendReminderTaskForm}">
+        <form th:action="@{/admin/send_reminder_task}"
+              method="post"
+              th:object="${sendReminderTaskForm}"
+              class="planned-task-form">
+
             <table class="table-with-lines planned-task-table">
                 <colgroup>
                     <col class="planned-task-label-column">
@@ -146,7 +169,9 @@
                     </td>
                     <td>
                         <select id="reminderSendingFrequencyInDays" th:field="*{reminderSendingFrequencyInDays}">
-                            <option th:each="frequency : ${frequencyList}" th:value="${frequency}" th:text="${frequency}">1</option>
+                            <option th:each="frequency : ${frequencyList}" th:value="${frequency}" th:text="${frequency}">
+                                1
+                            </option>
                         </select>
                     </td>
                 </tr>
@@ -159,7 +184,9 @@
                     </td>
                     <td>
                         <select id="reminderRepetitions" th:field="*{reminderRepetitions}">
-                            <option th:each="repetition : ${repetitionsList}" th:value="${repetition}" th:text="${repetition}">1</option>
+                            <option th:each="repetition : ${repetitionsList}" th:value="${repetition}" th:text="${repetition}">
+                                1
+                            </option>
                         </select>
                     </td>
                 </tr>
@@ -172,7 +199,9 @@
                     </td>
                     <td>
                         <select id="finalSubmissionDay" th:field="*{finalSubmissionDay}">
-                            <option th:each="day : ${finalSubmissionDaysList}" th:value="${day}" th:text="${day}">15</option>
+                            <option th:each="day : ${finalSubmissionDaysList}" th:value="${day}" th:text="${day}">
+                                15
+                            </option>
                         </select>
                     </td>
                 </tr>
@@ -186,7 +215,9 @@
                 </tr>
                 </tbody>
             </table>
+
         </form>
+
     </section>
 
     <section class="planned-task-section">
@@ -203,13 +234,21 @@
 
             <tbody>
             <tr th:if="${cleanupTaskRecord.cleanupIsActive}">
-                <td class="planned-task-display-label" data-th-text="#{scheduledTasks.status}">Status</td>
-                <td data-th-text="#{scheduledTasks.activeTask}">Active task</td>
+                <td class="planned-task-display-label" data-th-text="#{scheduledTasks.status}">
+                    Status
+                </td>
+                <td data-th-text="#{scheduledTasks.activeTask}">
+                    Active task
+                </td>
             </tr>
 
             <tr th:unless="${cleanupTaskRecord.cleanupIsActive}">
-                <td class="planned-task-display-label" data-th-text="#{scheduledTasks.status}">Status</td>
-                <td data-th-text="#{scheduledTasks.cleanup.noneActive}">There is no active cleanup task.</td>
+                <td class="planned-task-display-label" data-th-text="#{scheduledTasks.status}">
+                    Status
+                </td>
+                <td data-th-text="#{scheduledTasks.cleanup.noneActive}">
+                    There is no active cleanup task.
+                </td>
             </tr>
 
             <tr th:if="${cleanupTaskRecord.cleanupIsActive}">
@@ -223,7 +262,11 @@
             </tbody>
         </table>
 
-        <form th:action="@{/admin/cleanup_task}" method="post" th:object="${cleanupTaskForm}">
+        <form th:action="@{/admin/cleanup_task}"
+              method="post"
+              th:object="${cleanupTaskForm}"
+              class="planned-task-form">
+
             <table class="table-with-lines planned-task-table">
                 <colgroup>
                     <col class="planned-task-label-column">
@@ -290,24 +333,25 @@
                 </tr>
                 </tbody>
             </table>
+
         </form>
+
     </section>
 
-    <div class="centered" data-th-text="#{scheduledTasks.infoText}">
+    <p class="centered planned-task-info" data-th-text="#{scheduledTasks.infoText}">
         In case the selected day exceeds the number of days in a month, the task will be carried out on the month's last
         day.
-    </div>
+    </p>
 
-    <br>
-
-    <div class="centered planned-task-actions">
+    <nav class="page-actions planned-task-actions centered">
         <a th:href="@{/admin/adminIndex}"
            class="standard-button button-link"
            data-th-text="#{button.backToHomePage}">
             Back to home page
         </a>
-    </div>
-</div>
+    </nav>
+
+</main>
 
 <div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
 

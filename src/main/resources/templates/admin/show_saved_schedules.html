@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+
+    <link rel="stylesheet" th:href="@{/styles/main.css}"/>
+
+    <title data-th-text="#{showSavedCalendars.title}">
+        Show saved calendars
+    </title>
+</head>
+
+<body>
+
+<button class="openbtn" onclick="openNav()">menu</button>
+
+<main id="main" class="centered show-saved-schedules-wrapper">
+
+    <header class="page-header">
+        <h1 data-th-text="#{showSavedCalendars.header}">
+            Saved schedules
+        </h1>
+    </header>
+
+    <section class="page-section"
+             th:if="${calendarExists == false}">
+
+        <p class="show-saved-schedules-message"
+           data-th-text="#{showSavedCalendars.calendarNonExistent}">
+            The database does not contain any stored dates for the selected month/year.
+            Please select another month/year.
+        </p>
+
+    </section>
+
+    <section class="page-section">
+
+        <form th:action="@{/admin/show_saved_schedules}"
+              method="post"
+              th:object="${savedCalendarSelectionForm}"
+              class="show-saved-schedules-form">
+
+            <table class="table-no-lines show-saved-schedules-table">
+
+                <tbody>
+
+                <tr>
+                    <td class="td-no-lines show-saved-schedules-label-cell">
+                        <label for="selectedMonth"
+                               data-th-text="#{showSavedCalendars.selectMonth}">
+                            Select month:
+                        </label>
+                    </td>
+
+                    <td class="td-no-lines show-saved-schedules-input-cell">
+                        <select id="selectedMonth"
+                                th:field="*{selectedMonth}">
+                            <option th:each="monthOption : ${monthOptions}"
+                                    th:value="${monthOption.value}"
+                                    th:text="${monthOption.label}">
+                                01/2026
+                            </option>
+                        </select>
+                    </td>
+                </tr>
+
+                </tbody>
+
+            </table>
+
+            <div class="form-actions">
+                <button type="submit"
+                        class="standard-button"
+                        data-th-text="#{button.showMonth}">
+                    Show month
+                </button>
+            </div>
+
+        </form>
+
+    </section>
+
+    <nav class="page-actions centered">
+        <a th:href="@{/admin/adminIndex}"
+           class="standard-button button-link"
+           data-th-text="#{button.backToHomePage}">
+            Back to home page
+        </a>
+    </nav>
+
+</main>
+
+<div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
+
+<script>
+    function openNav() {
+        document.getElementById("adminSidebar").style.width = "250px";
+    }
+
+    function closeNav() {
+        document.getElementById("adminSidebar").style.width = "0";
+    }
+</script>
+
+</body>
+</html>

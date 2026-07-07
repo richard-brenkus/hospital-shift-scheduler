@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="https://www.thymeleaf.org">
+
 <head>
     <title>Access denied</title>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link rel="stylesheet" th:href="@{/styles/main.css}"/>
@@ -10,33 +11,43 @@
 
 <body>
 
-<div class="centered">
-    <h1 data-th-text="#{accessDenied.header}">Access denied</h1>
+<main class="centered access-denied-wrapper">
 
-    <p data-th-text="#{accessDenied.message}">
-        Sorry, you don't have permission!
-    </p>
-</div>
+    <header class="page-header">
+        <h1 data-th-text="#{accessDenied.header}">
+            Access denied
+        </h1>
+    </header>
 
-<br>
+    <section class="page-section access-denied-message">
+        <p data-th-text="#{accessDenied.message}">
+            Sorry, you don't have permission!
+        </p>
+    </section>
 
-<div class="centered">
-    <a th:href="@{/}"
-       class="standard-button button-link"
-       data-th-text="#{button.backToHomePage}">
-        Back to home page
-    </a>
-</div>
+    <nav class="page-actions centered">
 
-<br>
+        <a th:href="@{/}"
+           class="standard-button button-link"
+           data-th-text="#{button.backToHomePage}">
+            Back to home page
+        </a>
 
-<div class="centered">
-    <form th:action="@{/logout}" method="post">
-        <button type="submit" class="standard-button" data-th-text="#{button.signout}">
-            Sign out
-        </button>
-    </form>
-</div>
+        <form th:action="@{/logout}"
+              method="post"
+              class="inline-action-form">
+
+            <button type="submit"
+                    class="standard-button"
+                    data-th-text="#{button.signout}">
+                Sign out
+            </button>
+
+        </form>
+
+    </nav>
+
+</main>
 
 </body>
 </html>

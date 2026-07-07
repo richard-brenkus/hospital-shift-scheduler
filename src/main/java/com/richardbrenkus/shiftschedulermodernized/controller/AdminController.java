@@ -413,7 +413,7 @@ public class AdminController {
 
         userStatisticService.replaceStatsForMonth(scheduleEditForm.getMonth(), validationResult.getFullUserStatsByShiftType());
 
-        return "redirect:/admin/show_saved_calendars";
+        return "redirect:/admin/show_saved_schedules";
     }
 
     @PostMapping("/admin/save_schedule_override_validation")
@@ -422,24 +422,24 @@ public class AdminController {
 
         storedScheduleService.saveSchedule(calendar);
 
-        return "redirect:/admin/show_saved_calendars";
+        return "redirect:/admin/show_saved_schedules";
     }
 
 
-    @GetMapping("/admin/show_saved_calendars")
+    @GetMapping("/admin/show_saved_schedules")
     public String showSavedCalendars(Model model) {
         addSavedCalendarSelectionAttributes(model, SavedCalendarSelectionForm.builder().build(), true);
 
-        return "admin/show_saved_calendars";
+        return "admin/show_saved_schedules";
     }
 
-    @PostMapping("/admin/show_saved_calendars")
+    @PostMapping("/admin/show_saved_schedules")
     public String showSavedCalendarsPost(Model model, @ModelAttribute("savedCalendarSelectionForm") SavedCalendarSelectionForm form) {
         YearMonth selectedMonth = form.getSelectedMonth();
 
         if (selectedMonth == null || !storedScheduleService.existsByMonth(selectedMonth)) {
             addSavedCalendarSelectionAttributes(model, form, false);
-            return "admin/show_saved_calendars";
+            return "admin/show_saved_schedules";
         }
 
         SavedScheduleView savedScheduleView = storedScheduleService.loadSavedScheduleView(selectedMonth);

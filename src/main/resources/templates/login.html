@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="https://www.thymeleaf.org">
+
 <head>
     <title>Login</title>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link rel="stylesheet" th:href="@{/styles/main.css}"/>
@@ -10,60 +11,88 @@
 
 <body>
 
-<div class="centered">
-    <h1 data-th-text="#{login.header}">Please Log In</h1>
+<main class="centered login-wrapper">
 
-    <div class="language-flags">
-        <a th:href="@{/login(language=cz)}">
-            <img alt="CZ" class="flag" th:src="@{/images/cz.png}" title="Česky">
-        </a>
-        <a th:href="@{/login(language=en)}">
-            <img alt="US" class="flag" th:src="@{/images/us.png}" title="English">
-        </a>
-    </div>
-</div>
+    <header class="page-header">
 
-<br>
+        <h1 data-th-text="#{login.header}">
+            Please Log In
+        </h1>
 
-<div class="centered">
-    <p th:if="${param.error}" data-th-text="#{login.error}">
-        Invalid username and password.
-    </p>
+        <div class="language-flags">
+            <a th:href="@{/login(language=cz)}">
+                <img alt="CZ" class="flag" th:src="@{/images/cz.png}" title="Česky">
+            </a>
 
-    <p th:if="${param.logout}" data-th-text="#{login.logout}">
-        You have been logged out.
-    </p>
-</div>
+            <a th:href="@{/login(language=en)}">
+                <img alt="US" class="flag" th:src="@{/images/us.png}" title="English">
+            </a>
+        </div>
 
-<div class="centered">
-    <form action="#" th:action="@{/login}" method="post">
+    </header>
 
-        <label for="username"></label>
-        <input type="text"
-               id="username"
-               name="username"
-               th:placeholder="#{label.username}"
-               autocomplete="username"
-               required
-               autofocus/>
+    <section class="login-message-section">
 
-        <br><br>
+        <p th:if="${param.error}"
+           class="login-message error-red"
+           data-th-text="#{login.error}">
+            Invalid username and password.
+        </p>
 
-        <label for="password"></label>
-        <input type="password"
-               id="password"
-               name="password"
-               th:placeholder="#{label.password}"
-               autocomplete="current-password"
-               required/>
+        <p th:if="${param.logout}"
+           class="login-message"
+           data-th-text="#{login.logout}">
+            You have been logged out.
+        </p>
 
-        <br><br>
+    </section>
 
-        <button type="submit" class="standard-button" data-th-text="#{button.login}">
-            Log in
-        </button>
-    </form>
-</div>
+    <section class="page-section">
+
+        <form th:action="@{/login}"
+              method="post"
+              class="login-form">
+
+            <div class="login-field">
+                <label for="username" class="visually-hidden" data-th-text="#{label.username}">
+                    Username
+                </label>
+
+                <input type="text"
+                       id="username"
+                       name="username"
+                       th:placeholder="#{label.username}"
+                       autocomplete="username"
+                       required
+                       autofocus/>
+            </div>
+
+            <div class="login-field">
+                <label for="password" class="visually-hidden" data-th-text="#{label.password}">
+                    Password
+                </label>
+
+                <input type="password"
+                       id="password"
+                       name="password"
+                       th:placeholder="#{label.password}"
+                       autocomplete="current-password"
+                       required/>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit"
+                        class="standard-button"
+                        data-th-text="#{button.login}">
+                    Log in
+                </button>
+            </div>
+
+        </form>
+
+    </section>
+
+</main>
 
 </body>
 </html>

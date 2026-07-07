@@ -1,5 +1,6 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
@@ -13,61 +14,78 @@
 
 <button class="openbtn" onclick="openNav()">menu</button>
 
-<div class="centered">
-    <h1 data-th-text="#{deleteRequest.header}">Delete shift request</h1>
+<main class="centered delete-shift-request-wrapper">
 
-    <form action="#"
-          th:action="@{/admin/delete_request}"
-          method="post"
-          th:object="${updatedUser}">
+    <header class="page-header">
+        <h1 data-th-text="#{deleteRequest.header}">
+            Delete shift request
+        </h1>
+    </header>
 
-        <table class="table-no-lines">
-            <tr>
-                <td class="td-no-lines">
-                    <label for="requestSelect"
-                           data-th-text="#{deleteRequest.select}">
-                        Select a shift request
-                    </label>
-                </td>
-            </tr>
+    <section class="page-section">
 
-            <tr>
-                <td class="td-no-lines">
-                    <select id="requestSelect" th:field="*{id}">
-                        <option value=""
-                                data-th-text="#{deleteRequest.select}">
-                            Select shift request
-                        </option>
+        <form th:action="@{/admin/delete_request}"
+              method="post"
+              th:object="${updatedUser}"
+              class="delete-shift-request-form">
 
-                        <option th:each="user : ${users}"
-                                th:value="${user.id}"
-                                th:text="${user.name}">
-                            User name
-                        </option>
-                    </select>
-                </td>
-            </tr>
+            <table class="table-no-lines delete-shift-request-table">
 
-            <tr>
-                <td class="td-no-lines">
-                    <button type="submit"
-                            class="standard-button"
-                            data-th-text="#{button.delete}">
-                        Delete
-                    </button>
-                </td>
-            </tr>
-        </table>
-    </form>
+                <tbody>
 
-    <br>
+                <tr>
+                    <td class="td-no-lines delete-shift-request-cell">
+                        <label for="requestSelect"
+                               data-th-text="#{deleteRequest.select}">
+                            Select a shift request
+                        </label>
+                    </td>
+                </tr>
 
-    <a th:href="@{/admin/adminIndex}"
-       class="standard-button button-link"
-       data-th-text="#{button.backToHomePage}">
-        Back to home page
-    </a>
-</div>
+                <tr>
+                    <td class="td-no-lines delete-shift-request-cell">
+                        <select id="requestSelect" th:field="*{id}">
+                            <option value=""
+                                    data-th-text="#{deleteRequest.select}">
+                                Select shift request
+                            </option>
+
+                            <option th:each="user : ${users}"
+                                    th:value="${user.id}"
+                                    th:text="${user.name}">
+                                User name
+                            </option>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="td-no-lines delete-shift-request-cell">
+                        <button type="submit"
+                                class="standard-button button-orange"
+                                data-th-text="#{button.delete}">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+
+                </tbody>
+
+            </table>
+
+        </form>
+
+    </section>
+
+    <nav class="page-actions centered">
+        <a th:href="@{/admin/adminIndex}"
+           class="standard-button button-link"
+           data-th-text="#{button.backToHomePage}">
+            Back to home page
+        </a>
+    </nav>
+
+</main>
 
 <div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
 
