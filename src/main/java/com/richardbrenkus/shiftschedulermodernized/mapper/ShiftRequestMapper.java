@@ -1,6 +1,6 @@
 package com.richardbrenkus.shiftschedulermodernized.mapper;
 
-import com.richardbrenkus.shiftschedulermodernized.config.ApplicationConstants;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftPreferenceForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftPreferenceViewRecord;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.richardbrenkus.shiftschedulermodernized.config.ApplicationConstants.DATE_FORMATTER;
+import static com.richardbrenkus.shiftschedulermodernized.config.constants.ApplicationConstants.DATE_FORMATTER;
 
 @Component
 public class ShiftRequestMapper {

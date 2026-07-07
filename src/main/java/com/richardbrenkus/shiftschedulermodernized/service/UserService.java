@@ -1,6 +1,6 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
-import com.richardbrenkus.shiftschedulermodernized.config.ApplicationConstants;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.config.PasswordEncoderConfig;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserRegisterForm;
@@ -23,7 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-import static com.richardbrenkus.shiftschedulermodernized.config.ApplicationConstants.DATE_FORMATTER;
+import static com.richardbrenkus.shiftschedulermodernized.config.constants.ApplicationConstants.DATE_FORMATTER;
 
 @Service
 public class UserService {

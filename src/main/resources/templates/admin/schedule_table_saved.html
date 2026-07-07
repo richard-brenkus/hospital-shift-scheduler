@@ -126,7 +126,7 @@
                 </th>
 
                 <th class="th-no-lines">
-                    <form th:action="@{/admin/download_spreadsheet}" method="post">
+                    <form th:action="@{/admin/download_schedule_as_spreadsheet}" method="post">
                         <input type="hidden"
                                name="selectedMonth"
                                th:value="${savedSchedule != null && savedSchedule.month != null ? savedSchedule.month : month}"/>

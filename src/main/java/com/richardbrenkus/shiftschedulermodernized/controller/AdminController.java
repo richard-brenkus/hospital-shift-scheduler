@@ -2,7 +2,7 @@ package com.richardbrenkus.shiftschedulermodernized.controller;
 
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleCalendar;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleValidationResult;
-import com.richardbrenkus.shiftschedulermodernized.config.ApplicationConstants;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeName;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Profession;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.*;
@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,6 +25,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.IOException;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.*;
 
@@ -44,6 +47,8 @@ public class AdminController {
     private final UserStatisticService userStatisticService;
     private final StoredScheduleService storedScheduleService;
     private final SpreadsheetService spreadsheetService;
+    private final UserExcelExportService userExcelExportService;
+    private final Clock applicationClock;
 
 
     @GetMapping("/admin/adminIndex")
@@ -451,11 +456,8 @@ public class AdminController {
         return "admin/schedule_table_saved";
     }
 
-    @PostMapping("/admin/download_spreadsheet")
-    public void exportSavedScheduleToExcel(
-            HttpServletResponse response,
-            @RequestParam("selectedMonth") YearMonth selectedMonth
-    ) throws IOException {
+    @PostMapping("/admin/download_schedule_as_spreadsheet")
+    public void exportSavedScheduleToExcel(HttpServletResponse response, @RequestParam("selectedMonth") YearMonth selectedMonth) throws IOException {
 
         String filename = spreadsheetService.createFileName(selectedMonth);
 
@@ -463,6 +465,17 @@ public class AdminController {
         response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
 
         spreadsheetService.writeSavedSchedule(response.getOutputStream(), selectedMonth);
+    }
+
+    @GetMapping("/admin/download_userlist_as_spreadsheet")
+    public void exportUsersToExcel(HttpServletResponse response) throws IOException {
+        String timestamp = LocalDateTime.now(applicationClock).format(ApplicationConstants.FILE_TIMESTAMP_FORMATTER);
+        String filename = "users_" + timestamp + ".xlsx";
+
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
+
+        userExcelExportService.exportUsers(response.getOutputStream());
     }
 
 
