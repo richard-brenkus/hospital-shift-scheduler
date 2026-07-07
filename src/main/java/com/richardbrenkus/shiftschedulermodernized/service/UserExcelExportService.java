@@ -5,6 +5,7 @@ import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import com.richardbrenkus.shiftschedulermodernized.util.UserExcelExporter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -22,13 +24,14 @@ public class UserExcelExportService {
 
     @Transactional(readOnly = true)
     public void exportUsers(OutputStream outputStream) throws IOException {
-
         List<UserExportRecord> users = new ArrayList<>();
 
         Iterable<User> usersIterable = userRepository.findAll();
         usersIterable.forEach(user -> users.add(toExportRecord(user)));
 
-        userExcelExporter.export(users, outputStream);
+        Locale locale = LocaleContextHolder.getLocale();
+
+        userExcelExporter.export(users, outputStream, locale);
     }
 
     private UserExportRecord toExportRecord(User user) {
@@ -37,7 +40,7 @@ public class UserExcelExportService {
                 nullToEmpty(user.getEmail()),
                 nullToEmpty(user.getName()),
                 nullToEmpty(user.getUsername()),
-                nullToEmpty(user.getRole().name()),
+                user.getRole() == null ? "" : user.getRole().name(),
                 user.isEnabled()
         );
     }

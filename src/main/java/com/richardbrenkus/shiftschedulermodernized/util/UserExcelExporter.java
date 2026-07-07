@@ -1,58 +1,59 @@
 package com.richardbrenkus.shiftschedulermodernized.util;
 
 import com.richardbrenkus.shiftschedulermodernized.dto.export.UserExportRecord;
+import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Locale;
 
 @Component
+@RequiredArgsConstructor
 public class UserExcelExporter {
 
-    private static final String SHEET_NAME = "Users";
+    private static final String SHEET_NAME_MESSAGE_KEY = "spreadsheet.users.sheetName";
+    private static final int COLUMN_COUNT = 6;
 
-    public void export(List<UserExportRecord> users, OutputStream outputStream) throws IOException {
+    private final MessageSource messageSource;
+
+    public void export(List<UserExportRecord> users, OutputStream outputStream, Locale locale) throws IOException {
         try (Workbook workbook = new XSSFWorkbook()) {
-            Sheet sheet = workbook.createSheet(SHEET_NAME);
+            Sheet sheet = workbook.createSheet(message(SHEET_NAME_MESSAGE_KEY, locale));
 
             CellStyle headerStyle = createHeaderStyle(workbook);
             CellStyle dataStyle = createDataStyle(workbook);
 
-            writeHeader(sheet, headerStyle);
+            writeHeader(sheet, headerStyle, locale);
             writeRows(sheet, users, dataStyle);
-            autoSizeColumns(sheet, 6);
+            autoSizeColumns(sheet, COLUMN_COUNT);
 
             workbook.write(outputStream);
         }
     }
 
-    private void writeHeader(Sheet sheet, CellStyle headerStyle) {
-
+    private void writeHeader(Sheet sheet, CellStyle headerStyle, Locale locale) {
         Row row = sheet.createRow(0);
 
-        createCell(row, 0, "User ID", headerStyle);
-        createCell(row, 1, "E-mail", headerStyle);
-        createCell(row, 2, "Name", headerStyle);
-        createCell(row, 3, "Username", headerStyle);
-        createCell(row, 4, "Role", headerStyle);
-        createCell(row, 5, "Enabled", headerStyle);
+        createCell(row, 0, message("spreadsheet.users.column.id", locale), headerStyle);
+        createCell(row, 1, message("spreadsheet.users.column.email", locale), headerStyle);
+        createCell(row, 2, message("spreadsheet.users.column.name", locale), headerStyle);
+        createCell(row, 3, message("spreadsheet.users.column.username", locale), headerStyle);
+        createCell(row, 4, message("spreadsheet.users.column.role", locale), headerStyle);
+        createCell(row, 5, message("spreadsheet.users.column.enabled", locale), headerStyle);
     }
 
-    private void writeRows(
-            Sheet sheet,
-            List<UserExportRecord> users,
-            CellStyle dataStyle) {
-
+    private void writeRows(Sheet sheet, List<UserExportRecord> users, CellStyle dataStyle) {
         int rowIndex = 1;
 
         for (UserExportRecord user : users) {
-
             Row row = sheet.createRow(rowIndex++);
 
-            createCell(row, 0, user.username(), dataStyle);
+            createCell(row, 0, user.userId(), dataStyle);
             createCell(row, 1, user.email(), dataStyle);
             createCell(row, 2, user.name(), dataStyle);
             createCell(row, 3, user.username(), dataStyle);
@@ -101,5 +102,9 @@ public class UserExcelExporter {
         for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
             sheet.autoSizeColumn(columnIndex);
         }
+    }
+
+    private String message(String key, Locale locale) {
+        return messageSource.getMessage(key, null, locale);
     }
 }

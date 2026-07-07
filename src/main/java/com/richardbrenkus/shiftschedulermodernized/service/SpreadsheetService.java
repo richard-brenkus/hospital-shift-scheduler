@@ -10,6 +10,8 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,39 +21,38 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
 public class SpreadsheetService {
 
-    private static final DateTimeFormatter MONTH_YEAR_ID_FORMATTER =
-            DateTimeFormatter.ofPattern("MM/yyyy");
+    private static final DateTimeFormatter MONTH_YEAR_ID_FORMATTER = DateTimeFormatter.ofPattern("MM/yyyy");
 
-    private static final DateTimeFormatter FILE_NAME_FORMATTER =
-            DateTimeFormatter.ofPattern("MM_yyyy");
+    private static final DateTimeFormatter FILE_NAME_FORMATTER = DateTimeFormatter.ofPattern("MM_yyyy");
 
     private final StoredCalendarDayRepository storedCalendarDayRepository;
     private final ShiftTypeService shiftTypeService;
+    private final MessageSource messageSource;
 
     @Transactional(readOnly = true)
-    public void writeSavedSchedule(
-            OutputStream outputStream,
-            YearMonth selectedMonth
-    ) throws IOException {
+    public void writeSavedSchedule(OutputStream outputStream, YearMonth selectedMonth) throws IOException {
         if (selectedMonth == null) {
             throw new IllegalArgumentException("Selected month must not be null.");
         }
+
+        Locale locale = LocaleContextHolder.getLocale();
 
         List<StoredCalendarDay> storedDays = loadStoredCalendarDays(selectedMonth);
         List<Integer> shiftTypes = shiftTypeService.getShiftTypes();
 
         try (XSSFWorkbook workbook = new XSSFWorkbook()) {
-            XSSFSheet sheet = workbook.createSheet("Schedule");
+            XSSFSheet sheet = workbook.createSheet(message("spreadsheet.schedule.sheetName", locale));
 
             CellStyle headerStyle = createHeaderStyle(workbook);
             CellStyle dataStyle = createDataStyle(workbook);
 
-            writeHeaderLine(sheet, headerStyle, shiftTypes);
+            writeHeaderLine(sheet, headerStyle, shiftTypes, locale);
             writeDataLines(sheet, dataStyle, storedDays, shiftTypes);
             autoSizeColumns(sheet, shiftTypes.size() + 1);
 
@@ -80,67 +81,46 @@ public class SpreadsheetService {
     private void writeHeaderLine(
             XSSFSheet sheet,
             CellStyle style,
-            List<Integer> shiftTypes
+            List<Integer> shiftTypes,
+            Locale locale
     ) {
         Row row = sheet.createRow(0);
 
-        ExcelCellUtils.createCell(row, 0, "Day", style);
+        ExcelCellUtils.createCell(row, 0, message("spreadsheet.schedule.column.day", locale), style);
 
         int columnIndex = 1;
         for (Integer shiftType : shiftTypes) {
-            ExcelCellUtils.createCell(
-                    row,
-                    columnIndex++,
-                    "Shift type " + shiftType,
-                    style
-            );
+            ExcelCellUtils.createCell(row, columnIndex++, message("spreadsheet.schedule.column.shiftType", new Object[]{shiftType}, locale), style);
         }
     }
 
-    private void writeDataLines(
-            XSSFSheet sheet,
-            CellStyle style,
-            List<StoredCalendarDay> storedDays,
-            List<Integer> shiftTypes
-    ) {
+    private void writeDataLines(XSSFSheet sheet, CellStyle style, List<StoredCalendarDay> storedDays, List<Integer> shiftTypes) {
         int rowIndex = 1;
 
         for (StoredCalendarDay storedDay : storedDays) {
             Row row = sheet.createRow(rowIndex++);
 
-            ExcelCellUtils.createCell(
-                    row,
-                    0,
-                    storedDay.getDayInteger() == null
-                            ? ""
+            ExcelCellUtils.createCell(row, 0, storedDay.getDayInteger() == null
+                            || storedDay.getDayInteger() == 0 ? ""
                             : storedDay.getDayInteger().toString(),
                     style
             );
 
             int columnIndex = 1;
             for (Integer shiftType : shiftTypes) {
-                ExcelCellUtils.createCell(
-                        row,
-                        columnIndex++,
-                        displayNameForShiftType(storedDay, shiftType),
-                        style
-                );
+                ExcelCellUtils.createCell(row, columnIndex++, displayNameForShiftType(storedDay, shiftType), style);
             }
         }
     }
 
-    private String displayNameForShiftType(
-            StoredCalendarDay storedDay,
-            int shiftType
-    ) {
+    private String displayNameForShiftType(StoredCalendarDay storedDay, int shiftType) {
         if (storedDay == null
                 || storedDay.getAssignmentsByShiftType() == null
                 || !storedDay.getAssignmentsByShiftType().containsKey(shiftType)) {
             return "";
         }
 
-        StoredUserSnapshot userSnapshot =
-                storedDay.getAssignmentsByShiftType().get(shiftType);
+        StoredUserSnapshot userSnapshot = storedDay.getAssignmentsByShiftType().get(shiftType);
 
         if (userSnapshot == null) {
             return "";
@@ -177,5 +157,13 @@ public class SpreadsheetService {
         for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
             sheet.autoSizeColumn(columnIndex);
         }
+    }
+
+    private String message(String key, Locale locale) {
+        return messageSource.getMessage(key, null, locale);
+    }
+
+    private String message(String key, Object[] args, Locale locale) {
+        return messageSource.getMessage(key, args, locale);
     }
 }
