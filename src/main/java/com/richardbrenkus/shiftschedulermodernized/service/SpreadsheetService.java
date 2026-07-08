@@ -1,8 +1,8 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
-import com.richardbrenkus.shiftschedulermodernized.entity.StoredCalendarDay;
+import com.richardbrenkus.shiftschedulermodernized.entity.StoredScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.entity.StoredUserSnapshot;
-import com.richardbrenkus.shiftschedulermodernized.repository.StoredCalendarDayRepository;
+import com.richardbrenkus.shiftschedulermodernized.repository.StoredScheduleDayRepository;
 import com.richardbrenkus.shiftschedulermodernized.util.ExcelCellUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -31,7 +31,7 @@ public class SpreadsheetService {
 
     private static final DateTimeFormatter FILE_NAME_FORMATTER = DateTimeFormatter.ofPattern("MM_yyyy");
 
-    private final StoredCalendarDayRepository storedCalendarDayRepository;
+    private final StoredScheduleDayRepository storedScheduleDayRepository;
     private final ShiftTypeService shiftTypeService;
     private final MessageSource messageSource;
 
@@ -43,7 +43,7 @@ public class SpreadsheetService {
 
         Locale locale = LocaleContextHolder.getLocale();
 
-        List<StoredCalendarDay> storedDays = loadStoredCalendarDays(selectedMonth);
+        List<StoredScheduleDay> storedDays = loadStoredScheduleDays(selectedMonth);
         List<Integer> shiftTypes = shiftTypeService.getShiftTypes();
 
         try (XSSFWorkbook workbook = new XSSFWorkbook()) {
@@ -68,13 +68,13 @@ public class SpreadsheetService {
         return "schedule_" + selectedMonth.format(FILE_NAME_FORMATTER) + ".xlsx";
     }
 
-    private List<StoredCalendarDay> loadStoredCalendarDays(YearMonth selectedMonth) {
+    private List<StoredScheduleDay> loadStoredScheduleDays(YearMonth selectedMonth) {
         String monthYearId = selectedMonth.format(MONTH_YEAR_ID_FORMATTER);
 
-        return storedCalendarDayRepository
+        return storedScheduleDayRepository
                 .findByMonthYearIdOrderByDayIntegerAsc(monthYearId)
                 .stream()
-                .sorted(Comparator.comparing(StoredCalendarDay::getDayInteger))
+                .sorted(Comparator.comparing(StoredScheduleDay::getDayInteger))
                 .toList();
     }
 
@@ -94,10 +94,10 @@ public class SpreadsheetService {
         }
     }
 
-    private void writeDataLines(XSSFSheet sheet, CellStyle style, List<StoredCalendarDay> storedDays, List<Integer> shiftTypes) {
+    private void writeDataLines(XSSFSheet sheet, CellStyle style, List<StoredScheduleDay> storedDays, List<Integer> shiftTypes) {
         int rowIndex = 1;
 
-        for (StoredCalendarDay storedDay : storedDays) {
+        for (StoredScheduleDay storedDay : storedDays) {
             Row row = sheet.createRow(rowIndex++);
 
             ExcelCellUtils.createCell(row, 0, storedDay.getDayInteger() == null
@@ -113,7 +113,7 @@ public class SpreadsheetService {
         }
     }
 
-    private String displayNameForShiftType(StoredCalendarDay storedDay, int shiftType) {
+    private String displayNameForShiftType(StoredScheduleDay storedDay, int shiftType) {
         if (storedDay == null
                 || storedDay.getAssignmentsByShiftType() == null
                 || !storedDay.getAssignmentsByShiftType().containsKey(shiftType)) {

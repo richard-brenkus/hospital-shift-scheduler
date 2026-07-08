@@ -1,7 +1,7 @@
 package com.richardbrenkus.shiftschedulermodernized.mapper;
 
-import com.richardbrenkus.shiftschedulermodernized.algorithm.CalendarDay;
-import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleCalendar;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleDay;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleMonth;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ShiftAssignment;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.*;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserStatViewRecord;
@@ -25,31 +25,31 @@ public class ScheduleMapper {
 
     private final UserRepository userRepository;
 
-    public ScheduleEditForm toEditForm(ScheduleCalendar calendar, CalculationProfileForm calculationProfileForm, List<Integer> shiftTypes) {
+    public ScheduleEditForm toEditForm(ScheduleMonth scheduleMonth, CalculationProfileForm calculationProfileForm, List<Integer> shiftTypes) {
         ScheduleEditForm form = ScheduleEditForm.builder()
                 .month(calculationProfileForm.getCalculationMonth())
                 .shiftCountCap(calculationProfileForm.getShiftCountCap())
                 .gapBetweenShifts(calculationProfileForm.getGapBetweenShifts())
                 .sortByDatesAmount(calculationProfileForm.isSortByDatesAmount())
                 .forceFillShiftTypes(new ArrayList<>(calculationProfileForm.getForceFillShiftTypes() == null? List.of() : calculationProfileForm.getForceFillShiftTypes()))
-                .overrideUserShiftRequestExceptNoDates(calendar.isOverrideUserShiftRequestExceptNoDates())
-                .overrideUserShiftRequestAll(calendar.isOverrideUserShiftRequestAll())
-                .overrideShiftCountCap(calendar.isOverrideShiftCountCap())
-                .overrideConflictingDates(calendar.isOverrideConflictingDates())
-                .overrideHasShiftRequest(calendar.isOverrideHasShiftRequest())
-                .overridePreviousMonthValid(calendar.isOverridePreviousMonthValid())
+                .overrideUserShiftRequestExceptNoDates(scheduleMonth.isOverrideUserShiftRequestExceptNoDates())
+                .overrideUserShiftRequestAll(scheduleMonth.isOverrideUserShiftRequestAll())
+                .overrideShiftCountCap(scheduleMonth.isOverrideShiftCountCap())
+                .overrideConflictingDates(scheduleMonth.isOverrideConflictingDates())
+                .overrideHasShiftRequest(scheduleMonth.isOverrideHasShiftRequest())
+                .overridePreviousMonthValid(scheduleMonth.isOverridePreviousMonthValid())
                 .days(new ArrayList<>())
                 .build();
 
-        for (CalendarDay calendarDay : calendar.getDays()) {
+        for (ScheduleDay scheduleDay : scheduleMonth.getDays()) {
             ScheduleDayForm dayForm = ScheduleDayForm.builder()
-                    .date(calendarDay.getDate())
-                    .weekendOrHoliday(calendarDay.isWeekendOrHoliday())
+                    .date(scheduleDay.getDate())
+                    .weekendOrHoliday(scheduleDay.isWeekendOrHoliday())
                     .assignments(new ArrayList<>())
                     .build();
 
             for (Integer shiftType : shiftTypes) {
-                ShiftAssignment existingAssignment = calendarDay.getAssignments()
+                ShiftAssignment existingAssignment = scheduleDay.getAssignments()
                         .stream()
                         .filter(assignment -> assignment.getShiftType() == shiftType)
                         .findFirst()
@@ -73,19 +73,19 @@ public class ScheduleMapper {
     }
 
     @Transactional(readOnly = true)
-    public ScheduleCalendar toScheduleCalendar(ScheduleEditForm form, CalculationProfileForm calculationProfile) {
+    public ScheduleMonth toScheduleMonth(ScheduleEditForm form, CalculationProfileForm calculationProfile) {
         if (form == null) {
             throw new IllegalArgumentException("Schedule edit form must not be null");
         }
 
-        List<CalendarDay> days = form.getDays() == null
+        List<ScheduleDay> days = form.getDays() == null
                 ? new ArrayList<>()
                 : form.getDays()
                 .stream()
-                .map(this::toCalendarDay)
+                .map(this::toScheduleDay)
                 .toList();
 
-        return ScheduleCalendar.builder()
+        return ScheduleMonth.builder()
                 .month(form.getMonth())
                 .calculationProfile(calculationProfile)
                 .days(new ArrayList<>(days))
@@ -99,7 +99,7 @@ public class ScheduleMapper {
     }
 
     @Transactional(readOnly = true)
-    public ScheduleCalendar toScheduleCalendar(SavedScheduleView savedScheduleView) {
+    public ScheduleMonth toScheduleMonth(SavedScheduleView savedScheduleView) {
         if (savedScheduleView == null) {
             throw new IllegalArgumentException("Saved schedule view must not be null");
         }
@@ -108,15 +108,15 @@ public class ScheduleMapper {
             throw new IllegalArgumentException("Saved schedule month must not be null");
         }
 
-        List<CalendarDay> days = savedScheduleView.getDays() == null
+        List<ScheduleDay> days = savedScheduleView.getDays() == null
                 ? new ArrayList<>()
                 : savedScheduleView.getDays()
                 .stream()
                 .filter(Objects::nonNull)
-                .map(this::toCalendarDay)
+                .map(this::toScheduleDay)
                 .toList();
 
-        return ScheduleCalendar.builder()
+        return ScheduleMonth.builder()
                 .month(savedScheduleView.getMonth())
                 .days(new ArrayList<>(days))
                 .build();
@@ -183,7 +183,7 @@ public class ScheduleMapper {
     }
 
 
-    private CalendarDay toCalendarDay(SavedScheduleDayView savedDay) {
+    private ScheduleDay toScheduleDay(SavedScheduleDayView savedDay) {
         if (savedDay.getDate() == null) {
             throw new IllegalArgumentException("Saved schedule day date must not be null");
         }
@@ -197,7 +197,7 @@ public class ScheduleMapper {
                 .filter(Objects::nonNull)
                 .toList();
 
-        return CalendarDay.builder()
+        return ScheduleDay.builder()
                 .date(savedDay.getDate())
                 .weekendOrHoliday(savedDay.isWeekendOrHoliday())
                 .assignments(new ArrayList<>(assignments))
@@ -245,7 +245,7 @@ public class ScheduleMapper {
                 .orElse(null);
     }
 
-    private CalendarDay toCalendarDay(ScheduleDayForm form) {
+    private ScheduleDay toScheduleDay(ScheduleDayForm form) {
         List<ShiftAssignment> assignments = form.getAssignments() == null
                 ? new ArrayList<>()
                 : form.getAssignments()
@@ -254,7 +254,7 @@ public class ScheduleMapper {
                 .filter(Objects::nonNull)
                 .toList();
 
-        return CalendarDay.builder()
+        return ScheduleDay.builder()
                 .date(form.getDate())
                 .weekendOrHoliday(form.isWeekendOrHoliday())
                 .assignments(new ArrayList<>(assignments))

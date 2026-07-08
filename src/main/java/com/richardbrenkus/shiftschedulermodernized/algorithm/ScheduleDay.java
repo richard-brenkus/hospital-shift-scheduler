@@ -11,7 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CalendarDay {
+public class ScheduleDay {
 
     private LocalDate date;
     private boolean weekendOrHoliday;

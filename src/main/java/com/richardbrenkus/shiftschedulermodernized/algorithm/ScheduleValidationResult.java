@@ -12,7 +12,7 @@ import java.util.*;
 @Builder
 public class ScheduleValidationResult {
 
-    private ScheduleCalendar calendar;
+    private ScheduleMonth scheduleMonth;
 
     private boolean errorsExist;
     private boolean allUsersExist;

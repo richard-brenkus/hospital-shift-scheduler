@@ -13,7 +13,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class StoredCalendarDay {
+public class StoredScheduleDay {
 
     @Id
     @Column(name = "date_id")

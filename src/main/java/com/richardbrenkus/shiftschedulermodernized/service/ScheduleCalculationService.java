@@ -1,12 +1,12 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
-import com.richardbrenkus.shiftschedulermodernized.algorithm.CalendarDay;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.CalculationCounters;
-import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleCalendar;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleMonth;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.UsersForShiftType;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileForm;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftPreference;
-import com.richardbrenkus.shiftschedulermodernized.entity.StoredCalendarDay;
+import com.richardbrenkus.shiftschedulermodernized.entity.StoredScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +37,7 @@ public class ScheduleCalculationService {
     private final ScheduleGenerationEngine scheduleGenerationEngine;
 
     @Transactional(readOnly = true)
-    public ScheduleCalendar calculateSchedule(CalculationProfileForm form) {
+    public ScheduleMonth calculateSchedule(CalculationProfileForm form) {
 
         YearMonth calculationMonth = form.getCalculationMonth();
         int minimalGap = form.getGapBetweenShifts();
@@ -57,39 +57,39 @@ public class ScheduleCalculationService {
         );
 
         List<LocalDate> holidaysCzech = getHolidaysCzechRepublic(calculationMonth);
-        Map<Integer, StoredCalendarDay> previousMonthCalendar =
-                scheduleRuleService.loadPreviousMonthCalendar(calculationMonth.atDay(1), minimalGap);
+        Map<Integer, StoredScheduleDay> storedScheduleDayMap =
+                scheduleRuleService.loadPreviousStoredScheduleDays(calculationMonth.atDay(1), minimalGap);
 
-        List<ScheduleCalendar> candidateCalendars = new ArrayList<>();
+        List<ScheduleMonth> candidateSchedules = new ArrayList<>();
 
         for (int attempt = 0; attempt < NUMBER_OF_ATTEMPTS; attempt++) {
-            ScheduleCalendar calendar = createCandidateCalendar(
+            ScheduleMonth scheduleMonth = createCandidateScheduleMonth(
                     form,
                     calculationMonth,
                     holidaysCzech,
                     calculationOrder,
                     priorities,
                     usersByShiftType,
-                    previousMonthCalendar
+                    storedScheduleDayMap
             );
 
-            candidateCalendars.add(calendar);
+            candidateSchedules.add(scheduleMonth);
         }
 
-        return selectBestCalendar(candidateCalendars);
+        return selectBestScheduleMonth(candidateSchedules);
     }
 
-    private ScheduleCalendar createCandidateCalendar(
+    private ScheduleMonth createCandidateScheduleMonth(
             CalculationProfileForm form,
             YearMonth calculationMonth,
             List<LocalDate> holidaysCzech,
             List<Integer> calculationOrder,
             List<Integer> priorities,
             Map<Integer, UsersForShiftType> usersByShiftType,
-            Map<Integer, StoredCalendarDay> previousMonthCalendar
+            Map<Integer, StoredScheduleDay> previousMonthStoredScheduleDays
     ) {
         CalculationCounters counters = new CalculationCounters();
-        ScheduleCalendar calendar = createEmptyScheduleCalendar(form, calculationMonth, holidaysCzech);
+        ScheduleMonth scheduleMonth = createEmptyScheduleMonth(form, calculationMonth, holidaysCzech);
         List<Integer> monthDays = createShuffledMonthDays(calculationMonth);
 
         List<Integer> forceFillShiftTypes = form.getForceFillShiftTypes() == null
@@ -99,7 +99,7 @@ public class ScheduleCalculationService {
         int hitCounter = 0;
 
         hitCounter += scheduleGenerationEngine.assignForceFillShifts(
-                calendar,
+                scheduleMonth,
                 monthDays,
                 priorities,
                 calculationOrder,
@@ -108,12 +108,12 @@ public class ScheduleCalculationService {
                 form.isSortByDatesAmount(),
                 form.getShiftCountCap(),
                 form.getGapBetweenShifts(),
-                previousMonthCalendar,
+                previousMonthStoredScheduleDays,
                 counters
         );
 
         hitCounter += scheduleGenerationEngine.assignRegularShifts(
-                calendar,
+                scheduleMonth,
                 monthDays,
                 priorities,
                 calculationOrder,
@@ -122,18 +122,18 @@ public class ScheduleCalculationService {
                 form.isSortByDatesAmount(),
                 form.getShiftCountCap(),
                 form.getGapBetweenShifts(),
-                previousMonthCalendar,
+                previousMonthStoredScheduleDays,
                 counters
         );
 
-        calendar.setHitCounter(hitCounter);
-        return calendar;
+        scheduleMonth.setHitCounter(hitCounter);
+        return scheduleMonth;
     }
 
-    private ScheduleCalendar selectBestCalendar(List<ScheduleCalendar> candidateCalendars) {
-        return candidateCalendars.stream()
-                .max(Comparator.comparingInt(ScheduleCalendar::getHitCounter))
-                .orElseThrow(() -> new IllegalStateException("No schedule calendar was created"));
+    private ScheduleMonth selectBestScheduleMonth(List<ScheduleMonth> candidateScheduleMonths) {
+        return candidateScheduleMonths.stream()
+                .max(Comparator.comparingInt(ScheduleMonth::getHitCounter))
+                .orElseThrow(() -> new IllegalStateException("No schedule was created"));
     }
 
     private List<Integer> createShuffledMonthDays(YearMonth calculationMonth) {
@@ -234,21 +234,21 @@ public class ScheduleCalculationService {
                 .orElse(null);
     }
 
-    private ScheduleCalendar createEmptyScheduleCalendar(
+    private ScheduleMonth createEmptyScheduleMonth(
             CalculationProfileForm form,
             YearMonth month,
             List<LocalDate> holidays
     ) {
-        List<CalendarDay> days = IntStream.rangeClosed(1, month.lengthOfMonth())
+        List<ScheduleDay> days = IntStream.rangeClosed(1, month.lengthOfMonth())
                 .mapToObj(month::atDay)
-                .map(date -> CalendarDay.builder()
+                .map(date -> ScheduleDay.builder()
                         .date(date)
                         .weekendOrHoliday(isWeekendOrHoliday(date, holidays))
                         .assignments(new ArrayList<>())
                         .build())
                 .toList();
 
-        return ScheduleCalendar.builder()
+        return ScheduleMonth.builder()
                 .month(month)
                 .calculationProfile(form)
                 .days(new ArrayList<>(days))

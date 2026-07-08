@@ -1,6 +1,6 @@
 package com.richardbrenkus.shiftschedulermodernized.controller;
 
-import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleCalendar;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleMonth;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeName;
@@ -336,12 +336,12 @@ public class AdminController {
             HttpSession session,
             @ModelAttribute("calculationProfileForm") CalculationProfileForm calculationProfileForm
     ) {
-        ScheduleCalendar bestCalendar = scheduleCalculationService.calculateSchedule(calculationProfileForm);
+        ScheduleMonth scheduleMonth = scheduleCalculationService.calculateSchedule(calculationProfileForm);
 
         List<Integer> shiftTypes = shiftTypeService.getShiftTypes();
-        ScheduleEditForm scheduleEditForm = scheduleMapper.toEditForm(bestCalendar, calculationProfileForm, shiftTypes);
+        ScheduleEditForm scheduleEditForm = scheduleMapper.toEditForm(scheduleMonth, calculationProfileForm, shiftTypes);
 
-        ScheduleValidationResult scheduleValidationResult = scheduleValidationService.initializeValidationAndUserStats(bestCalendar);
+        ScheduleValidationResult scheduleValidationResult = scheduleValidationService.initializeValidationAndUserStats(scheduleMonth);
 
         userStatisticService.storeFullStatisticsInSession(session, scheduleValidationResult, scheduleEditForm);
 
@@ -402,9 +402,9 @@ public class AdminController {
             return "admin/schedule_table";
         }
 
-        ScheduleCalendar calendar = scheduleMapper.toScheduleCalendar(scheduleEditForm, scheduleEditForm.toCalculationProfileForm());
+        ScheduleMonth scheduleMonth = scheduleMapper.toScheduleMonth(scheduleEditForm, scheduleEditForm.toCalculationProfileForm());
 
-        storedScheduleService.saveSchedule(calendar);
+        storedScheduleService.saveSchedule(scheduleMonth);
 
         userStatisticService.replaceStatsForMonth(scheduleEditForm.getMonth(), validationResult.getFullUserStatsByShiftType());
 
@@ -413,34 +413,34 @@ public class AdminController {
 
     @PostMapping("/admin/save_schedule_override_validation")
     public String saveScheduleOverrideValidation(@ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm) {
-        ScheduleCalendar calendar = scheduleMapper.toScheduleCalendar(scheduleEditForm, scheduleEditForm.toCalculationProfileForm());
+        ScheduleMonth scheduleMonth = scheduleMapper.toScheduleMonth(scheduleEditForm, scheduleEditForm.toCalculationProfileForm());
 
-        storedScheduleService.saveSchedule(calendar);
+        storedScheduleService.saveSchedule(scheduleMonth);
 
         return "redirect:/admin/show_saved_schedules";
     }
 
 
     @GetMapping("/admin/show_saved_schedules")
-    public String showSavedCalendars(Model model) {
-        addSavedCalendarSelectionAttributes(model, SavedCalendarSelectionForm.builder().build(), true);
+    public String showSavedSchedules(Model model) {
+        addSavedScheduleSelectionAttributes(model, SavedScheduleSelectionForm.builder().build(), true);
 
         return "admin/show_saved_schedules";
     }
 
     @PostMapping("/admin/show_saved_schedules")
-    public String showSavedCalendarsPost(Model model, @ModelAttribute("savedScheduleSelectionForm") SavedCalendarSelectionForm form) {
+    public String showSavedSchedulesPost(Model model, @ModelAttribute("savedScheduleSelectionForm") SavedScheduleSelectionForm form) {
         YearMonth selectedMonth = form.getSelectedMonth();
 
         if (selectedMonth == null || !storedScheduleService.existsByMonth(selectedMonth)) {
-            addSavedCalendarSelectionAttributes(model, form, false);
+            addSavedScheduleSelectionAttributes(model, form, false);
             return "admin/show_saved_schedules";
         }
 
         SavedScheduleView savedScheduleView = storedScheduleService.loadSavedScheduleView(selectedMonth);
 
         model.addAttribute("savedSchedule", savedScheduleView);
-        model.addAttribute("calendar", savedScheduleView);
+        //model.addAttribute("calendar", savedScheduleView);
         model.addAttribute("month", selectedMonth);
         model.addAttribute("year", selectedMonth.getYear());
         model.addAttribute("monthInt", selectedMonth.getMonthValue());
@@ -474,7 +474,7 @@ public class AdminController {
     }
 
 
-    private void addSavedCalendarSelectionAttributes(Model model, SavedCalendarSelectionForm form, boolean scheduleExists) {
+    private void addSavedScheduleSelectionAttributes(Model model, SavedScheduleSelectionForm form, boolean scheduleExists) {
         model.addAttribute("savedScheduleSelectionForm", form);
         model.addAttribute("monthOptions", storedScheduleService.getSelectableMonthOptions());
         model.addAttribute("scheduleExists", scheduleExists);

@@ -2,9 +2,9 @@ package com.richardbrenkus.shiftschedulermodernized.service;
 
 import com.richardbrenkus.shiftschedulermodernized.algorithm.*;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftPreference;
-import com.richardbrenkus.shiftschedulermodernized.entity.StoredCalendarDay;
+import com.richardbrenkus.shiftschedulermodernized.entity.StoredScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
-import com.richardbrenkus.shiftschedulermodernized.repository.StoredCalendarDayRepository;
+import com.richardbrenkus.shiftschedulermodernized.repository.StoredScheduleDayRepository;
 import com.richardbrenkus.shiftschedulermodernized.util.CalendarDateIdUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,7 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class ScheduleRuleService {
 
-    private final StoredCalendarDayRepository storedCalendarDayRepository;
+    private final StoredScheduleDayRepository storedScheduleDayRepository;
 
     boolean isWithinTotalShiftLimit(Integer shiftCountCap, User user, CalculationCounters counters) {
 
@@ -109,15 +109,15 @@ public class ScheduleRuleService {
                 .getOrDefault(shiftType, 0);
     }
 
-    boolean respectsMinimalGap(LocalDate date, int minimalGap, User user, ScheduleCalendar calendar, int currentShiftType) {
-        if (date == null || user == null || user.getId() == null || calendar == null) {
+    boolean respectsMinimalGap(LocalDate date, int minimalGap, User user, ScheduleMonth scheduleMonth, int currentShiftType) {
+        if (date == null || user == null || user.getId() == null || scheduleMonth == null) {
             return true;
         }
 
         LocalDate startDate = date.minusDays(minimalGap);
         LocalDate endDate = date.plusDays(minimalGap);
 
-        for (CalendarDay day : calendar.getDays()) {
+        for (ScheduleDay day : scheduleMonth.getDays()) {
 
             if (day == null || day.getDate() == null || day.getAssignments() == null) {
                 continue;
@@ -155,12 +155,12 @@ public class ScheduleRuleService {
     }
 
     public boolean respectsPreviousMonthGap(
-            Map<Integer, StoredCalendarDay> previousMonthCalendar,
+            Map<Integer, StoredScheduleDay> previousMonthStoredScheduleDays,
             Integer minimalGap,
             LocalDate date,
             User user
     ) {
-        if (previousMonthCalendar == null
+        if (previousMonthStoredScheduleDays == null
                 || minimalGap == null
                 || date == null
                 || user == null
@@ -173,8 +173,8 @@ public class ScheduleRuleService {
         }
 
         for (int backwardIndex = 0; backwardIndex > -minimalGap; backwardIndex--) {
-            StoredCalendarDay previousMonthDay =
-                    previousMonthCalendar.get(backwardIndex);
+            StoredScheduleDay previousMonthDay =
+                    previousMonthStoredScheduleDays.get(backwardIndex);
 
             if (previousMonthDay == null) {
                 continue;
@@ -246,13 +246,13 @@ public class ScheduleRuleService {
         return assignedWeekdayCount <= requestedWeekdayCount;
     }
 
-    public Map<Integer, StoredCalendarDay> loadPreviousMonthCalendar(
+    public Map<Integer, StoredScheduleDay> loadPreviousStoredScheduleDays(
             LocalDate adminDate,
             int minimalGap
     ) {
         List<LocalDate> previousMonthDates = createPreviousMonthDatesToCheck(adminDate, minimalGap);
 
-        Map<Integer, StoredCalendarDay> previousMonthCalendar = new HashMap<>();
+        Map<Integer, StoredScheduleDay> previousMonthStoredScheduleDays= new HashMap<>();
 
         int backwardIndex = 0;
 
@@ -260,15 +260,15 @@ public class ScheduleRuleService {
             Long dateId = CalendarDateIdUtils.toDateId(previousMonthDate);
 
             int finalBackwardIndex = backwardIndex;
-            storedCalendarDayRepository.findById(dateId)
+            storedScheduleDayRepository.findById(dateId)
                     .ifPresent(storedDay ->
-                            previousMonthCalendar.put(finalBackwardIndex, storedDay)
+                            previousMonthStoredScheduleDays.put(finalBackwardIndex, storedDay)
                     );
 
             backwardIndex--;
         }
 
-        return previousMonthCalendar;
+        return previousMonthStoredScheduleDays;
     }
 
     private static List<LocalDate> createPreviousMonthDatesToCheck(

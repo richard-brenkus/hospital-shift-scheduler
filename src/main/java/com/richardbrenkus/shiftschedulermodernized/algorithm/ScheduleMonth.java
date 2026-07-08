@@ -11,12 +11,12 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ScheduleCalendar {
+public class ScheduleMonth {
 
     private YearMonth month;
     private int hitCounter;
 
-    private List<CalendarDay> days = new ArrayList<>();
+    private List<ScheduleDay> days = new ArrayList<>();
 
     private CalculationProfileForm calculationProfile;
 

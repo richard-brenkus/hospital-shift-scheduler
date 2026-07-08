@@ -1,8 +1,8 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
-import com.richardbrenkus.shiftschedulermodernized.algorithm.CalendarDay;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.CalculationCounters;
-import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleCalendar;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleMonth;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ShiftAssignment;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserStatViewRecord;
@@ -10,7 +10,7 @@ import com.richardbrenkus.shiftschedulermodernized.config.ShiftTypeProperties;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ScheduleEditForm;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
-import com.richardbrenkus.shiftschedulermodernized.entity.StoredCalendarDay;
+import com.richardbrenkus.shiftschedulermodernized.entity.StoredScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ScheduleMapper;
 import lombok.RequiredArgsConstructor;
@@ -31,31 +31,31 @@ public class ScheduleValidationService {
     private final UserStatisticService userStatisticService;
 
     @Transactional(readOnly = true)
-    public ScheduleValidationResult initializeValidationAndUserStats(ScheduleCalendar calendar) {
+    public ScheduleValidationResult initializeValidationAndUserStats(ScheduleMonth scheduleMonth) {
         ScheduleValidationResult result = ScheduleValidationResult.builder()
-                .calendar(calendar)
+                .scheduleMonth(scheduleMonth)
                 .allUsersExist(true)
                 .errorsExist(false)
                 .build();
 
-        return generateValidationAndUserStats(calendar, result);
+        return generateValidationAndUserStats(scheduleMonth, result);
     }
 
     @Transactional(readOnly = true)
     public ScheduleValidationResult validateSchedule(ScheduleEditForm scheduleEditForm) {
-        ScheduleCalendar editedCalendar = scheduleMapper.toScheduleCalendar(scheduleEditForm, scheduleEditForm.toCalculationProfileForm());
+        ScheduleMonth editedScheduleMonth = scheduleMapper.toScheduleMonth(scheduleEditForm, scheduleEditForm.toCalculationProfileForm());
 
-        if (editedCalendar == null) {
+        if (editedScheduleMonth == null) {
             return ScheduleValidationResult.builder()
                     .allUsersExist(true)
                     .errorsExist(false)
                     .build();
         }
 
-        CalculationProfileForm profile = editedCalendar.getCalculationProfile();
+        CalculationProfileForm profile = editedScheduleMonth.getCalculationProfile();
 
         if (profile == null) {
-            throw new IllegalArgumentException("Schedule calendar has no calculation profile.");
+            throw new IllegalArgumentException("Schedule has no calculation profile.");
         }
 
         int shiftCountCap = profile.getShiftCountCap();
@@ -65,22 +65,22 @@ public class ScheduleValidationService {
                 ? Set.of()
                 : new HashSet<>(profile.getForceFillShiftTypes());
 
-        Map<Integer, StoredCalendarDay> previousMonthCalendar = scheduleRuleService.loadPreviousMonthCalendar(editedCalendar.getMonth().atDay(1), minimalGap);
+        Map<Integer, StoredScheduleDay> previousMonthStoredScheduleDays = scheduleRuleService.loadPreviousStoredScheduleDays(editedScheduleMonth.getMonth().atDay(1), minimalGap);
 
-        CalculationCounters counters = countAssignments(editedCalendar);
+        CalculationCounters counters = countAssignments(editedScheduleMonth);
 
         ScheduleValidationResult result = ScheduleValidationResult.builder()
-                .calendar(editedCalendar)
+                .scheduleMonth(editedScheduleMonth)
                 .allUsersExist(true)
                 .errorsExist(false)
-                .scheduleScore(userStatisticService.returnScheduleScoreAsString(editedCalendar, shiftTypeProperties.count()))
+                .scheduleScore(userStatisticService.returnScheduleScoreAsString(editedScheduleMonth, shiftTypeProperties.count()))
                 .build();
 
-        if (editedCalendar.getDays() == null) {
+        if (editedScheduleMonth.getDays() == null) {
             return result;
         }
 
-        for (CalendarDay day : editedCalendar.getDays()) {
+        for (ScheduleDay day : editedScheduleMonth.getDays()) {
 
             if (day == null || day.getAssignments() == null) {
                 continue;
@@ -101,7 +101,7 @@ public class ScheduleValidationService {
                 int shiftType = assignment.getShiftType();
                 String userName = user.getName();
 
-                if (!editedCalendar.isOverrideHasShiftRequest() && !user.hasShiftRequest()) {
+                if (!editedScheduleMonth.isOverrideHasShiftRequest() && !user.hasShiftRequest()) {
                     markError(result, shiftType, day);
                     result.setUserNoRequest(true);
                     result.addUserNoRequest(shiftType, userName);
@@ -125,13 +125,13 @@ public class ScheduleValidationService {
                     withinRequestedWeekdayLimit = scheduleRuleService.isValidWithinRequestedWeekdayLimit(user, shiftType, counters);
                 }
 
-                boolean respectsMinimalGap = scheduleRuleService.respectsMinimalGap(day.getDate(), minimalGap, user, editedCalendar, shiftType);
+                boolean respectsMinimalGap = scheduleRuleService.respectsMinimalGap(day.getDate(), minimalGap, user, editedScheduleMonth, shiftType);
 
                 boolean isNotRejectedByUser = scheduleRuleService.isNotRejectedByUser(day.getDate(), shiftRequest.getDatesNo());
 
-                boolean respectsPreviousMonthGap = scheduleRuleService.respectsPreviousMonthGap(previousMonthCalendar, minimalGap, day.getDate(), user);
+                boolean respectsPreviousMonthGap = scheduleRuleService.respectsPreviousMonthGap(previousMonthStoredScheduleDays, minimalGap, day.getDate(), user);
 
-                if (!withinTotalShiftLimit && !editedCalendar.isOverrideShiftCountCap()) {
+                if (!withinTotalShiftLimit && !editedScheduleMonth.isOverrideShiftCountCap()) {
                     markError(result, shiftType, day);
                     result.setUserShiftCap(true);
                     result.addShiftCapUser(shiftType, userName);
@@ -140,8 +140,8 @@ public class ScheduleValidationService {
                 boolean forceFill = forceFillShiftTypes.contains(shiftType);
 
                 if (!forceFill
-                        && !editedCalendar.isOverrideUserShiftRequestExceptNoDates()
-                        && !editedCalendar.isOverrideUserShiftRequestAll()) {
+                        && !editedScheduleMonth.isOverrideUserShiftRequestExceptNoDates()
+                        && !editedScheduleMonth.isOverrideUserShiftRequestAll()) {
 
                     if (!withinRequestedWeekdayLimit) {
                         markError(result, shiftType, day);
@@ -156,19 +156,19 @@ public class ScheduleValidationService {
                     }
                 }
 
-                if (!respectsMinimalGap && !editedCalendar.isOverrideConflictingDates()) {
+                if (!respectsMinimalGap && !editedScheduleMonth.isOverrideConflictingDates()) {
                     markError(result, shiftType, day);
                     result.setUserCrossCheck(true);
                     result.addCrossCheckUser(shiftType, userName);
                 }
 
-                if (!isNotRejectedByUser && !editedCalendar.isOverrideUserShiftRequestAll()) {
+                if (!isNotRejectedByUser && !editedScheduleMonth.isOverrideUserShiftRequestAll()) {
                     markError(result, shiftType, day);
                     result.setUserDatesNo(true);
                     result.addDatesNoCheckUser(shiftType, userName);
                 }
 
-                if (!respectsPreviousMonthGap && !editedCalendar.isOverridePreviousMonthValid()) {
+                if (!respectsPreviousMonthGap && !editedScheduleMonth.isOverridePreviousMonthValid()) {
                     markError(result, shiftType, day);
                     result.setPreviousMonthCheckFailed(true);
                     result.addPreviousMonthCheckUser(shiftType, userName);
@@ -176,24 +176,24 @@ public class ScheduleValidationService {
             }
         }
 
-        this.generateValidationAndUserStats(editedCalendar, result);
+        this.generateValidationAndUserStats(editedScheduleMonth, result);
 
         return result;
     }
 
-    private ScheduleValidationResult generateValidationAndUserStats(ScheduleCalendar calendar, ScheduleValidationResult result) {
-        if (calendar == null || calendar.getCalculationProfile() == null) {
+    private ScheduleValidationResult generateValidationAndUserStats(ScheduleMonth scheduleMonth, ScheduleValidationResult result) {
+        if (scheduleMonth == null || scheduleMonth.getCalculationProfile() == null) {
             return result;
         }
 
-        CalculationCounters counters = countAssignments(calendar);
-        int shiftCountCap = calendar.getCalculationProfile().getShiftCountCap();
+        CalculationCounters counters = countAssignments(scheduleMonth);
+        int shiftCountCap = scheduleMonth.getCalculationProfile().getShiftCountCap();
 
-        Map<Integer, Set<UserStatViewRecord>> shortStats = userStatisticService.returnQuickUserStats(calendar, shiftCountCap, counters);
+        Map<Integer, Set<UserStatViewRecord>> shortStats = userStatisticService.returnQuickUserStats(scheduleMonth, shiftCountCap, counters);
 
-        Map<Integer, Set<UserStatViewRecord>> noShiftAssignedStats = userStatisticService.returnNoShiftAssignedUserStatMap(calendar, counters);
+        Map<Integer, Set<UserStatViewRecord>> noShiftAssignedStats = userStatisticService.returnNoShiftAssignedUserStatMap(scheduleMonth, counters);
 
-        Map<Integer, Set<UserStatViewRecord>> fullStats = userStatisticService.returnFullUserStats(calendar, counters);
+        Map<Integer, Set<UserStatViewRecord>> fullStats = userStatisticService.returnFullUserStats(scheduleMonth, counters);
 
         result.setShortStatsByShiftType(shortStats);
         result.setShortStatsExist(hasAnyStats(shortStats));
@@ -203,13 +203,13 @@ public class ScheduleValidationService {
 
         result.setFullUserStatsByShiftType(fullStats);
 
-        result.setScheduleScore(userStatisticService.returnScheduleScoreAsString(calendar, shiftTypeProperties.count())
+        result.setScheduleScore(userStatisticService.returnScheduleScoreAsString(scheduleMonth, shiftTypeProperties.count())
         );
 
         return result;
     }
 
-    private void markError(ScheduleValidationResult result, int shiftType, CalendarDay day) {
+    private void markError(ScheduleValidationResult result, int shiftType, ScheduleDay day) {
         result.setErrorsExist(true);
         result.markRedField(shiftType, day.getDate().getDayOfMonth());
     }
@@ -220,14 +220,14 @@ public class ScheduleValidationService {
                 .anyMatch(values -> values != null && !values.isEmpty());
     }
 
-    private CalculationCounters countAssignments(ScheduleCalendar calendar) {
+    private CalculationCounters countAssignments(ScheduleMonth scheduleMonth) {
         CalculationCounters counters = new CalculationCounters();
 
-        if (calendar == null || calendar.getDays() == null) {
+        if (scheduleMonth == null || scheduleMonth.getDays() == null) {
             return counters;
         }
 
-        for (CalendarDay day : calendar.getDays()) {
+        for (ScheduleDay day : scheduleMonth.getDays()) {
             if (day == null || day.getAssignments() == null) {
                 continue;
             }

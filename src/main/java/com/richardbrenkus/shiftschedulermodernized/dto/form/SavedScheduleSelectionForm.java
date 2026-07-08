@@ -9,7 +9,7 @@ import java.time.YearMonth;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SavedCalendarSelectionForm {
+public class SavedScheduleSelectionForm {
 
     private YearMonth selectedMonth;
 }

@@ -1,13 +1,13 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
-import com.richardbrenkus.shiftschedulermodernized.algorithm.CalendarDay;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.CalculationCounters;
-import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleCalendar;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleMonth;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ShiftAssignment;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.UsersForShiftType;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftPreference;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
-import com.richardbrenkus.shiftschedulermodernized.entity.StoredCalendarDay;
+import com.richardbrenkus.shiftschedulermodernized.entity.StoredScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,7 +27,7 @@ public class ScheduleGenerationEngine {
     private final ScheduleRuleService scheduleRuleService;
 
     public int assignForceFillShifts(
-            ScheduleCalendar calendar,
+            ScheduleMonth scheduleMonth,
             List<Integer> monthDays,
             List<Integer> priorities,
             List<Integer> calculationOrder,
@@ -36,13 +36,13 @@ public class ScheduleGenerationEngine {
             boolean sortByDatesAmount,
             int shiftCountCap,
             int minimalGap,
-            Map<Integer, StoredCalendarDay> previousMonthCalendar,
+            Map<Integer, StoredScheduleDay> previousMonthStoredScheduleDays,
             CalculationCounters counters
     ) {
         int hitCounter = 0;
 
         for (Integer dayOfMonth : monthDays) {
-            CalendarDay calendarDay = getCalendarDay(calendar, calendar.getMonth().atDay(dayOfMonth));
+            ScheduleDay scheduleDay = getScheduleDay(scheduleMonth, scheduleMonth.getMonth().atDay(dayOfMonth));
 
             for (Integer priority : priorities) {
                 for (Integer shiftType : calculationOrder) {
@@ -54,19 +54,19 @@ public class ScheduleGenerationEngine {
                             usersByShiftType.get(shiftType),
                             shiftType,
                             sortByDatesAmount,
-                            calendar.getMonth()
+                            scheduleMonth.getMonth()
                     );
 
                     boolean assigned = tryAssignUser(
                             AssignmentMode.FORCE_FILL,
-                            calendar,
-                            calendarDay,
+                            scheduleMonth,
+                            scheduleDay,
                             orderedUsers,
                             shiftType,
                             priority,
                             shiftCountCap,
                             minimalGap,
-                            previousMonthCalendar,
+                            previousMonthStoredScheduleDays,
                             counters
                     );
 
@@ -81,7 +81,7 @@ public class ScheduleGenerationEngine {
     }
 
     public int assignRegularShifts(
-            ScheduleCalendar calendar,
+            ScheduleMonth scheduleMonth,
             List<Integer> monthDays,
             List<Integer> priorities,
             List<Integer> calculationOrder,
@@ -90,13 +90,13 @@ public class ScheduleGenerationEngine {
             boolean sortByDatesAmount,
             int shiftCountCap,
             int minimalGap,
-            Map<Integer, StoredCalendarDay> previousMonthCalendar,
+            Map<Integer, StoredScheduleDay> previousMonthStoredScheduleDays,
             CalculationCounters counters
     ) {
         int hitCounter = 0;
 
         for (Integer dayOfMonth : monthDays) {
-            CalendarDay calendarDay = getCalendarDay(calendar, calendar.getMonth().atDay(dayOfMonth));
+            ScheduleDay scheduleDay = getScheduleDay(scheduleMonth, scheduleMonth.getMonth().atDay(dayOfMonth));
 
             for (Integer priority : priorities) {
                 for (Integer shiftType : calculationOrder) {
@@ -108,19 +108,19 @@ public class ScheduleGenerationEngine {
                             usersByShiftType.get(shiftType),
                             shiftType,
                             sortByDatesAmount,
-                            calendar.getMonth()
+                            scheduleMonth.getMonth()
                     );
 
                     boolean assigned = tryAssignUser(
                             AssignmentMode.REGULAR,
-                            calendar,
-                            calendarDay,
+                            scheduleMonth,
+                            scheduleDay,
                             orderedUsers,
                             shiftType,
                             priority,
                             shiftCountCap,
                             minimalGap,
-                            previousMonthCalendar,
+                            previousMonthStoredScheduleDays,
                             counters
                     );
 
@@ -136,17 +136,17 @@ public class ScheduleGenerationEngine {
 
     private boolean tryAssignUser(
             AssignmentMode assignmentMode,
-            ScheduleCalendar calendar,
-            CalendarDay calendarDay,
+            ScheduleMonth scheduleMonth,
+            ScheduleDay scheduleDay,
             List<User> users,
             int shiftType,
             int priority,
             int shiftCountCap,
             int minimalGap,
-            Map<Integer, StoredCalendarDay> previousMonthCalendar,
+            Map<Integer, StoredScheduleDay> previousMonthSchedule,
             CalculationCounters counters
     ) {
-        if (hasAssignment(calendarDay, shiftType)) {
+        if (hasAssignment(scheduleDay, shiftType)) {
             return false;
         }
 
@@ -157,11 +157,11 @@ public class ScheduleGenerationEngine {
                 continue;
             }
 
-            if (!appliesToCalculationMonth(preference, calendar.getMonth())) {
+            if (!appliesToCalculationMonth(preference, scheduleMonth.getMonth())) {
                 continue;
             }
 
-            if (!isEligibleForAssignmentMode(assignmentMode, user, preference, calendarDay)) {
+            if (!isEligibleForAssignmentMode(assignmentMode, user, preference, scheduleDay)) {
                 continue;
             }
 
@@ -176,18 +176,18 @@ public class ScheduleGenerationEngine {
 
             boolean respectsMinimalGap =
                     scheduleRuleService.respectsMinimalGap(
-                            calendarDay.getDate(),
+                            scheduleDay.getDate(),
                             minimalGap,
                             user,
-                            calendar,
+                            scheduleMonth,
                             shiftType
                     );
 
             boolean respectsPreviousMonthGap =
                     scheduleRuleService.respectsPreviousMonthGap(
-                            previousMonthCalendar,
+                            previousMonthSchedule,
                             minimalGap,
-                            calendarDay.getDate(),
+                            scheduleDay.getDate(),
                             user
                     );
 
@@ -195,15 +195,15 @@ public class ScheduleGenerationEngine {
                 continue;
             }
 
-            if (!calendarDay.isWeekendOrHoliday() && withinRequestedWeekdayLimit) {
+            if (!scheduleDay.isWeekendOrHoliday() && withinRequestedWeekdayLimit) {
                 incrementWeekdayCounter(user, shiftType, counters);
-                addAssignment(calendarDay, shiftType, user);
+                addAssignment(scheduleDay, shiftType, user);
                 return true;
             }
 
-            if (calendarDay.isWeekendOrHoliday() && withinRequestedWeekendLimit) {
+            if (scheduleDay.isWeekendOrHoliday() && withinRequestedWeekendLimit) {
                 incrementWeekendCounter(user, shiftType, counters);
-                addAssignment(calendarDay, shiftType, user);
+                addAssignment(scheduleDay, shiftType, user);
                 return true;
             }
         }
@@ -215,7 +215,7 @@ public class ScheduleGenerationEngine {
             AssignmentMode assignmentMode,
             User user,
             ShiftPreference preference,
-            CalendarDay calendarDay
+            ScheduleDay scheduleDay
     ) {
         ShiftRequest request = user.getShiftRequest();
 
@@ -223,7 +223,7 @@ public class ScheduleGenerationEngine {
             return false;
         }
 
-        boolean dateRejected = containsDay(request.getDatesNo(), calendarDay.getDate());
+        boolean dateRejected = containsDay(request.getDatesNo(), scheduleDay.getDate());
 
         if (dateRejected) {
             return false;
@@ -233,27 +233,27 @@ public class ScheduleGenerationEngine {
             return true;
         }
 
-        boolean dateExplicitlySelected = containsDay(preference.getDatesYes(), calendarDay.getDate());
+        boolean dateExplicitlySelected = containsDay(preference.getDatesYes(), scheduleDay.getDate());
         boolean anyDateSelected = preference.isAnyDateSelected();
 
         return dateExplicitlySelected || anyDateSelected;
     }
 
-    private CalendarDay getCalendarDay(ScheduleCalendar calendar, LocalDate date) {
-        return calendar.getDays()
+    private ScheduleDay getScheduleDay(ScheduleMonth scheduleMonth, LocalDate date) {
+        return scheduleMonth.getDays()
                 .stream()
                 .filter(day -> day.getDate().equals(date))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Calendar day not found: " + date));
+                .orElseThrow(() -> new IllegalStateException("Schedule day not found: " + date));
     }
 
-    private boolean hasAssignment(CalendarDay day, int shiftType) {
+    private boolean hasAssignment(ScheduleDay day, int shiftType) {
         return day.getAssignments()
                 .stream()
                 .anyMatch(assignment -> assignment.getShiftType() == shiftType);
     }
 
-    private void addAssignment(CalendarDay day, int shiftType, User user) {
+    private void addAssignment(ScheduleDay day, int shiftType, User user) {
         day.getAssignments().add(
                 ShiftAssignment.builder()
                         .shiftType(shiftType)

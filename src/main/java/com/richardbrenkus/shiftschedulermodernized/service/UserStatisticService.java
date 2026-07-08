@@ -85,20 +85,16 @@ public class UserStatisticService {
     }
 
 
-    Map<Integer, Set<UserStatViewRecord>> returnQuickUserStats(
-            ScheduleCalendar calendar,
-            int shiftCountCap,
-            CalculationCounters counters
-    ) {
+    Map<Integer, Set<UserStatViewRecord>> returnQuickUserStats(ScheduleMonth scheduleMonth, int shiftCountCap, CalculationCounters counters) {
         Map<Integer, Set<UserStatViewRecord>> userStatMap = new HashMap<>();
 
-        if (calendar == null || calendar.getDays() == null || calendar.getMonth() == null) {
+        if (scheduleMonth == null || scheduleMonth.getDays() == null || scheduleMonth.getMonth() == null) {
             return userStatMap;
         }
 
         Map<Integer, Set<Long>> alreadyAddedUserIdsByShiftType = new HashMap<>();
 
-        for (CalendarDay day : calendar.getDays()) {
+        for (ScheduleDay day : scheduleMonth.getDays()) {
             if (day.getAssignments() == null) {
                 continue;
             }
@@ -113,7 +109,7 @@ public class UserStatisticService {
                 int shiftType = assignment.getShiftType();
                 ShiftPreference preference = getPreference(user, shiftType);
 
-                if (!preferenceAppliesToMonth(preference, calendar.getMonth())) {
+                if (!preferenceAppliesToMonth(preference, scheduleMonth.getMonth())) {
                     continue;
                 }
 
@@ -150,11 +146,11 @@ public class UserStatisticService {
                         .remainingWeekdays(Math.max(remainingWeekdays, 0))
                         .remainingWeekends(Math.max(remainingWeekends, 0))
                         .anyDateSelected(preference.isAnyDateSelected())
-                        .requestedDateDays(toCurrentMonthDayOfMonthSet(preference.getDatesYes(), calendar.getMonth()))
+                        .requestedDateDays(toCurrentMonthDayOfMonthSet(preference.getDatesYes(), scheduleMonth.getMonth()))
                         .assignedWeekdays(calculatedWeekdays)
                         .assignedWeekends(calculatedWeekends)
                         .assignedTotal(calculatedWeekdays + calculatedWeekends)
-                        .month(calendar.getMonth())
+                        .month(scheduleMonth.getMonth())
                         .build();
 
                 userStatMap
@@ -196,17 +192,17 @@ public class UserStatisticService {
                 .collect(Collectors.toCollection(TreeSet::new));
     }
 
-    Map<Integer, Set<UserStatViewRecord>> returnNoShiftAssignedUserStatMap(ScheduleCalendar calendar, CalculationCounters counters) {
+    Map<Integer, Set<UserStatViewRecord>> returnNoShiftAssignedUserStatMap(ScheduleMonth scheduleMonth, CalculationCounters counters) {
         Map<Integer, Set<UserStatViewRecord>> result = new HashMap<>();
 
-        if (calendar == null || calendar.getMonth() == null) {
+        if (scheduleMonth == null || scheduleMonth.getMonth() == null) {
             return result;
         }
 
         List<User> usersWithRequest = findUsersWithRequest();
         List<Integer> shiftTypes = shiftTypeService.getShiftTypes();
 
-        Map<Integer, Set<Long>> assignedUserIdsByShiftType = collectAssignedUserIdsByShiftType(calendar);
+        Map<Integer, Set<Long>> assignedUserIdsByShiftType = collectAssignedUserIdsByShiftType(scheduleMonth);
 
         for (Integer shiftType : shiftTypes) {
             Set<UserStatViewRecord> statsForShiftType = new HashSet<>();
@@ -249,11 +245,11 @@ public class UserStatisticService {
                         .requestedWeekdays(preference.getWeekdayCount())
                         .requestedWeekends(preference.getWeekendCount())
                         .anyDateSelected(preference.isAnyDateSelected())
-                        .requestedDateDays(toCurrentMonthDayOfMonthSet(preference.getDatesYes(), calendar.getMonth()))
+                        .requestedDateDays(toCurrentMonthDayOfMonthSet(preference.getDatesYes(), scheduleMonth.getMonth()))
                         .assignedWeekdays(0)
                         .assignedWeekends(0)
                         .assignedTotal(0)
-                        .month(calendar.getMonth())
+                        .month(scheduleMonth.getMonth())
                         .build();
 
                 statsForShiftType.add(stat);
@@ -265,15 +261,15 @@ public class UserStatisticService {
         return result;
     }
 
-    public Map<Integer, Set<UserStatViewRecord>> returnFullUserStats(ScheduleCalendar calendar, CalculationCounters counters) {
+    public Map<Integer, Set<UserStatViewRecord>> returnFullUserStats(ScheduleMonth scheduleMonth, CalculationCounters counters) {
         Map<Integer, Map<Long, UserStatBuilderData>> statsByShiftTypeAndUser =
                 new HashMap<>();
 
-        if (calendar == null || calendar.getDays() == null) {
+        if (scheduleMonth == null || scheduleMonth.getDays() == null) {
             return Map.of();
         }
 
-        for (CalendarDay day : calendar.getDays()) {
+        for (ScheduleDay day : scheduleMonth.getDays()) {
             if (day.getAssignments() == null) {
                 continue;
             }
@@ -318,9 +314,9 @@ public class UserStatisticService {
                                                 .anyDateSelected(anyDateSelected)
                                                 .requestedDateDays(preference == null
                                                         ? Set.of()
-                                                        : toCurrentMonthDayOfMonthSet(preference.getDatesYes(), calendar.getMonth()))
+                                                        : toCurrentMonthDayOfMonthSet(preference.getDatesYes(), scheduleMonth.getMonth()))
                                                 .assignedDateDays(new TreeSet<>())
-                                                .month(calendar.getMonth())
+                                                .month(scheduleMonth.getMonth())
                                                 .build()
                                 );
 
@@ -349,14 +345,14 @@ public class UserStatisticService {
     }
 
 
-    private CalculationCounters countAssignments(ScheduleCalendar calendar) {
+    private CalculationCounters countAssignments(ScheduleMonth scheduleMonth) {
         CalculationCounters counters = new CalculationCounters();
 
-        if (calendar == null || calendar.getDays() == null) {
+        if (scheduleMonth == null || scheduleMonth.getDays() == null) {
             return counters;
         }
 
-        for (CalendarDay day : calendar.getDays()) {
+        for (ScheduleDay day : scheduleMonth.getDays()) {
             if (day == null || day.getAssignments() == null) {
                 continue;
             }
@@ -460,16 +456,14 @@ public class UserStatisticService {
         return result;
     }
 
-    private Map<Integer, Set<Long>> collectAssignedUserIdsByShiftType(
-            ScheduleCalendar calendar
-    ) {
+    private Map<Integer, Set<Long>> collectAssignedUserIdsByShiftType(ScheduleMonth scheduleMonth) {
         Map<Integer, Set<Long>> result = new HashMap<>();
 
-        if (calendar == null || calendar.getDays() == null) {
+        if (scheduleMonth == null || scheduleMonth.getDays() == null) {
             return result;
         }
 
-        for (CalendarDay day : calendar.getDays()) {
+        for (ScheduleDay day : scheduleMonth.getDays()) {
             if (day.getAssignments() == null) {
                 continue;
             }
@@ -497,17 +491,14 @@ public class UserStatisticService {
                 .toList();
     }
 
-    String returnScheduleScoreAsString(
-            ScheduleCalendar calendar,
-            int shiftTypeCount
-    ) {
-        if (calendar == null || calendar.getDays() == null) {
+    String returnScheduleScoreAsString(ScheduleMonth scheduleMonth, int shiftTypeCount) {
+        if (scheduleMonth == null || scheduleMonth.getDays() == null) {
             return "0/0";
         }
 
         int assignedCount = 0;
 
-        for (CalendarDay day : calendar.getDays()) {
+        for (ScheduleDay day : scheduleMonth.getDays()) {
             if (day.getAssignments() == null) {
                 continue;
             }
@@ -521,11 +512,11 @@ public class UserStatisticService {
             }
         }
 
-        if (calendar.getMonth() == null) {
+        if (scheduleMonth.getMonth() == null) {
             return assignedCount + "/0";
         }
 
-        int maxScore = calendar.getMonth().lengthOfMonth() * shiftTypeCount;
+        int maxScore = scheduleMonth.getMonth().lengthOfMonth() * shiftTypeCount;
 
         return assignedCount + "/" + maxScore;
     }

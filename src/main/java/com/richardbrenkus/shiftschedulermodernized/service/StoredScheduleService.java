@@ -1,16 +1,16 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
-import com.richardbrenkus.shiftschedulermodernized.algorithm.CalendarDay;
-import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleCalendar;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleDay;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleMonth;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ShiftAssignment;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.MonthOption;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.SavedScheduleDayView;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.SavedScheduleShiftAssignmentView;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.SavedScheduleView;
-import com.richardbrenkus.shiftschedulermodernized.entity.StoredCalendarDay;
+import com.richardbrenkus.shiftschedulermodernized.entity.StoredScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.entity.StoredUserSnapshot;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
-import com.richardbrenkus.shiftschedulermodernized.repository.StoredCalendarDayRepository;
+import com.richardbrenkus.shiftschedulermodernized.repository.StoredScheduleDayRepository;
 import com.richardbrenkus.shiftschedulermodernized.util.CalendarDateIdUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,30 +28,30 @@ public class StoredScheduleService {
     private static final DateTimeFormatter MONTH_YEAR_ID_FORMATTER = DateTimeFormatter.ofPattern("MM/yyyy");
     private static final DateTimeFormatter MONTH_LABEL_FORMATTER = DateTimeFormatter.ofPattern("MM/yyyy");
 
-    private final StoredCalendarDayRepository storedCalendarDayRepository;
+    private final StoredScheduleDayRepository storedScheduleDayRepository;
     private final ShiftTypeService shiftTypeService;
 
     @Transactional
-    public void saveSchedule(ScheduleCalendar calendar) {
-        if (calendar == null || calendar.getMonth() == null) {
+    public void saveSchedule(ScheduleMonth scheduleMonth) {
+        if (scheduleMonth == null || scheduleMonth.getMonth() == null) {
             throw new IllegalArgumentException("Cannot save schedule: schedule or schedule month is missing.");
         }
 
-        if (calendar.getDays() == null || calendar.getDays().isEmpty()) {
+        if (scheduleMonth.getDays() == null || scheduleMonth.getDays().isEmpty()) {
             throw new IllegalArgumentException("Cannot save schedule: schedule contains no days.");
         }
 
-        YearMonth month = calendar.getMonth();
+        YearMonth month = scheduleMonth.getMonth();
         String monthYearId = month.format(MONTH_YEAR_FORMATTER);
 
-        List<StoredCalendarDay> storedDays = calendar.getDays()
+        List<StoredScheduleDay> storedDays = scheduleMonth.getDays()
                 .stream()
                 .filter(Objects::nonNull)
-                .sorted(Comparator.comparing(CalendarDay::getDate))
-                .map(day -> toStoredCalendarDay(day, monthYearId))
+                .sorted(Comparator.comparing(ScheduleDay::getDate))
+                .map(day -> toStoredScheduleDay(day, monthYearId))
                 .toList();
 
-        storedCalendarDayRepository.saveAll(storedDays);
+        storedScheduleDayRepository.saveAll(storedDays);
     }
 
     @Transactional(readOnly = true)
@@ -62,7 +62,7 @@ public class StoredScheduleService {
 
         String monthYearId = toMonthYearId(month);
 
-        return !storedCalendarDayRepository
+        return !storedScheduleDayRepository
                 .findByMonthYearIdOrderByDayIntegerAsc(monthYearId)
                 .isEmpty();
     }
@@ -75,7 +75,7 @@ public class StoredScheduleService {
 
         String monthYearId = toMonthYearId(month);
 
-        List<StoredCalendarDay> storedDays = storedCalendarDayRepository.findByMonthYearIdOrderByDayIntegerAsc(monthYearId);
+        List<StoredScheduleDay> storedDays = storedScheduleDayRepository.findByMonthYearIdOrderByDayIntegerAsc(monthYearId);
 
         List<Integer> shiftTypes = shiftTypeService.getShiftTypes();
 
@@ -84,7 +84,7 @@ public class StoredScheduleService {
         for (int dayOfMonth = 1; dayOfMonth <= month.lengthOfMonth(); dayOfMonth++) {
             int currentDay = dayOfMonth;
 
-            StoredCalendarDay storedDay = storedDays.stream()
+            StoredScheduleDay storedDay = storedDays.stream()
                     .filter(day -> day.getDayInteger() != null && day.getDayInteger() == currentDay)
                     .findFirst()
                     .orElse(null);
@@ -125,7 +125,7 @@ public class StoredScheduleService {
 
     @Transactional(readOnly = true)
     public List<MonthOption> getSavedMonthOptionsOnly() {
-        return storedCalendarDayRepository.findDistinctMonthYearIds()
+        return storedScheduleDayRepository.findDistinctMonthYearIds()
                 .stream()
                 .map(this::parseMonthYearId)
                 .sorted(Comparator.reverseOrder())
@@ -133,7 +133,7 @@ public class StoredScheduleService {
                 .toList();
     }
 
-    private SavedScheduleDayView toDayView(YearMonth month, int dayOfMonth, StoredCalendarDay storedDay, List<Integer> shiftTypes) {
+    private SavedScheduleDayView toDayView(YearMonth month, int dayOfMonth, StoredScheduleDay storedDay, List<Integer> shiftTypes) {
         List<SavedScheduleShiftAssignmentView> assignmentViews = new ArrayList<>();
 
         for (Integer shiftType : shiftTypes) {
@@ -182,12 +182,12 @@ public class StoredScheduleService {
         return YearMonth.parse(monthYearId, MONTH_YEAR_ID_FORMATTER);
     }
 
-    private StoredCalendarDay toStoredCalendarDay(CalendarDay day, String monthYearId) {
+    private StoredScheduleDay toStoredScheduleDay(ScheduleDay day, String monthYearId) {
         if (day.getDate() == null) {
-            throw new IllegalArgumentException("Cannot save schedule: calendar day date is missing.");
+            throw new IllegalArgumentException("Cannot save schedule: schedule date is missing.");
         }
 
-        StoredCalendarDay storedDay = StoredCalendarDay.builder()
+        StoredScheduleDay storedDay = StoredScheduleDay.builder()
                 .dateId(CalendarDateIdUtils.toDateId(day.getDate()))
                 .monthYearId(monthYearId)
                 .weekendOrHoliday(day.isWeekendOrHoliday())
