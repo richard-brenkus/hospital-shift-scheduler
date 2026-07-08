@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.Comparator;
 
 @Service
@@ -39,7 +39,7 @@ public class PlannedTasksService {
         deactivateAllCleanupTasks();
 
         task.setActive(true);
-        task.setExecutionTime(toTodayOrTomorrowDateTime(
+        task.setExecutionTime(returnVerifiedDay(
                 form.getCleanupDay(),
                 form.getCleanupHour(),
                 form.getCleanupMinute()
@@ -68,7 +68,7 @@ public class PlannedTasksService {
         deactivateAllSendReminderTasks();
 
         task.setActive(true);
-        task.setStartSendingTime(toTodayOrTomorrowDateTime(
+        task.setStartSendingTime(returnVerifiedDay(
                 form.getStartSendingRemindersDay(),
                 form.getStartSendingRemindersHour(),
                 form.getStartSendingRemindersMinute()
@@ -205,11 +205,13 @@ public class PlannedTasksService {
                 .orElse(null);
     }
 
-    private LocalDateTime toTodayOrTomorrowDateTime(int day, int hour, int minute) {
-        LocalDateTime requestedDate = LocalDateTime.of(LocalDateTime.now().getYear(), LocalDateTime.now().getMonth(), day, hour, minute);
-        LocalDateTime now = LocalDateTime.now();
-        return now.isBefore(requestedDate)
-                ? requestedDate
-                : now.plusDays(1).withHour(hour).withMinute(minute);
+    private LocalDateTime returnVerifiedDay(int day, int hour, int minute) {
+
+        if (day > LocalDateTime.now().plusMonths(1).getMonth().maxLength())
+            return LocalDateTime.of(YearMonth.now().plusMonths(1).atEndOfMonth(), LocalTime.MAX);
+
+        return LocalDateTime.of(LocalDateTime.now().plusMonths(1).getYear(), LocalDateTime.now().plusMonths(1).getMonth(), day, hour, minute);
+
     }
+
 }
