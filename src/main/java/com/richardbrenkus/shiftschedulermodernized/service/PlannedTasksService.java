@@ -40,7 +40,7 @@ public class PlannedTasksService {
         deactivateAllCleanupTasks();
 
         task.setActive(true);
-        task.setExecutionTime(toCurrentMonthDateTime(
+        task.setExecutionTime(toTodayOrTomorrowDateTime(
                 form.getCleanupDay(),
                 form.getCleanupHour(),
                 form.getCleanupMinute()
@@ -69,7 +69,7 @@ public class PlannedTasksService {
         deactivateAllSendReminderTasks();
 
         task.setActive(true);
-        task.setStartSendingTime(toCurrentMonthDateTime(
+        task.setStartSendingTime(toTodayOrTomorrowDateTime(
                 form.getStartSendingRemindersDay(),
                 form.getStartSendingRemindersHour(),
                 form.getStartSendingRemindersMinute()
@@ -206,10 +206,11 @@ public class PlannedTasksService {
                 .orElse(null);
     }
 
-    private LocalDateTime toCurrentMonthDateTime(int requestedDay, int hour, int minute) {
-        YearMonth currentMonth = YearMonth.now();
-        int safeDay = Math.min(requestedDay, currentMonth.lengthOfMonth());
-
-        return currentMonth.atDay(safeDay).atTime(hour, minute);
+    private LocalDateTime toTodayOrTomorrowDateTime(int day, int hour, int minute) {
+        LocalDateTime requestedDate = LocalDateTime.of(LocalDateTime.now().getYear(), LocalDateTime.now().getMonth(), day, hour, minute);
+        LocalDateTime now = LocalDateTime.now();
+        return now.isBefore(requestedDate)
+                ? requestedDate
+                : now.plusDays(1).withHour(hour).withMinute(minute);
     }
 }
