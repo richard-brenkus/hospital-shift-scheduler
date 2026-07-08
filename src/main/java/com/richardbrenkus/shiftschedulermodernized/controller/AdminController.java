@@ -79,9 +79,9 @@ public class AdminController {
     }
 
     @PostMapping(path = "/admin/add")
-    public String addNewUser(@Valid @ModelAttribute(ModelAttributeName.USER_REGISTER_FORM) UserRegisterForm userRegisterForm,
-                             BindingResult bindingResult,
-                             Model model) {
+    public String addNewUser(@Valid @ModelAttribute(ModelAttributeName.USER_REGISTER_FORM) UserRegisterForm userRegisterForm, BindingResult bindingResult, Model model) {
+
+        prepareModelService.prepareRegisterUserModel(model);
 
         if (userRegisterForm.getAllowedShiftTypes() == null || userRegisterForm.getAllowedShiftTypes().isEmpty()) {
             bindingResult.rejectValue(
@@ -116,7 +116,9 @@ public class AdminController {
         }
 
         if (bindingResult.hasErrors()) {
+/*
             prepareModelService.prepareRegisterUserModel(model);
+*/
             return "admin/register_user";
         }
 
@@ -214,9 +216,7 @@ public class AdminController {
 
     @PostMapping(path = "/admin/update_user")
     public String postUserUpdateForm(
-            @Valid @ModelAttribute(ModelAttributeName.USER_UPDATE_FORM) UserUpdateForm updatedUser,
-            BindingResult bindingResult,
-            Model model) {
+            @Valid @ModelAttribute(ModelAttributeName.USER_UPDATE_FORM) UserUpdateForm updatedUser, BindingResult bindingResult, Model model) {
 
         prepareModelService.prepareUpdateUserModel(model);
         UserUpdateValidationResult userUpdateValidationResult = userService.validateUserUpdate(updatedUser);

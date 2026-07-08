@@ -2,6 +2,7 @@ package com.richardbrenkus.shiftschedulermodernized.service;
 
 import com.richardbrenkus.shiftschedulermodernized.config.SelectionLists;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeName;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeValue;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Profession;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
@@ -45,11 +46,14 @@ public class PrepareModelService {
     public void prepareRegisterUserModel(Model model) {
         model.addAttribute(ModelAttributeName.PROFESSIONS, Profession.values());
         model.addAttribute(ModelAttributeName.SHIFT_TYPES, shiftTypeService.getShiftTypes());
+        model.addAttribute(ModelAttributeName.ACTION_TYPE, ModelAttributeValue.ACTION_TYPE_ADD);
+
     }
 
     public void prepareUpdateUserModel(Model model) {
         model.addAttribute(ModelAttributeName.PROFESSIONS, Profession.values());
         model.addAttribute(ModelAttributeName.SHIFT_TYPES, shiftTypeService.getShiftTypes());
+        model.addAttribute(ModelAttributeName.ACTION_TYPE, ModelAttributeValue.ACTION_TYPE_UPDATE);
     }
 }
 
