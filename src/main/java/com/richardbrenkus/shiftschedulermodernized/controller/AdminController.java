@@ -429,7 +429,7 @@ public class AdminController {
     }
 
     @PostMapping("/admin/show_saved_schedules")
-    public String showSavedCalendarsPost(Model model, @ModelAttribute("savedCalendarSelectionForm") SavedCalendarSelectionForm form) {
+    public String showSavedCalendarsPost(Model model, @ModelAttribute("savedScheduleSelectionForm") SavedCalendarSelectionForm form) {
         YearMonth selectedMonth = form.getSelectedMonth();
 
         if (selectedMonth == null || !storedScheduleService.existsByMonth(selectedMonth)) {
@@ -474,10 +474,10 @@ public class AdminController {
     }
 
 
-    private void addSavedCalendarSelectionAttributes(Model model, SavedCalendarSelectionForm form, boolean calendarExists) {
-        model.addAttribute("savedCalendarSelectionForm", form);
+    private void addSavedCalendarSelectionAttributes(Model model, SavedCalendarSelectionForm form, boolean scheduleExists) {
+        model.addAttribute("savedScheduleSelectionForm", form);
         model.addAttribute("monthOptions", storedScheduleService.getSelectableMonthOptions());
-        model.addAttribute("calendarExists", calendarExists);
+        model.addAttribute("scheduleExists", scheduleExists);
     }
 
     private void addScheduleTableAttributes(Model model, ScheduleEditForm scheduleEditForm, ScheduleValidationResult scheduleValidationResult) {

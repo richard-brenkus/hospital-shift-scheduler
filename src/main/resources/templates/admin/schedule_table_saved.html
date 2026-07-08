@@ -38,7 +38,7 @@
     <section class="page-section"
              th:if="${savedSchedule == null || savedSchedule.days == null || #lists.isEmpty(savedSchedule.days)}">
 
-        <p data-th-text="#{showSavedCalendars.calendarNonExistent}">
+        <p data-th-text="#{showSavedSchedules.scheduleNonExistent}">
             The database does not contain any stored dates for the selected month/year.
         </p>
 
@@ -116,7 +116,7 @@
 
             <button type="submit"
                     class="standard-button"
-                    data-th-text="#{button.backToCalendars}">
+                    data-th-text="#{button.backToSchedules}">
                 Back to saved schedules selection
             </button>
 

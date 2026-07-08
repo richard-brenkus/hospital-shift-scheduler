@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Entity
-@Table(name = "stored_calendars")
+@Table(name = "stored_schedules")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -30,7 +30,7 @@ public class StoredCalendarDay {
 
     @ElementCollection
     @CollectionTable(
-            name = "stored_calendar_shift_assignments",
+            name = "stored_schedule_shift_assignments",
             joinColumns = @JoinColumn(name = "date_id")
     )
     @MapKeyColumn(name = "shift_type")

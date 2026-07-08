@@ -11,28 +11,6 @@ import java.time.ZonedDateTime;
 @Transactional
 public class CalendarService {
 
-	/*private final CalendarRepository repo;
-
-	public CalendarService(CalendarRepository repo) {
-		this.repo = repo;
-	}
-
-	public List<CalendarObjectDB> getCalendarByMonthYearId(String monthYearId){
-		return new ArrayList<>(repo.getCalendarByDateMonthYearId(monthYearId));
-	}
-
-	public CalendarExportData getCalendarExportData(int year, int month) {
-		String monthString = month < 10 ? "0" + month : String.valueOf(month);
-		String yearString = String.valueOf(year);
-		String monthYearId = monthString + "/" + yearString;
-
-		List<CalendarObjectDB> calendarObjects = this.getCalendarByMonthYearId(monthYearId);
-
-		calendarObjects.sort(Comparator.comparing(CalendarObjectDB::getDayInteger));
-
-		return new CalendarExportData(monthString, yearString, calendarObjects);
-	}*/
-
 	public int returnVerifiedDay(int day, LocalDate localDate, ZoneId zoneId) {
 
 		int resultingDay = day;

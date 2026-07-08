@@ -34,11 +34,11 @@ public class StoredScheduleService {
     @Transactional
     public void saveSchedule(ScheduleCalendar calendar) {
         if (calendar == null || calendar.getMonth() == null) {
-            throw new IllegalArgumentException("Cannot save schedule: calendar or calendar month is missing.");
+            throw new IllegalArgumentException("Cannot save schedule: schedule or schedule month is missing.");
         }
 
         if (calendar.getDays() == null || calendar.getDays().isEmpty()) {
-            throw new IllegalArgumentException("Cannot save schedule: calendar contains no days.");
+            throw new IllegalArgumentException("Cannot save schedule: schedule contains no days.");
         }
 
         YearMonth month = calendar.getMonth();
