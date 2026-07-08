@@ -4,9 +4,10 @@ import java.time.ZonedDateTime;
 import java.util.*;
 
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.ValidationConstants;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import lombok.*;
@@ -25,21 +26,22 @@ public class User {
     @Column(name = "user_id", nullable = false, updatable = false)
     private Long id;
 
-    @NotNull
-    @Size(min = 2, max = 45)
+    @NotBlank(message = "{user.name.NotBlank}")
+    @Size(min = ValidationConstants.NAME_MIN_LENGTH, max = ValidationConstants.NAME_MAX_LENGTH, message = "{user.name.size}")
     private String name;
 
-    @NotNull
-    @Size(min = 2, max = 45)
+    @NotBlank(message = "{user.username.NotBlank}")
+    @Size(min = ValidationConstants.NAME_MIN_LENGTH, max = ValidationConstants.NAME_MAX_LENGTH, message = "{user.username.size}")
     @Column(nullable = false, unique = true)
     private String username;
 
-    @Email
+    @NotBlank(message = "{user.email.NotBlank}")
+    @Email(message = "{user.email.invalid}")
     @Column(unique = true)
     private String email;
 
-    @NotNull
-    @Size(min = 8, max = 256)
+    @NotBlank(message = "{user.password.NotBlank}")
+    @Size(min = ValidationConstants.PASSWORD_MIN_LENGTH, max = ValidationConstants.PASSWORD_MAX_LENGTH, message = "{user.password.size}")
     private String password;
 
     private String note;

@@ -161,8 +161,8 @@ public class UserService {
                 ? new HashSet<>()
                 : new HashSet<>(form.getAllowedShiftTypes()));
         //userRepository.save(existingUser);
-        // a role change here is not allowed as it is database-only
-        // a password change is handled separately
+        // A role change here is not allowed as it is database-only.
+        // A password change is handled separately.
     }
 
 

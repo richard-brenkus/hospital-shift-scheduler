@@ -43,8 +43,7 @@ public class PlannedTasksController {
         if (hasDayError) {
             bindingResult.rejectValue(
                     "startSendingRemindersDay",
-                    "error.startSendingRemindersDay",
-                    "must be before final submission day"
+                    "error.startSendingRemindersDay"
             );
 
             prefillPageKeepingSubmittedReminderForm(model, sendReminderTaskForm);

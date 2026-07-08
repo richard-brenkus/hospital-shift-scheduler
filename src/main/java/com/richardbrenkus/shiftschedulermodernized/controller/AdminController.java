@@ -86,32 +86,28 @@ public class AdminController {
         if (userRegisterForm.getAllowedShiftTypes() == null || userRegisterForm.getAllowedShiftTypes().isEmpty()) {
             bindingResult.rejectValue(
                     "allowedShiftTypes",
-                    "error.allowedShiftTypes",
-                    "Please select at least one shift type!"
+                    "error.allowedShiftTypes"
             );
         }
 
         if (userService.existsByUsernameIgnoreCase(userRegisterForm.getUsername())) {
             bindingResult.rejectValue(
                     "username",
-                    "error.username",
-                    "This user name has already been used!"
+                    "error.username"
             );
         }
 
         if (userService.existsByEmailIgnoreCase(userRegisterForm.getEmail())) {
             bindingResult.rejectValue(
                     "email",
-                    "error.email",
-                    "This email address has already been used!"
+                    "error.email"
             );
         }
 
         if (userService.existsByNameIgnoreCase(userRegisterForm.getName())) {
             bindingResult.rejectValue(
                     "name",
-                    "error.name",
-                    "A user with the same name already exists! Please make the name unique."
+                    "error.name"
             );
         }
 
@@ -299,8 +295,7 @@ public class AdminController {
         if (!passwordChangeForm.passwordsMatch()) {
             bindingResult.rejectValue(
                     "confirmedPassword",
-                    "validation.password.mismatch",
-                    "Passwords do not match"
+                    "validation.password.mismatch"
             );
         }
 
