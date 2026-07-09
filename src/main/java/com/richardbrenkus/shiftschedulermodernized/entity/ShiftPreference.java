@@ -17,7 +17,7 @@ import java.util.List;
 public class ShiftPreference {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private int shiftType;
