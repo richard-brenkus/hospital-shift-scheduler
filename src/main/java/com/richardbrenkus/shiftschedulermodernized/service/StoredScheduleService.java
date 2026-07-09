@@ -105,7 +105,7 @@ public class StoredScheduleService {
          * +2 months, +1 month, current month, then previous 12 months.
          *
          * Replace this with getSavedMonthOptionsOnly()
-         * if you want to show only months that actually exist in DB.
+         * to show only months that actually exist in DB.
          */
         YearMonth currentMonth = YearMonth.now();
 
@@ -119,16 +119,6 @@ public class StoredScheduleService {
         }
 
         return months.stream()
-                .map(this::toMonthOption)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public List<MonthOption> getSavedMonthOptionsOnly() {
-        return storedScheduleDayRepository.findDistinctMonthYearIds()
-                .stream()
-                .map(this::parseMonthYearId)
-                .sorted(Comparator.reverseOrder())
                 .map(this::toMonthOption)
                 .toList();
     }
@@ -176,10 +166,6 @@ public class StoredScheduleService {
 
     private String toMonthYearId(YearMonth month) {
         return month.format(MONTH_YEAR_ID_FORMATTER);
-    }
-
-    private YearMonth parseMonthYearId(String monthYearId) {
-        return YearMonth.parse(monthYearId, MONTH_YEAR_ID_FORMATTER);
     }
 
     private StoredScheduleDay toStoredScheduleDay(ScheduleDay day, String monthYearId) {

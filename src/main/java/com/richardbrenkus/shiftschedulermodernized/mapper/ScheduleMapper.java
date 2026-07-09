@@ -8,10 +8,6 @@ import com.richardbrenkus.shiftschedulermodernized.dto.view.UserStatViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.entity.UserStatEntity;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
-import com.richardbrenkus.shiftschedulermodernized.dto.view.SavedScheduleDayView;
-import com.richardbrenkus.shiftschedulermodernized.dto.view.SavedScheduleShiftAssignmentView;
-import com.richardbrenkus.shiftschedulermodernized.dto.view.SavedScheduleView;
-import com.richardbrenkus.shiftschedulermodernized.entity.StoredUserSnapshot;
 
 import java.util.*;
 
@@ -98,30 +94,6 @@ public class ScheduleMapper {
                 .build();
     }
 
-    @Transactional(readOnly = true)
-    public ScheduleMonth toScheduleMonth(SavedScheduleView savedScheduleView) {
-        if (savedScheduleView == null) {
-            throw new IllegalArgumentException("Saved schedule view must not be null");
-        }
-
-        if (savedScheduleView.getMonth() == null) {
-            throw new IllegalArgumentException("Saved schedule month must not be null");
-        }
-
-        List<ScheduleDay> days = savedScheduleView.getDays() == null
-                ? new ArrayList<>()
-                : savedScheduleView.getDays()
-                .stream()
-                .filter(Objects::nonNull)
-                .map(this::toScheduleDay)
-                .toList();
-
-        return ScheduleMonth.builder()
-                .month(savedScheduleView.getMonth())
-                .days(new ArrayList<>(days))
-                .build();
-    }
-
     public UserStatEntity toUserStatEntity(UserStatViewRecord record) {
         if (record == null) {
             throw new IllegalArgumentException("UserStatViewRecord must not be null");
@@ -180,69 +152,6 @@ public class ScheduleMapper {
                 .assignedDateDays(entity.getAssignedDateDays())
                 .month(entity.getYearMonth())
                 .build();
-    }
-
-
-    private ScheduleDay toScheduleDay(SavedScheduleDayView savedDay) {
-        if (savedDay.getDate() == null) {
-            throw new IllegalArgumentException("Saved schedule day date must not be null");
-        }
-
-        List<ShiftAssignment> assignments = savedDay.getAssignments() == null
-                ? new ArrayList<>()
-                : savedDay.getAssignments()
-                .stream()
-                .filter(Objects::nonNull)
-                .map(this::toShiftAssignment)
-                .filter(Objects::nonNull)
-                .toList();
-
-        return ScheduleDay.builder()
-                .date(savedDay.getDate())
-                .weekendOrHoliday(savedDay.isWeekendOrHoliday())
-                .assignments(new ArrayList<>(assignments))
-                .build();
-    }
-
-    private ShiftAssignment toShiftAssignment(SavedScheduleShiftAssignmentView savedAssignment) {
-        if (savedAssignment == null || savedAssignment.getUser() == null) {
-            return null;
-        }
-
-        User user = resolveUser(savedAssignment.getUser());
-
-        if (user == null) {
-            throw new IllegalStateException(
-                    "Cannot restore saved schedule. User not found: "
-                            + savedAssignment.getDisplayName()
-            );
-        }
-
-        return ShiftAssignment.builder()
-                .shiftType(savedAssignment.getShiftType())
-                .user(user)
-                .build();
-    }
-
-    private User resolveUser(StoredUserSnapshot userSnapshot) {
-        if (userSnapshot == null) {
-            return null;
-        }
-
-        if (userSnapshot.getUserId() != null) {
-            Optional<User> userById = userRepository.findById(userSnapshot.getUserId());
-
-            if (userById.isPresent()) {
-                return userById.get();
-            }
-        }
-
-        if (userSnapshot.getUsername() == null || userSnapshot.getUsername().isBlank()) {
-            return null;
-        }
-
-        return userRepository.findByUsername(userSnapshot.getUsername())
-                .orElse(null);
     }
 
     private ScheduleDay toScheduleDay(ScheduleDayForm form) {

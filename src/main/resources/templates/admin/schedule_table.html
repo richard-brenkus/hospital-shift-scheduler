@@ -59,7 +59,7 @@
 
         <span th:if="${!#lists.isEmpty(scheduleEditForm.forceFillShiftTypes)}">
             <span th:each="shiftType : ${scheduleEditForm.forceFillShiftTypes}">
-                <span th:text="' Force fill ' + ${shiftType}">Force fill 1</span>
+                <span th:text="#{calcSchedMenu.forceFill} + ' ' + ${shiftType}">Force fill</span>
             </span>
         </span>
 
@@ -221,7 +221,7 @@
                     <b data-th-text="#{error.adminShiftCount}">Admin shift count exceeded:</b>
                     <div th:each="shiftType : ${shiftTypes}"
                          th:if="${scheduleValidationResult.shiftCapUsersByShiftType.get(shiftType) != null && !#sets.isEmpty(scheduleValidationResult.shiftCapUsersByShiftType.get(shiftType))}">
-                        <span th:text="'Shift type ' + ${shiftType} + ': '">Shift type:</span>
+                        <span th:text="#{scheduleTable.shiftType} + ${shiftType} + ': '">Shift type:</span>
                         <span th:text="${scheduleValidationResult.shiftCapUsersByShiftType.get(shiftType)}"></span>
                     </div>
                 </div>
@@ -230,7 +230,7 @@
                     <b data-th-text="#{error.requestedWeekday}">Requested weekday count exceeded:</b>
                     <div th:each="shiftType : ${shiftTypes}"
                          th:if="${scheduleValidationResult.individualShiftCapUsersByShiftType.get(shiftType) != null && !#sets.isEmpty(scheduleValidationResult.individualShiftCapUsersByShiftType.get(shiftType))}">
-                        <span th:text="'Shift type ' + ${shiftType} + ': '">Shift type:</span>
+                        <span th:text="#{scheduleTable.shiftType} + ${shiftType} + ': '">Shift type:</span>
                         <span th:text="${scheduleValidationResult.individualShiftCapUsersByShiftType.get(shiftType)}"></span>
                     </div>
                 </div>
@@ -239,7 +239,7 @@
                     <b data-th-text="#{error.requestedWeekend}">Requested weekend count exceeded:</b>
                     <div th:each="shiftType : ${shiftTypes}"
                          th:if="${scheduleValidationResult.weekendCapUsersByShiftType.get(shiftType) != null && !#sets.isEmpty(scheduleValidationResult.weekendCapUsersByShiftType.get(shiftType))}">
-                        <span th:text="'Shift type ' + ${shiftType} + ': '">Shift type:</span>
+                        <span th:text="#{scheduleTable.shiftType} + ${shiftType} + ': '">Shift type:</span>
                         <span th:text="${scheduleValidationResult.weekendCapUsersByShiftType.get(shiftType)}"></span>
                     </div>
                 </div>
@@ -248,7 +248,7 @@
                     <b data-th-text="#{error.noRequest}">No shiftRequest has been submitted by the user(s):</b>
                     <div th:each="shiftType : ${shiftTypes}"
                          th:if="${scheduleValidationResult.userNoRequestByShiftType.get(shiftType) != null && !#sets.isEmpty(scheduleValidationResult.userNoRequestByShiftType.get(shiftType))}">
-                        <span th:text="'Shift type ' + ${shiftType} + ': '">Shift type:</span>
+                        <span th:text="#{scheduleTable.shiftType} + ${shiftType} + ': '">Shift type:</span>
                         <span th:text="${scheduleValidationResult.userNoRequestByShiftType.get(shiftType)}"></span>
                     </div>
                 </div>
@@ -257,7 +257,7 @@
                     <b data-th-text="#{error.conflictingDates}">Conflicting dates found:</b>
                     <div th:each="shiftType : ${shiftTypes}"
                          th:if="${scheduleValidationResult.crossCheckUsersByShiftType.get(shiftType) != null && !#sets.isEmpty(scheduleValidationResult.crossCheckUsersByShiftType.get(shiftType))}">
-                        <span th:text="'Shift type ' + ${shiftType} + ': '">Shift type:</span>
+                        <span th:text="#{scheduleTable.shiftType} + ${shiftType} + ': '">Shift type:</span>
                         <span th:text="${scheduleValidationResult.crossCheckUsersByShiftType.get(shiftType)}"></span>
                     </div>
                 </div>
@@ -266,7 +266,7 @@
                     <b data-th-text="#{error.unwantedDates}">Unwanted dates entered:</b>
                     <div th:each="shiftType : ${shiftTypes}"
                          th:if="${scheduleValidationResult.datesNoCheckUsersByShiftType.get(shiftType) != null && !#sets.isEmpty(scheduleValidationResult.datesNoCheckUsersByShiftType.get(shiftType))}">
-                        <span th:text="'Shift type ' + ${shiftType} + ': '">Shift type:</span>
+                        <span th:text="#{scheduleTable.shiftType} + ${shiftType} + ': '">Shift type:</span>
                         <span th:text="${scheduleValidationResult.datesNoCheckUsersByShiftType.get(shiftType)}"></span>
                     </div>
                 </div>
@@ -281,7 +281,7 @@
                     </b>
                     <div th:each="shiftType : ${shiftTypes}"
                          th:if="${scheduleValidationResult.previousMonthCheckUsersByShiftType.get(shiftType) != null && !#sets.isEmpty(scheduleValidationResult.previousMonthCheckUsersByShiftType.get(shiftType))}">
-                        <span th:text="'Shift type ' + ${shiftType} + ': '">Shift type:</span>
+                        <span th:text="#{scheduleTable.shiftType} + ${shiftType} + ': '">Shift type:</span>
                         <span th:text="${scheduleValidationResult.previousMonthCheckUsersByShiftType.get(shiftType)}"></span>
                     </div>
                 </div>

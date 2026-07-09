@@ -1,6 +1,5 @@
 package com.richardbrenkus.shiftschedulermodernized.mapper;
 
-import com.richardbrenkus.shiftschedulermodernized.dto.form.UserRegisterForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserUpdateForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
@@ -10,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserMapper {
 
-    UserRepository userRepository;
+    private final UserRepository userRepository;
 
     public UserMapper(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -30,26 +29,11 @@ public class UserMapper {
         return userRegisterForm;
     }
 
-    public User userRegisterFormToEntity(UserRegisterForm userRegisterForm) {
-        User user = new User();
-        user.setId(userRegisterForm.getId());
-        user.setTitle(userRegisterForm.getTitle());
-        user.setName(userRegisterForm.getName());
-        user.setUsername(userRegisterForm.getUsername());
-        user.setPassword(userRegisterForm.getPassword());
-        user.setNote(userRegisterForm.getNote());
-        user.setEmail(userRegisterForm.getEmail());
-        user.setBirthday(userRegisterForm.getBirthday());
-        user.setProfession(userRegisterForm.getProfession());
-        user.setAllowedShiftTypes(userRegisterForm.getAllowedShiftTypes());
-        return user;
-    }
-
     public UserViewRecord entityToUserViewRecord(User user) {
         return UserViewRecord.builder()
                 .userId(user.getId())
                 .name(user.getName())
-                .username(user.getUsername())   // missing
+                .username(user.getUsername())
                 .email(user.getEmail())
                 .hasShiftRequest(user.hasShiftRequest())
                 .build();

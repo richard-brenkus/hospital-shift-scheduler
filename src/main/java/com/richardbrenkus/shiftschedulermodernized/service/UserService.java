@@ -8,14 +8,11 @@ import com.richardbrenkus.shiftschedulermodernized.dto.form.UserUpdateForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserUpdateValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
-import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
 import com.richardbrenkus.shiftschedulermodernized.mapper.UserMapper;
-import com.richardbrenkus.shiftschedulermodernized.repository.ShiftRequestRepository;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -23,23 +20,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-import static com.richardbrenkus.shiftschedulermodernized.config.constants.ApplicationConstants.DATE_FORMATTER;
-
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
-    private final ShiftRequestMapper shiftRequestMapper;
     private final PasswordEncoderConfig encoder;
-    private final ShiftRequestRepository shiftRequestRepository;
     private final PasswordEncoderConfig passwordEncoder;
     private final UserMapper userMapper;
 
-    public UserService(UserRepository userRepository, ShiftRequestMapper shiftRequestMapper, PasswordEncoderConfig encoder, ShiftRequestRepository shiftRequestRepository, PasswordEncoderConfig passwordEncoder, UserMapper userMapper) {
+    public UserService(UserRepository userRepository, PasswordEncoderConfig encoder, PasswordEncoderConfig passwordEncoder, UserMapper userMapper) {
         this.userRepository = userRepository;
-        this.shiftRequestMapper = shiftRequestMapper;
         this.encoder = encoder;
-        this.shiftRequestRepository = shiftRequestRepository;
         this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
     }
@@ -72,7 +63,7 @@ public class UserService {
     }
 
     @Transactional
-    public User createUser(UserRegisterForm form) {
+    public void createUser(UserRegisterForm form) {
         User user = new User();
 
         user.setCreationDate(ZonedDateTime.now(ApplicationConstants.ZONE_ID));
@@ -89,7 +80,7 @@ public class UserService {
 
         user.setAllowedShiftTypes(new HashSet<>(form.getAllowedShiftTypes()));
 
-        return userRepository.save(user);
+        userRepository.save(user);
     }
 
     public boolean existsByUsernameIgnoreCase(String username) {
@@ -195,10 +186,6 @@ public class UserService {
         return new UserUpdateValidationResult(rejectedFields.isEmpty(), defaultMessages, rejectedFields);
     }
 
-    public UserViewRecord entityToUserViewRecord(User user) {
-        return new UserViewRecord(user.getId(), user.getName(), user.getUsername(), user.getEmail(), user.hasShiftRequest());
-    }
-
     @Transactional
     public List<UserViewRecord> findAllUsersForSelectionByNameAsc() {
 
@@ -218,21 +205,5 @@ public class UserService {
     public UserUpdateForm getUserUpdateFormByUserId(long userId) {
         return userMapper.entityToUserUpdateFormByUserId(userId);
     }
-
-    private String getShiftRequestDatesAsString(List<LocalDate> localDatesList) {
-
-        List<String> stringDatesList = new ArrayList<>();
-        String stringDates = "";
-        if (localDatesList != null && !localDatesList.isEmpty()) {
-            for (LocalDate d : localDatesList) {
-                stringDatesList.add(DATE_FORMATTER.format(d));
-            }
-            stringDates = stringDatesList.toString();
-            stringDates = stringDates.substring(1, stringDates.length() - 1);
-        }
-
-        return stringDates;
-    }
-
 
 }

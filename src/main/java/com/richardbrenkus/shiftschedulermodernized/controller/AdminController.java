@@ -112,9 +112,7 @@ public class AdminController {
         }
 
         if (bindingResult.hasErrors()) {
-/*
-            prepareModelService.prepareRegisterUserModel(model);
-*/
+
             return "admin/register_user";
         }
 

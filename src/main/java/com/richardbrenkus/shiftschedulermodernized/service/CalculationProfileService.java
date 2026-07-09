@@ -3,14 +3,12 @@ package com.richardbrenkus.shiftschedulermodernized.service;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.config.SelectionLists;
 import com.richardbrenkus.shiftschedulermodernized.config.ShiftTypeProperties;
-import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.MonthOption;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -45,22 +43,5 @@ public class CalculationProfileService {
                         month.format(formatter)
                 ))
                 .toList();
-    }
-
-    public List<Integer> resolveShiftCalculationOrder(CalculationProfileForm form) {
-
-        List<Integer> prioritized = form.getForceFillShiftTypes() == null
-                ? List.of()
-                : form.getForceFillShiftTypes();
-
-        List<Integer> remaining = getAvailableShiftTypes().stream()
-                .filter(shiftType -> !prioritized.contains(shiftType))
-                .toList();
-
-        List<Integer> result = new ArrayList<>();
-        result.addAll(prioritized);
-        result.addAll(remaining);
-
-        return result;
     }
 }

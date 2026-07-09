@@ -8,7 +8,6 @@ import com.richardbrenkus.shiftschedulermodernized.entity.ShiftPreference;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
-import com.richardbrenkus.shiftschedulermodernized.repository.ShiftRequestRepository;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.stereotype.Service;
@@ -20,17 +19,13 @@ import java.util.*;
 @Service
 public class ShiftRequestService {
 
-    UserRepository userRepository;
-    ShiftRequestRepository shiftRequestRepository;
-    UserService userService;
-    PrepareModelService prepareModelService;
-    ShiftRequestMapper shiftRequestMapper;
+    private final UserRepository userRepository;
+    private final UserService userService;
+    private final ShiftRequestMapper shiftRequestMapper;
 
-    public ShiftRequestService(UserRepository userRepository, ShiftRequestRepository shiftRequestRepository, UserService userService, PrepareModelService prepareModelService, ShiftRequestMapper shiftRequestMapper) {
+    public ShiftRequestService(UserRepository userRepository, UserService userService, ShiftRequestMapper shiftRequestMapper) {
         this.userRepository = userRepository;
-        this.shiftRequestRepository = shiftRequestRepository;
         this.userService = userService;
-        this.prepareModelService = prepareModelService;
         this.shiftRequestMapper = shiftRequestMapper;
     }
 
@@ -165,10 +160,7 @@ public class ShiftRequestService {
         return ShiftRequestValidationResult.valid();
     }
 
-    private ShiftRequestValidationResult validateSingleShiftPreference(
-            ShiftRequestForm form,
-            ShiftPreferenceForm preference,
-            int index) {
+    private ShiftRequestValidationResult validateSingleShiftPreference(ShiftRequestForm form, ShiftPreferenceForm preference, int index) {
 
         boolean noShift = preference.isNoShiftRequested();
         boolean anyDate = preference.isAnyDateSelected();
@@ -286,20 +278,6 @@ public class ShiftRequestService {
         userRepository.save(user);
     }
 
-
-    private void updatePreference(ShiftPreference existingPreference,
-                                  ShiftPreferenceForm form) {
-
-        existingPreference.setPriority(form.getPriority());
-
-        existingPreference.setDatesYes(new ArrayList<>(emptyIfNull(form.getDatesYes())));
-        existingPreference.setNoShiftRequested(form.isNoShiftRequested());
-        existingPreference.setAnyDateSelected(form.isAnyDateSelected());
-        existingPreference.setWeekdayCount(form.getWeekdayCount());
-        existingPreference.setWeekendCount(form.getWeekendCount());
-
-    }
-
     private ShiftPreference findPreferenceByShiftType(ShiftRequest request, int shiftType) {
         return request.getPreferences()
                 .stream()
@@ -308,8 +286,7 @@ public class ShiftRequestService {
                 .orElse(null);
     }
 
-    private void updatePreferenceIfChanged(ShiftPreference existingPreference,
-                                           ShiftPreferenceForm preferenceForm) {
+    private void updatePreferenceIfChanged(ShiftPreference existingPreference, ShiftPreferenceForm preferenceForm) {
 
         if (existingPreference.getShiftType() != preferenceForm.getShiftType()) {
             existingPreference.setShiftType(preferenceForm.getShiftType());

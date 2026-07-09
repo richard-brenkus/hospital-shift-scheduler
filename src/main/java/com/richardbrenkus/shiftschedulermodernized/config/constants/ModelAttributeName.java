@@ -5,19 +5,6 @@ public final class ModelAttributeName {
     private ModelAttributeName() {
     }
 
-    // Scheduled tasks
-    public static final String REMINDER_TASK_INFO = "reminderTaskInfo";
-    public static final String CLEANUP_TASK_INFO = "cleanupTaskInfo";
-    public static final String REMINDER_IS_ACTIVE = "reminderIsActive";
-    public static final String CLEANUP_IS_ACTIVE = "cleanupIsActive";
-    public static final String REMINDER_REPETITIONS = "reminderRepetitions";
-    public static final String REMINDER_FREQUENCY = "reminderFrequency";
-    public static final String CLEANUP_DATE_TIME = "cleanupDateTime";
-    public static final String REMINDER_START = "reminderStart";
-    public static final String REMINDER_DEADLINE = "reminderFinalSubmissionDay";
-    public static final String REMINDER_TASK = "sendReminderTask";
-    public static final String CLEANUP_TASK = "cleanupTask";
-
     // User
     public static final String DISPLAY_NAME = "displayName";
     public static final String USERNAME_PASSED = "usernamePassed";
@@ -49,14 +36,6 @@ public final class ModelAttributeName {
 
     // Validation flags
     public static final String CONFLICTING_DATES = "conflictingDates";
-    public static final String SHIFT_AND_WEEKEND_COUNT = "shiftAndWeekendCount";
-    public static final String INVALID_INPUT_CONDITION_1 = "invalidInputCondition1";
-    public static final String INVALID_INPUT_CONDITION_2 = "invalidInputCondition2";
-    public static final String NO_SHIFTS_ONLY_SELECTED = "noShiftsOnlySelected";
-    public static final String NO_DATES_ONLY = "noDatesOnly";
-    public static final String YES_DATES_ANY_DATE = "yesDatesAnyDate";
-
-    // Validation errors
     public static final String NO_MATCH = "noMatch";
     public static final String TOO_SHORT = "tooShort";
 

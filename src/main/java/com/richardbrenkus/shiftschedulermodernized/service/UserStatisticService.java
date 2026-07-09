@@ -344,35 +344,6 @@ public class UserStatisticService {
         return addAllShiftsUserStat(result);
     }
 
-
-    private CalculationCounters countAssignments(ScheduleMonth scheduleMonth) {
-        CalculationCounters counters = new CalculationCounters();
-
-        if (scheduleMonth == null || scheduleMonth.getDays() == null) {
-            return counters;
-        }
-
-        for (ScheduleDay day : scheduleMonth.getDays()) {
-            if (day == null || day.getAssignments() == null) {
-                continue;
-            }
-
-            for (ShiftAssignment assignment : day.getAssignments()) {
-                if (assignment == null || assignment.getUser() == null) {
-                    continue;
-                }
-
-                if (day.isWeekendOrHoliday()) {
-                    counters.incrementWeekend(assignment.getUser(), assignment.getShiftType());
-                } else {
-                    counters.incrementWeekday(assignment.getUser(), assignment.getShiftType());
-                }
-            }
-        }
-
-        return counters;
-    }
-
     public Set<String> returnUsersWithNoRequest() {
         return StreamSupport.stream(userRepository.findAll().spliterator(), false)
                 .filter(user -> !user.hasShiftRequest())
