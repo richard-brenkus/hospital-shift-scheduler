@@ -1,0 +1,388 @@
+package com.richardbrenkus.shiftschedulermodernized.service;
+
+import com.richardbrenkus.shiftschedulermodernized.config.PasswordEncoderConfig;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.UserRegisterForm;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.UserUpdateForm;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.UserUpdateValidationResult;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.UserViewRecord;
+import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
+import com.richardbrenkus.shiftschedulermodernized.entity.User;
+import com.richardbrenkus.shiftschedulermodernized.mapper.UserMapper;
+import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
+import com.richardbrenkus.shiftschedulermodernized.support.TestFixtures;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private PasswordEncoderConfig passwordEncoderConfig;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private UserMapper userMapper;
+
+    private UserService service;
+
+    @BeforeEach
+    void setUp() {
+        service = new UserService(userRepository, passwordEncoderConfig, passwordEncoderConfig, userMapper);
+    }
+
+    @Test
+    void shouldReturnNameOnly_whenTitleIsNull() {
+        User user = TestFixtures.user(1L, "freddie");
+        user.setName("Freddie Mercury");
+        user.setTitle(null);
+        when(userRepository.getUserByUsername("freddie")).thenReturn(user);
+
+        assertThat(service.getDisplayNameByUserName("freddie")).isEqualTo("Freddie Mercury");
+    }
+
+    @Test
+    void shouldPrependTitleToName_whenTitleIsSet() {
+        User user = TestFixtures.user(1L, "freddie");
+        user.setName("Freddie Mercury");
+        user.setTitle("MUDr.");
+        when(userRepository.getUserByUsername("freddie")).thenReturn(user);
+
+        assertThat(service.getDisplayNameByUserName("freddie")).isEqualTo("MUDr. Freddie Mercury");
+    }
+
+    @Test
+    void shouldReturnUserFromRepository_whenGettingByUsername() {
+        User user = TestFixtures.user(1L, "freddie");
+        when(userRepository.getUserByUsername("freddie")).thenReturn(user);
+
+        assertThat(service.getUserByUsername("freddie")).isSameAs(user);
+    }
+
+    @Test
+    void shouldEncodePasswordAndSaveUser_whenChangingPassword() {
+        User user = TestFixtures.user(1L, "freddie");
+        when(userRepository.getUserByUsername("freddie")).thenReturn(user);
+        when(passwordEncoderConfig.passwordEncoder()).thenReturn(passwordEncoder);
+        when(passwordEncoder.encode("newpass")).thenReturn("encoded-newpass");
+
+        service.changeUserPassword("freddie", "newpass");
+
+        assertThat(user.getPassword()).isEqualTo("encoded-newpass");
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void shouldReturnTrue_whenUserHasShiftRequest() {
+        User user = TestFixtures.user(1L, "freddie");
+        user.setShiftRequest(new ShiftRequest());
+        when(userRepository.getUserByUsername("freddie")).thenReturn(user);
+
+        assertThat(service.hasShiftRequest("freddie")).isTrue();
+    }
+
+    @Test
+    void shouldReturnFalse_whenUserExistsButHasNoShiftRequest() {
+        User user = TestFixtures.user(1L, "freddie");
+        when(userRepository.getUserByUsername("freddie")).thenReturn(user);
+
+        assertThat(service.hasShiftRequest("freddie")).isFalse();
+    }
+
+    @Test
+    void shouldReturnFalse_whenUserRepositoryReturnsNull() {
+        when(userRepository.getUserByUsername("ghost")).thenReturn(null);
+
+        assertThat(service.hasShiftRequest("ghost")).isFalse();
+    }
+
+    @Test
+    void shouldPersistNewUserWithEncodedPassword_whenCreatingUser() {
+        UserRegisterForm form = new UserRegisterForm();
+        form.setName("Freddie Mercury");
+        form.setUsername("freddie");
+        form.setEmail("freddie@example.test");
+        form.setPassword("Plain1");
+        form.setTitle("MUDr.");
+        form.setProfession("psychiatrist");
+        form.setBirthday("1967-01-24");
+        form.setNote("Test");
+        form.setAllowedShiftTypes(Set.of(1, 2, 3));
+
+        when(passwordEncoderConfig.passwordEncoder()).thenReturn(passwordEncoder);
+        when(passwordEncoder.encode("Plain1")).thenReturn("hashed-Plain1");
+
+        service.createUser(form);
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        User saved = captor.getValue();
+        assertThat(saved.getUsername()).isEqualTo("freddie");
+        assertThat(saved.getEmail()).isEqualTo("freddie@example.test");
+        assertThat(saved.getPassword()).isEqualTo("hashed-Plain1");
+        assertThat(saved.getRole().name()).isEqualTo("USER");
+        assertThat(saved.isEnabled()).isTrue();
+        assertThat(saved.getCreationDate()).isNotNull();
+        assertThat(saved.getAllowedShiftTypes()).containsExactlyInAnyOrder(1, 2, 3);
+    }
+
+    @Test
+    void shouldDelegateExistsChecksToRepository() {
+        when(userRepository.existsByUsernameIgnoreCase("mick")).thenReturn(true);
+        when(userRepository.existsByEmailIgnoreCase("m@x.test")).thenReturn(false);
+        when(userRepository.existsByNameIgnoreCase("Mick")).thenReturn(true);
+
+        assertThat(service.existsByUsernameIgnoreCase("mick")).isTrue();
+        assertThat(service.existsByEmailIgnoreCase("m@x.test")).isFalse();
+        assertThat(service.existsByNameIgnoreCase("Mick")).isTrue();
+    }
+
+    @Test
+    void shouldFilterAdminsAndSortByName_whenGettingAllUsersWithoutAdmin() {
+        User admin = TestFixtures.admin(1L, "root");
+        User b = TestFixtures.user(2L, "bruce");
+        b.setName("Bruce");
+        User a = TestFixtures.user(3L, "amy");
+        a.setName("Amy");
+        when(userRepository.findAll()).thenReturn(List.of(admin, b, a));
+
+        List<User> users = service.getAllUsersWithoutAdminByNameAsc();
+
+        assertThat(users)
+                .extracting(User::getName)
+                .containsExactly("Amy", "Bruce");
+    }
+
+    @Test
+    void shouldReturnUserById_whenExists() {
+        User user = TestFixtures.user(9L, "jim");
+        when(userRepository.findById(9L)).thenReturn(Optional.of(user));
+
+        assertThat(service.getUserById(9L)).isSameAs(user);
+    }
+
+    @Test
+    void shouldThrowIllegalArgumentException_whenUserIdNotFound() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.getUserById(99L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("99");
+    }
+
+    @Test
+    void shouldReturnUsernameFromLookupById() {
+        User user = TestFixtures.user(7L, "jimi");
+        when(userRepository.getUserById(7L)).thenReturn(user);
+
+        assertThat(service.getUsernameByUserId(7L)).isEqualTo("jimi");
+    }
+
+    @Test
+    void shouldFilterOnlyUsersWithShiftRequestSortedByName() {
+        User withRequest = TestFixtures.user(1L, "freddie");
+        withRequest.setName("Freddie");
+        withRequest.setShiftRequest(new ShiftRequest());
+        User withoutRequest = TestFixtures.user(2L, "mick");
+        withoutRequest.setName("Mick");
+        when(userRepository.findAll()).thenReturn(List.of(withoutRequest, withRequest));
+
+        List<User> users = service.getAllUsersWithShiftRequestByNameAsc();
+
+        assertThat(users).extracting(User::getName).containsExactly("Freddie");
+    }
+
+    @Test
+    void shouldSortAllUsersIncludingAdmins() {
+        User admin = TestFixtures.admin(1L, "root");
+        admin.setName("Zoe");
+        User user = TestFixtures.user(2L, "mick");
+        user.setName("Alan");
+        when(userRepository.findAll()).thenReturn(List.of(admin, user));
+
+        List<User> users = service.getAllUsersAndAdminsByNameAsc();
+
+        assertThat(users).extracting(User::getName).containsExactly("Alan", "Zoe");
+    }
+
+    @Test
+    void shouldMapUsersToViewRecordsSortedByName() {
+        User u = TestFixtures.user(1L, "freddie");
+        u.setName("Freddie");
+        when(userRepository.findAll()).thenReturn(List.of(u));
+        UserViewRecord record = UserViewRecord.builder().userId(1L).name("Freddie").build();
+        when(userMapper.entityToUserViewRecord(u)).thenReturn(record);
+
+        List<UserViewRecord> records = service.getAllUserSummaryViewRecordsByNameAsc();
+
+        assertThat(records).containsExactly(record);
+    }
+
+    @Test
+    void shouldMutateExistingUser_whenUpdatingUser() {
+        User existing = TestFixtures.user(1L, "old");
+        existing.setEmail("old@x.test");
+        UserUpdateForm form = new UserUpdateForm();
+        form.setId(1L);
+        form.setName("New Name");
+        form.setUsername("newname");
+        form.setEmail("new@x.test");
+        form.setNote("note");
+        form.setTitle("Bc.");
+        form.setBirthday("1990-01-01");
+        form.setProfession("Doctor");
+        form.setAllowedShiftTypes(Set.of(1, 2));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
+
+        service.updateUser(form);
+
+        assertThat(existing.getName()).isEqualTo("New Name");
+        assertThat(existing.getUsername()).isEqualTo("newname");
+        assertThat(existing.getEmail()).isEqualTo("new@x.test");
+        assertThat(existing.getTitle()).isEqualTo("Bc.");
+        assertThat(existing.getAllowedShiftTypes()).containsExactlyInAnyOrder(1, 2);
+    }
+
+    @Test
+    void shouldSetEmptyAllowedShiftTypes_whenFormValueIsNull() {
+        User existing = TestFixtures.user(1L, "u");
+        existing.setAllowedShiftTypes(new HashSet<>(Set.of(1, 2)));
+        UserUpdateForm form = new UserUpdateForm();
+        form.setId(1L);
+        form.setAllowedShiftTypes(null);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
+
+        service.updateUser(form);
+
+        assertThat(existing.getAllowedShiftTypes()).isEmpty();
+    }
+
+    @Test
+    void shouldThrowIllegalArgumentException_whenUpdatingNonexistentUser() {
+        UserUpdateForm form = new UserUpdateForm();
+        form.setId(99L);
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.updateUser(form))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void shouldReturnValidResult_whenNoFieldsConflictAndShiftTypesPresent() {
+        UserUpdateForm form = new UserUpdateForm();
+        form.setId(1L);
+        form.setUsername("new");
+        form.setEmail("new@x.test");
+        form.setName("New");
+        form.setAllowedShiftTypes(Set.of(1));
+        when(userRepository.existsByUsernameIgnoreCaseAndIdNot("new", 1L)).thenReturn(false);
+        when(userRepository.existsByEmailIgnoreCaseAndIdNot("new@x.test", 1L)).thenReturn(false);
+        when(userRepository.existsByNameIgnoreCaseAndIdNot("New", 1L)).thenReturn(false);
+
+        UserUpdateValidationResult result = service.validateUserUpdate(form);
+
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.rejectedFields()).isEmpty();
+    }
+
+    @Test
+    void shouldReturnRejectedFields_whenUniquenessAndShiftTypeChecksFail() {
+        UserUpdateForm form = new UserUpdateForm();
+        form.setId(1L);
+        form.setUsername("dup");
+        form.setEmail("dup@x.test");
+        form.setName("Dup");
+        form.setAllowedShiftTypes(Set.of());
+        when(userRepository.existsByUsernameIgnoreCaseAndIdNot("dup", 1L)).thenReturn(true);
+        when(userRepository.existsByEmailIgnoreCaseAndIdNot("dup@x.test", 1L)).thenReturn(true);
+        when(userRepository.existsByNameIgnoreCaseAndIdNot("Dup", 1L)).thenReturn(true);
+
+        UserUpdateValidationResult result = service.validateUserUpdate(form);
+
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.rejectedFields())
+                .containsExactly("username", "email", "name", "allowedShiftTypes");
+    }
+
+    @Test
+    void shouldRejectAllowedShiftTypes_whenNull() {
+        UserUpdateForm form = new UserUpdateForm();
+        form.setId(1L);
+        form.setUsername("new");
+        form.setEmail("new@x.test");
+        form.setName("New");
+        form.setAllowedShiftTypes(null);
+        when(userRepository.existsByUsernameIgnoreCaseAndIdNot(any(), any())).thenReturn(false);
+        when(userRepository.existsByEmailIgnoreCaseAndIdNot(any(), any())).thenReturn(false);
+        when(userRepository.existsByNameIgnoreCaseAndIdNot(any(), any())).thenReturn(false);
+
+        UserUpdateValidationResult result = service.validateUserUpdate(form);
+
+        assertThat(result.rejectedFields()).containsExactly("allowedShiftTypes");
+    }
+
+    @Test
+    void shouldDelegateFindAllUsersForSelectionToMapper() {
+        User u = TestFixtures.user(1L, "u");
+        u.setName("Amy");
+        UserViewRecord record = UserViewRecord.builder().userId(1L).name("Amy").build();
+        when(userRepository.findAll()).thenReturn(List.of(u));
+        when(userMapper.entityToUserViewRecord(u)).thenReturn(record);
+
+        assertThat(service.findAllUsersForSelectionByNameAsc()).containsExactly(record);
+    }
+
+    @Test
+    void shouldReturnNull_whenFindUserViewByIdNotFound() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThat(service.findUserViewById(99L)).isNull();
+    }
+
+    @Test
+    void shouldMapUserToViewRecord_whenFindUserViewByIdFound() {
+        User user = TestFixtures.user(3L, "u");
+        UserViewRecord record = UserViewRecord.builder().userId(3L).build();
+        when(userRepository.findById(3L)).thenReturn(Optional.of(user));
+        when(userMapper.entityToUserViewRecord(user)).thenReturn(record);
+
+        assertThat(service.findUserViewById(3L)).isEqualTo(record);
+    }
+
+    @Test
+    void shouldDelegateGetUserUpdateFormByUserIdToMapper() {
+        UserUpdateForm form = new UserUpdateForm();
+        when(userMapper.entityToUserUpdateFormByUserId(4L)).thenReturn(form);
+
+        assertThat(service.getUserUpdateFormByUserId(4L)).isSameAs(form);
+    }
+
+    @Test
+    void shouldDelegateDeleteUserToRepository() {
+        User user = TestFixtures.user(1L, "u");
+
+        service.deleteUser(user);
+
+        verify(userRepository).delete(user);
+    }
+}
