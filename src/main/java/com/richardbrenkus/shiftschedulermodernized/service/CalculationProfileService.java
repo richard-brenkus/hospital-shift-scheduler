@@ -19,11 +19,7 @@ public class CalculationProfileService {
 
     private final ShiftTypeProperties shiftTypeProperties;
 
-    public List<Integer> getGapBetweenShiftsOptions() {
-        return SelectionLists.GENERIC_ONE_TO_TEN_LIST;
-    }
-
-    public List<Integer> getShiftCountCapOptions() {
+    public List<Integer> getGenericOneToTenList() {
         return SelectionLists.GENERIC_ONE_TO_TEN_LIST;
     }
 

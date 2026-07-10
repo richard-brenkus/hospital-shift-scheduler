@@ -321,8 +321,8 @@ public class AdminController {
 
         model.addAttribute(ModelAttributeName.CALCULATION_PROFILE_FORM, calculationProfileForm);
         model.addAttribute(ModelAttributeName.MONTH_OPTIONS, calculationProfileService.getAvailableCalculationMonths());
-        model.addAttribute(ModelAttributeName.GAP_BETWEEN_SHIFTS, calculationProfileService.getGapBetweenShiftsOptions());
-        model.addAttribute(ModelAttributeName.SHIFT_COUNT_MAX, calculationProfileService.getShiftCountCapOptions());
+        model.addAttribute(ModelAttributeName.GAP_BETWEEN_SHIFTS, calculationProfileService.getGenericOneToTenList());
+        model.addAttribute(ModelAttributeName.SHIFT_COUNT_MAX, calculationProfileService.getGenericOneToTenList());
         model.addAttribute(ModelAttributeName.SHIFT_TYPES, calculationProfileService.getAvailableShiftTypes());
 
         return "admin/calculate_schedule_select";

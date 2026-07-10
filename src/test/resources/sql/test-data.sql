@@ -61,8 +61,11 @@ INSERT INTO shift_request (shift_request_id) VALUES (1057);
 INSERT INTO shift_request (shift_request_id) VALUES (1058);
 INSERT INTO shift_request (shift_request_id) VALUES (1059);
 INSERT INTO shift_request (shift_request_id) VALUES (1060);
+INSERT INTO shift_request (shift_request_id) VALUES (1061);
+INSERT INTO shift_request (shift_request_id) VALUES (1062);
+INSERT INTO shift_request (shift_request_id) VALUES (1063);
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1001, 'Freddie Mercury', 'freddie.mercury', 'freddie.mercury@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-04 10:47:00', '1967-01-24', 'Nurse', 'Mgr.', TRUE, 'USER', 1001);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1001, 'Freddie Mercury', 'freddie.mercury', 'freddie.mercury@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-04 10:47:00', '1967-01-24', 'psychiatrist', 'MUDr.', TRUE, 'USER', 1001);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1001, 5);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1001, 6);
 INSERT INTO shift_request_dates_no (shift_request_id, date_no) VALUES (1001, '2026-08-14');
@@ -81,7 +84,7 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5002, '2026-08-16');
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5002, '2026-08-21');
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1002, 'Mick Jagger', 'mick.jagger', 'mick.jagger@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-06 09:05:00', '1987-06-09', 'Nurse', 'Bc.', TRUE, 'USER', 1002);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1002, 'Mick Jagger', 'mick.jagger', 'mick.jagger@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-06 09:05:00', '1987-06-09', 'psychiatrist', 'Bc.', TRUE, 'USER', 1002);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1002, 1);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1002, 2);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1002, 3);
@@ -205,7 +208,7 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5020, '2026-08-09');
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5020, '2026-08-31');
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1007, 'Bruce Springsteen', 'bruce.springsteen', 'bruce.springsteen@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-05 18:31:00', '1962-06-03', 'Nurse', 'PhDr.', TRUE, 'USER', 1007);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1007, 'Bruce Springsteen', 'bruce.springsteen', 'bruce.springsteen@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-05 18:31:00', '1962-06-03', 'psychiatrist', 'PhDr.', TRUE, 'USER', 1007);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1007, 2);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1007, 4);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1007, 5);
@@ -233,7 +236,7 @@ INSERT INTO shift_request_dates_no (shift_request_id, date_no) VALUES (1008, '20
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5024, 4, 1, 0, 0, TRUE, FALSE, 1008);
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5025, 5, 2, 1, 0, FALSE, TRUE, 1008);
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1009, 'John Lennon', 'john.lennon', 'john.lennon@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-07 08:10:00', '1970-07-16', 'Nurse', 'Ing.', TRUE, 'USER', 1009);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1009, 'John Lennon', 'john.lennon', 'john.lennon@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-07 08:10:00', '1970-07-16', 'psychiatrist', 'MUDr.', TRUE, 'USER', 1009);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1009, 1);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1009, 2);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1009, 3);
@@ -328,7 +331,7 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5041, '2026-08-28');
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5042, 6, 4, 0, 0, TRUE, FALSE, 1012);
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1013, 'Robert Plant', 'robert.plant', 'robert.plant@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-03 10:56:00', '1986-10-24', 'Nurse', 'Bc.', TRUE, 'USER', 1013);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1013, 'Robert Plant', 'robert.plant', 'robert.plant@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-03 10:56:00', '1986-10-24', 'psychiatrist', 'Bc.', TRUE, 'USER', 1013);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1013, 1);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1013, 2);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1013, 3);
@@ -374,7 +377,7 @@ INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_c
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5050, 4, 3, 3, 0, FALSE, TRUE, 1014);
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5051, 6, 4, 2, 2, FALSE, TRUE, 1014);
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1015, 'Pete Townshend', 'pete.townshend', 'pete.townshend@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-05 16:08:00', '1979-11-14', 'Surgeon', 'Mgr.', TRUE, 'USER', 1015);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1015, 'Pete Townshend', 'pete.townshend', 'pete.townshend@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-05 16:08:00', '1979-11-14', 'Surgeon', 'MUDr.', TRUE, 'USER', 1015);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1015, 2);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1015, 4);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1015, 6);
@@ -396,7 +399,7 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5053, '2026-08-25');
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5054, 6, 3, 2, 0, FALSE, TRUE, 1015);
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1016, 'Keith Richards', 'keith.richards', 'keith.richards@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-03 08:02:00', '1975-11-10', 'Nurse', 'Bc.', TRUE, 'USER', 1016);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1016, 'Keith Richards', 'keith.richards', 'keith.richards@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-03 08:02:00', '1975-11-10', 'psychiatrist', 'Bc.', TRUE, 'USER', 1016);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1016, 1);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1016, 4);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1016, 5);
@@ -451,7 +454,7 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5061, '2026-08-30');
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5062, 6, 5, 0, 0, TRUE, FALSE, 1017);
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1018, 'Sting Sumner', 'sting.sumner', 'sting.sumner@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-06 12:48:00', '1961-10-13', 'Doctor', 'Ing.', TRUE, 'USER', 1018);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1018, 'Sting Sumner', 'sting.sumner', 'sting.sumner@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-06 12:48:00', '1961-10-13', 'Doctor', 'MUDr.', TRUE, 'USER', 1018);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1018, 1);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1018, 2);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1018, 4);
@@ -519,7 +522,7 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5071, '2026-08-29');
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5072, 6, 5, 1, 2, FALSE, TRUE, 1019);
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1020, 'Axl Rose', 'axl.rose', 'axl.rose@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-02 14:23:00', '1981-01-28', 'Surgeon', 'Ing.', TRUE, 'USER', 1020);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1020, 'Axl Rose', 'axl.rose', 'axl.rose@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-02 14:23:00', '1981-01-28', 'Surgeon', 'MUDr.', TRUE, 'USER', 1020);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1020, 1);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1020, 2);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1020, 4);
@@ -647,7 +650,7 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5091, 5, 3, 3, 1, FALSE, TRUE, 1024);
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5092, 6, 4, 0, 0, TRUE, FALSE, 1024);
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1025, 'Thom Yorke', 'thom.yorke', 'thom.yorke@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-01 14:47:00', '1992-09-16', 'Doctor', 'Ing.', TRUE, 'USER', 1025);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1025, 'Thom Yorke', 'thom.yorke', 'thom.yorke@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-01 14:47:00', '1992-09-16', 'Doctor', 'MUDr.', TRUE, 'USER', 1025);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1025, 1);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1025, 3);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1025, 4);
@@ -660,7 +663,7 @@ INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_c
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5095, 4, 3, 3, 0, FALSE, TRUE, 1025);
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5096, 5, 4, 1, 1, FALSE, TRUE, 1025);
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1026, 'Liam Gallagher', 'liam.gallagher', 'liam.gallagher@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-07 18:52:00', '1993-11-15', 'Nurse', 'Mgr.', TRUE, 'USER', 1026);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1026, 'Liam Gallagher', 'liam.gallagher', 'liam.gallagher@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-07 18:52:00', '1993-11-15', 'psychiatrist', 'MUDr.', TRUE, 'USER', 1026);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1026, 1);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1026, 2);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1026, 3);
@@ -923,7 +926,7 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5136, '2026-08-27');
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5136, '2026-08-29');
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1038, 'Chrissie Hynde', 'chrissie.hynde', 'chrissie.hynde@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-02 15:45:00', '1961-01-16', 'Surgeon', 'Ing.', TRUE, 'USER', 1038);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1038, 'Chrissie Hynde', 'chrissie.hynde', 'chrissie.hynde@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-02 15:45:00', '1961-01-16', 'Surgeon', 'MUDr.', TRUE, 'USER', 1038);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1038, 1);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1038, 3);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1038, 4);
@@ -944,7 +947,7 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5140, 5, 4, 0, 0, TRUE, FALSE, 1038);
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5141, 6, 5, 1, 1, FALSE, TRUE, 1038);
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1039, 'Annie Lennox', 'annie.lennox', 'annie.lennox@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-07 14:46:00', '1988-04-14', 'Surgeon', 'Mgr.', TRUE, 'USER', 1039);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1039, 'Annie Lennox', 'annie.lennox', 'annie.lennox@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-07 14:46:00', '1988-04-14', 'Surgeon', 'MUDr.', TRUE, 'USER', 1039);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1039, 3);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1039, 4);
 INSERT INTO shift_request_dates_no (shift_request_id, date_no) VALUES (1039, '2026-08-09');
@@ -980,7 +983,7 @@ INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_c
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5146, 3, 3, 1, 2, FALSE, TRUE, 1040);
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5147, 5, 4, 0, 0, TRUE, FALSE, 1040);
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1041, 'Siouxsie Sioux', 'siouxsie.sioux', 'siouxsie.sioux@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-05 13:22:00', '1977-01-06', 'Anesthesiologist', 'Mgr.', TRUE, 'USER', 1041);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1041, 'Siouxsie Sioux', 'siouxsie.sioux', 'siouxsie.sioux@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-05 13:22:00', '1977-01-06', 'Anesthesiologist', 'MUDr.', TRUE, 'USER', 1041);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1041, 2);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1041, 6);
 INSERT INTO shift_request_dates_no (shift_request_id, date_no) VALUES (1041, '2026-08-01');
@@ -1020,7 +1023,7 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5152, 5, 3, 0, 0, TRUE, FALSE, 1042);
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5153, 6, 4, 2, 1, FALSE, TRUE, 1042);
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1043, 'Sheryl Crow', 'sheryl.crow', 'sheryl.crow@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-07 10:08:00', '1980-02-01', 'Anesthesiologist', 'Ing.', TRUE, 'USER', 1043);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1043, 'Sheryl Crow', 'sheryl.crow', 'sheryl.crow@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-07 10:08:00', '1980-02-01', 'Anesthesiologist', 'MUDr.', TRUE, 'USER', 1043);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1043, 1);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1043, 2);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1043, 3);
@@ -1096,7 +1099,7 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5166, '2026-08-28');
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5166, '2026-08-29');
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1046, 'Courtney Love', 'courtney.love', 'courtney.love@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-08 15:33:00', '1992-11-06', 'Nurse', 'MUDr.', TRUE, 'USER', 1046);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1046, 'Courtney Love', 'courtney.love', 'courtney.love@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-08 15:33:00', '1992-11-06', 'psychiatrist', 'MUDr.', TRUE, 'USER', 1046);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1046, 3);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1046, 5);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1046, 6);
@@ -1127,7 +1130,7 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5169, '2026-08-24');
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5169, '2026-08-28');
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1047, 'PJ Harvey', 'pj.harvey', 'pj.harvey@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-09 09:41:00', '1984-11-26', 'Nurse', 'Mgr.', TRUE, 'USER', 1047);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1047, 'PJ Harvey', 'pj.harvey', 'pj.harvey@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-09 09:41:00', '1984-11-26', 'psychiatrist', 'MUDr.', TRUE, 'USER', 1047);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1047, 1);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1047, 2);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1047, 3);
@@ -1160,7 +1163,7 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5173, '2026-08-28');
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5174, 6, 5, 1, 1, FALSE, TRUE, 1047);
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1048, 'Florence Welch', 'florence.welch', 'florence.welch@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-09 11:19:00', '1978-12-26', 'Nurse', 'Ing.', TRUE, 'USER', 1048);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1048, 'Florence Welch', 'florence.welch', 'florence.welch@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-09 11:19:00', '1978-12-26', 'psychiatrist', 'MUDr.', TRUE, 'USER', 1048);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1048, 2);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1048, 3);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1048, 4);
@@ -1188,7 +1191,7 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5178, '2026-08-20');
 INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5179, 6, 5, 0, 0, TRUE, FALSE, 1048);
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1049, 'Amy Winehouse', 'amy.winehouse', 'amy.winehouse@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-06 11:24:00', '1961-07-02', 'Radiologist', 'Ing.', TRUE, 'USER', 1049);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1049, 'Amy Winehouse', 'amy.winehouse', 'amy.winehouse@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-06 11:24:00', '1961-07-02', 'Radiologist', 'MUDr.', TRUE, 'USER', 1049);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1049, 2);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1049, 3);
 INSERT INTO shift_request_dates_no (shift_request_id, date_no) VALUES (1049, '2026-08-11');
@@ -1290,7 +1293,7 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5195, '2026-08-24');
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5195, '2026-08-26');
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1053, 'Beth Gibbons', 'beth.gibbons', 'beth.gibbons@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-08 08:46:00', '1987-03-23', 'Paramedic', 'Ing.', TRUE, 'USER', 1053);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1053, 'Beth Gibbons', 'beth.gibbons', 'beth.gibbons@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-08 08:46:00', '1987-03-23', 'Paramedic', 'MUDr.', TRUE, 'USER', 1053);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1053, 3);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1053, 4);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1053, 5);
@@ -1420,35 +1423,12 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5217, '2026-08-18');
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5217, '2026-08-25');
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1059, 'Nina Hagen', 'nina.hagen', 'nina.hagen@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-03 15:32:00', '1980-10-24', 'Nurse', 'Mgr.', TRUE, 'USER', 1059);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1059, 'Nina Hagen', 'nina.hagen', 'nina.hagen@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-03 15:32:00', '1980-10-24', 'psychiatrist', 'MUDr.', TRUE, 'USER', null);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1059, 1);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1059, 3);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1059, 4);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1059, 5);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1059, 6);
-INSERT INTO shift_request_dates_no (shift_request_id, date_no) VALUES (1059, '2026-08-07');
-INSERT INTO shift_request_dates_no (shift_request_id, date_no) VALUES (1059, '2026-08-08');
-INSERT INTO shift_request_dates_no (shift_request_id, date_no) VALUES (1059, '2026-08-15');
-INSERT INTO shift_request_dates_no (shift_request_id, date_no) VALUES (1059, '2026-08-17');
-INSERT INTO shift_request_dates_no (shift_request_id, date_no) VALUES (1059, '2026-08-31');
-INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5218, 1, 1, 1, 0, FALSE, TRUE, 1059);
-INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5219, 3, 2, 3, 2, FALSE, FALSE, 1059);
-INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5219, '2026-08-01');
-INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5219, '2026-08-04');
-INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5219, '2026-08-05');
-INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5219, '2026-08-12');
-INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5219, '2026-08-18');
-INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5219, '2026-08-22');
-INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5220, 4, 3, 0, 0, TRUE, FALSE, 1059);
-INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5221, 5, 4, 2, 1, FALSE, TRUE, 1059);
-INSERT INTO shift_preference (id, shift_type, priority, weekday_count, weekend_count, no_shift_requested, any_date_selected, shift_request_id) VALUES (5222, 6, 5, 1, 2, FALSE, FALSE, 1059);
-INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5222, '2026-08-03');
-INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5222, '2026-08-09');
-INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5222, '2026-08-12');
-INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5222, '2026-08-14');
-INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5222, '2026-08-16');
-INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5222, '2026-08-21');
-INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5222, '2026-08-22');
 
 INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1060, 'Marina Diamandis', 'marina.diamandis', 'marina.diamandis@example.test', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-02 10:06:00', '1988-09-09', 'Anesthesiologist', 'PhDr.', TRUE, 'USER', 1060);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1060, 1);
@@ -1484,6 +1464,18 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5227, '2026-08-26');
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5227, '2026-08-28');
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5227, '2026-08-29');
+
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1061, 'Alajos', 'alajos@alajosmail.ala', 'alajos@alajosmail.ala', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-04 10:47:00', '1967-01-24', 'psychiatrist', 'MUDr.', TRUE, 'ADMIN', null);
+INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1061, 1);
+
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1062, 'Antal', 'antal@antalmail.ant', 'antal@antalmail.ant', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-04 10:47:00', '1967-01-24', 'psychiatrist', 'MUDr.', TRUE, 'USER', null);
+INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1062, 1);
+INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1062, 2);
+INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1062, 3);
+
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, shift_request_id) VALUES (1063, 'Béla', 'bela@belamail.bel', 'bela@belamail.bel', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-04 10:47:00', '1967-01-24', 'psychiatrist', 'MUDr.', TRUE, 'USER', null);
+INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1063, 3);
+INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1063, 2);
 
 COMMIT;
 SET FOREIGN_KEY_CHECKS = 1;

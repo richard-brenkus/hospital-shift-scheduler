@@ -16,7 +16,6 @@ public class LandingPageService {
     }
 
     public LandingPageRecord getLandingPageRecord() {
-        //String requestSubmittedString = "";
         double userCountWithoutAdmin = 0.0;
         double shiftRequestCount = 0.0;
         String percentage = "0%";
