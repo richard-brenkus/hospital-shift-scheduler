@@ -6,26 +6,25 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
 
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@Testcontainers
 public abstract class AbstractMySqlContainerTest {
 
     @MockitoBean
     protected EmailReminderService emailReminderService;
 
-    @Container
     protected static final MySQLContainer<?> mysql =
             new MySQLContainer<>("mysql:8.4")
                     .withDatabaseName("shift_scheduler_test")
                     .withUsername("test")
                     .withPassword("test");
+
+    static {
+        mysql.start();
+    }
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
