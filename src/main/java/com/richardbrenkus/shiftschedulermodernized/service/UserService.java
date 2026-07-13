@@ -7,33 +7,29 @@ import com.richardbrenkus.shiftschedulermodernized.dto.form.UserRegisterForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserUpdateForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserUpdateValidationResult;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.ValidationError;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.UserMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.stream.StreamSupport;
 
 @Service
+@AllArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoderConfig encoder;
     private final PasswordEncoderConfig passwordEncoder;
     private final UserMapper userMapper;
-
-    public UserService(UserRepository userRepository, PasswordEncoderConfig encoder, PasswordEncoderConfig passwordEncoder, UserMapper userMapper) {
-        this.userRepository = userRepository;
-        this.encoder = encoder;
-        this.passwordEncoder = passwordEncoder;
-        this.userMapper = userMapper;
-    }
+    private final UserTransactionalUpdater transactionalUpdater;
 
     public String getDisplayNameByUserName(String userName) {
         User currentUser = userRepository.getUserByUsername(userName);
@@ -67,9 +63,9 @@ public class UserService {
         User user = new User();
 
         user.setCreationDate(ZonedDateTime.now(ApplicationConstants.ZONE_ID));
-        user.setName(form.getName());
-        user.setUsername(form.getUsername());
-        user.setEmail(form.getEmail());
+        user.setName(form.getName().trim());
+        user.setUsername(form.getUsername().trim().toLowerCase());
+        user.setEmail(form.getEmail().trim().toLowerCase());
         user.setBirthday(form.getBirthday());
         user.setNote(form.getNote());
         user.setTitle(form.getTitle());
@@ -135,55 +131,49 @@ public class UserService {
                 .toList();
     }
 
-    @Transactional
-    public void updateUser(UserUpdateForm form) {
+    public UserUpdateValidationResult validateAndUpdateUser(UserUpdateForm updatedUser) {
+        UserUpdateValidationResult result = new UserUpdateValidationResult(true, new ArrayList<>(), new ArrayList<>());
 
-        User existingUser = userRepository.findById(form.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + form.getId()));
-
-        existingUser.setTitle(form.getTitle());
-        existingUser.setName(form.getName());
-        existingUser.setUsername(form.getUsername());
-        existingUser.setBirthday(form.getBirthday());
-        existingUser.setEmail(form.getEmail());
-        existingUser.setNote(form.getNote());
-        existingUser.setProfession(form.getProfession());
-        existingUser.setAllowedShiftTypes(form.getAllowedShiftTypes() == null
-                ? new HashSet<>()
-                : new HashSet<>(form.getAllowedShiftTypes()));
-        //userRepository.save(existingUser);
-        // A role change here is not allowed as it is database-only.
-        // A password change is handled separately.
-    }
-
-
-    public UserUpdateValidationResult validateUserUpdate(UserUpdateForm updatedUser) {
         Long id = updatedUser.getId();
 
-        List<String> defaultMessages = new ArrayList<>();
-        List<String> rejectedFields = new ArrayList<>();
-
-        if (userRepository.existsByUsernameIgnoreCaseAndIdNot(updatedUser.getUsername(), id)) {
-            defaultMessages.add("This username already exists! Choose another one.");
-            rejectedFields.add("username");
+        if (!userRepository.existsById(id)) {
+            result.addGlobalError(new ValidationError("userNotFound", "The selected user no longer exists."));
+            result.setValid(false);
+            return result;
         }
 
-        if (userRepository.existsByEmailIgnoreCaseAndIdNot(updatedUser.getEmail(), id)) {
-            defaultMessages.add("This email address already exists! Choose another one.");
-            rejectedFields.add("email");
+        if (userRepository.existsByUsernameIgnoreCaseAndIdNot(updatedUser.getUsername().trim().toLowerCase(), id)) {
+            result.addFieldError(new ValidationError("username", "This username already exists! Choose another one."));
         }
 
-        if (userRepository.existsByNameIgnoreCaseAndIdNot(updatedUser.getName(), id)) {
-            defaultMessages.add("This name already exists! Choose another one.");
-            rejectedFields.add("name");
+        if (userRepository.existsByEmailIgnoreCaseAndIdNot(updatedUser.getEmail().trim().toLowerCase(), id)) {
+            result.addFieldError(new ValidationError("email", "This email address already exists! Choose another one."));
+        }
+
+        if (userRepository.existsByNameIgnoreCaseAndIdNot(updatedUser.getName().trim(), id)) {
+            result.addFieldError(new ValidationError("name", "This name already exists! Choose another one."));
         }
 
         if (updatedUser.getAllowedShiftTypes() == null || updatedUser.getAllowedShiftTypes().isEmpty()) {
-            defaultMessages.add("Please select at least one shift type!");
-            rejectedFields.add("allowedShiftTypes");
+            result.addFieldError(new ValidationError("allowedShiftTypes", "Please select at least one shift type!"));
         }
 
-        return new UserUpdateValidationResult(rejectedFields.isEmpty(), defaultMessages, rejectedFields);
+        if (!result.getFieldErrors().isEmpty() || !result.getGlobalErrors().isEmpty()) {
+            result.setValid(false);
+            return result;
+        }
+
+        try {
+            transactionalUpdater.update(updatedUser);
+        } catch (ObjectOptimisticLockingFailureException exception) {
+            result.addGlobalError(new ValidationError("concurrentUpdate", "This user was modified by another administrator. Reload the page and try again."));
+            result.setValid(false);
+        } catch (DataIntegrityViolationException exception) {
+            result.addGlobalError(new ValidationError("concurrentDuplicate", "The submitted username, name, or email was used by another administrator before your update completed."));
+            result.setValid(false);
+        }
+
+        return result;
     }
 
     @Transactional

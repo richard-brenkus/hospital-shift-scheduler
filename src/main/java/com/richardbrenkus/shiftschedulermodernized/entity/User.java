@@ -26,8 +26,12 @@ public class User {
     @Column(name = "user_id", nullable = false, updatable = false)
     private Long id;
 
+    @Version
+    private Long version;
+
     @NotBlank(message = "{user.name.NotBlank}")
     @Size(min = ValidationConstants.NAME_MIN_LENGTH, max = ValidationConstants.NAME_MAX_LENGTH, message = "{user.name.size}")
+    @Column(nullable = false, unique = true)
     private String name;
 
     @NotBlank(message = "{user.username.NotBlank}")
@@ -37,7 +41,7 @@ public class User {
 
     @NotBlank(message = "{user.email.NotBlank}")
     @Email(message = "{user.email.invalid}")
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @NotBlank(message = "{user.password.NotBlank}")

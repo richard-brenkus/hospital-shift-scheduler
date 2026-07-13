@@ -5,6 +5,7 @@ import com.richardbrenkus.shiftschedulermodernized.dto.form.UserRegisterForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserUpdateForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserUpdateValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserViewRecord;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.ValidationError;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.UserMapper;
@@ -44,11 +45,14 @@ class UserServiceTest {
     @Mock
     private UserMapper userMapper;
 
+    @Mock
+    private UserTransactionalUpdater userTransactionalUpdater;
+
     private UserService service;
 
     @BeforeEach
     void setUp() {
-        service = new UserService(userRepository, passwordEncoderConfig, passwordEncoderConfig, userMapper);
+        service = new UserService(userRepository, passwordEncoderConfig, passwordEncoderConfig, userMapper, userTransactionalUpdater);
     }
 
     @Test
@@ -254,7 +258,7 @@ class UserServiceTest {
         form.setAllowedShiftTypes(Set.of(1, 2));
         when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
 
-        service.updateUser(form);
+        service.validateAndUpdateUser(form);
 
         assertThat(existing.getName()).isEqualTo("New Name");
         assertThat(existing.getUsername()).isEqualTo("newname");
@@ -272,7 +276,7 @@ class UserServiceTest {
         form.setAllowedShiftTypes(null);
         when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
 
-        service.updateUser(form);
+        service.validateAndUpdateUser(form);
 
         assertThat(existing.getAllowedShiftTypes()).isEmpty();
     }
@@ -283,7 +287,7 @@ class UserServiceTest {
         form.setId(99L);
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.updateUser(form))
+        assertThatThrownBy(() -> service.validateAndUpdateUser(form))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -299,10 +303,11 @@ class UserServiceTest {
         when(userRepository.existsByEmailIgnoreCaseAndIdNot("new@x.test", 1L)).thenReturn(false);
         when(userRepository.existsByNameIgnoreCaseAndIdNot("New", 1L)).thenReturn(false);
 
-        UserUpdateValidationResult result = service.validateUserUpdate(form);
+        UserUpdateValidationResult result = service.validateAndUpdateUser(form);
 
         assertThat(result.isValid()).isTrue();
-        assertThat(result.rejectedFields()).isEmpty();
+        assertThat(result.getFieldErrors()).isEmpty();
+        assertThat(result.getGlobalErrors()).isEmpty();
     }
 
     @Test
@@ -317,11 +322,15 @@ class UserServiceTest {
         when(userRepository.existsByEmailIgnoreCaseAndIdNot("dup@x.test", 1L)).thenReturn(true);
         when(userRepository.existsByNameIgnoreCaseAndIdNot("Dup", 1L)).thenReturn(true);
 
-        UserUpdateValidationResult result = service.validateUserUpdate(form);
+        UserUpdateValidationResult result = service.validateAndUpdateUser(form);
 
         assertThat(result.isValid()).isFalse();
-        assertThat(result.rejectedFields())
-                .containsExactly("username", "email", "name", "allowedShiftTypes");
+
+        List<String> errorFields = result.getFieldErrors().stream()
+                .map(ValidationError::field)
+                .toList();
+
+        assertThat(errorFields).containsExactly("username", "email", "name", "allowedShiftTypes");
     }
 
     @Test
@@ -336,9 +345,13 @@ class UserServiceTest {
         when(userRepository.existsByEmailIgnoreCaseAndIdNot(any(), any())).thenReturn(false);
         when(userRepository.existsByNameIgnoreCaseAndIdNot(any(), any())).thenReturn(false);
 
-        UserUpdateValidationResult result = service.validateUserUpdate(form);
+        UserUpdateValidationResult result = service.validateAndUpdateUser(form);
 
-        assertThat(result.rejectedFields()).containsExactly("allowedShiftTypes");
+        List<String> errorFields = result.getFieldErrors().stream()
+                .map(ValidationError::field)
+                .toList();
+
+        assertThat(errorFields).containsExactly("allowedShiftTypes");
     }
 
     @Test

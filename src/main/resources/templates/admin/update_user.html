@@ -23,6 +23,9 @@
               th:object="${userUpdateForm}"
               class="update-user-form">
 
+            <!-- Preserve the optimistic-lock version submitted with the form. -->
+            <input type="hidden" th:field="*{version}"/>
+
             <table class="table-no-lines update-user-table">
 
                 <tbody>
@@ -230,6 +233,19 @@
                         data-th-text="#{register.update}">
                     Update user
                 </button>
+            </div>
+
+            <!-- Database/concurrency errors not associated with a single field. -->
+            <div class="update-user-global-errors error-red"
+                 th:if="${#fields.hasGlobalErrors()}"
+                 role="alert"
+                 aria-live="polite">
+
+                <p th:each="error : ${#fields.globalErrors()}"
+                   th:text="${error.defaultMessage}">
+                    The user could not be updated because of a concurrent database change.
+                </p>
+
             </div>
 
         </form>

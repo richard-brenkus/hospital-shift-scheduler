@@ -57,8 +57,7 @@ public class ScheduleCalculationService {
         );
 
         List<LocalDate> holidaysCzech = getHolidaysCzechRepublic(calculationMonth);
-        Map<Integer, StoredScheduleDay> storedScheduleDayMap =
-                scheduleRuleService.loadPreviousStoredScheduleDays(calculationMonth.atDay(1), minimalGap);
+        Map<Integer, StoredScheduleDay> storedScheduleDayMap = scheduleRuleService.loadPreviousStoredScheduleDays(calculationMonth.atDay(1), minimalGap);
 
         List<ScheduleMonth> candidateSchedules = new ArrayList<>();
 

@@ -85,7 +85,7 @@ class UserServiceIT extends AbstractMySqlContainerTest {
         form.setProfession("Doctor");
         form.setAllowedShiftTypes(new HashSet<>(Set.of(5, 6)));
 
-        userService.updateUser(form);
+        userService.validateAndUpdateUser(form);
 
         User reloaded = userRepository.findById(existing.getId()).orElseThrow();
         assertThat(reloaded.getName()).isEqualTo("Alice Renamed");

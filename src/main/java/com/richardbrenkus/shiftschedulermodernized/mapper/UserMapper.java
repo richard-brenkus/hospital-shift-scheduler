@@ -18,6 +18,7 @@ public class UserMapper {
     public UserUpdateForm entityToUserUpdateForm(User user) {
         UserUpdateForm userRegisterForm = new UserUpdateForm();
         userRegisterForm.setId(user.getId());
+        userRegisterForm.setVersion(user.getVersion());
         userRegisterForm.setTitle(user.getTitle());
         userRegisterForm.setName(user.getName());
         userRegisterForm.setUsername(user.getUsername());

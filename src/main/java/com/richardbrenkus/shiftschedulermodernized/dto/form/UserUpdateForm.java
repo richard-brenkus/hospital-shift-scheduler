@@ -17,7 +17,11 @@ import java.util.Set;
 @AllArgsConstructor
 public class UserUpdateForm {
 
+    @NotNull
     private Long id;
+
+    @NotNull
+    private long version;
 
     @NotNull
     @Size(min = 2, max = 45)
@@ -28,6 +32,7 @@ public class UserUpdateForm {
     private String username;
 
     @Email
+    @NotNull
     private String email;
 
     private String note;
