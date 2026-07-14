@@ -1,12 +1,10 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
-import com.richardbrenkus.shiftschedulermodernized.config.constants.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.config.PasswordEncoderConfig;
-import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserRegisterForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserUpdateForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserViewRecord;
-import com.richardbrenkus.shiftschedulermodernized.dto.view.UserUpdateValidationResult;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.UserValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ValidationError;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.UserMapper;
@@ -17,7 +15,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.StreamSupport;
 
@@ -27,9 +24,9 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoderConfig encoder;
-    private final PasswordEncoderConfig passwordEncoder;
     private final UserMapper userMapper;
     private final UserTransactionalUpdater transactionalUpdater;
+    private final UserTransactionalCreator userTransactionalCreator;
 
     public String getDisplayNameByUserName(String userName) {
         User currentUser = userRepository.getUserByUsername(userName);
@@ -59,24 +56,43 @@ public class UserService {
     }
 
     @Transactional
-    public void createUser(UserRegisterForm form) {
-        User user = new User();
+    public UserValidationResult validateAndCreateUser(UserRegisterForm form) {
 
-        user.setCreationDate(ZonedDateTime.now(ApplicationConstants.ZONE_ID));
-        user.setName(form.getName().trim());
-        user.setUsername(form.getUsername().trim().toLowerCase());
-        user.setEmail(form.getEmail().trim().toLowerCase());
-        user.setBirthday(form.getBirthday());
-        user.setNote(form.getNote());
-        user.setTitle(form.getTitle());
-        user.setProfession(form.getProfession());
-        user.setEnabled(true);
-        user.setRole(Role.USER);
-        user.setPassword(passwordEncoder.passwordEncoder().encode(form.getPassword()));
+        UserValidationResult validationResult = new UserValidationResult(true, new ArrayList<>(), new ArrayList<>());
 
-        user.setAllowedShiftTypes(new HashSet<>(form.getAllowedShiftTypes()));
+        if (form.getAllowedShiftTypes() == null || form.getAllowedShiftTypes().isEmpty()) {
+            validationResult.getFieldErrors().add(new ValidationError("allowedShiftTypes", "error.allowedShiftTypes"));
+            validationResult.setValid(false);
+        }
 
-        userRepository.save(user);
+        if (this.existsByUsernameIgnoreCase(form.getUsername().trim().toLowerCase(Locale.ROOT))) {
+            validationResult.getFieldErrors().add(new ValidationError("username", "error.username"));
+            validationResult.setValid(false);
+        }
+
+        if (this.existsByEmailIgnoreCase(form.getEmail().trim().toLowerCase(Locale.ROOT))) {
+            validationResult.getFieldErrors().add(new ValidationError("email", "error.email"));
+            validationResult.setValid(false);
+        }
+
+        if (this.existsByNameIgnoreCase(form.getName().trim())) {
+            validationResult.getFieldErrors().add(new ValidationError("name", "error.name"));
+            validationResult.setValid(false);
+        }
+
+        if (!validationResult.getFieldErrors().isEmpty()) {
+            validationResult.setValid(false);
+            return validationResult;
+        }
+
+        try {
+            userTransactionalCreator.createUser(form);
+        } catch (DataIntegrityViolationException exception) {
+            validationResult.addGlobalError(new ValidationError("concurrentDuplicate", "error.database"));
+            validationResult.setValid(false);
+        }
+
+        return validationResult;
     }
 
     public boolean existsByUsernameIgnoreCase(String username) {
@@ -131,8 +147,8 @@ public class UserService {
                 .toList();
     }
 
-    public UserUpdateValidationResult validateAndUpdateUser(UserUpdateForm updatedUser) {
-        UserUpdateValidationResult result = new UserUpdateValidationResult(true, new ArrayList<>(), new ArrayList<>());
+    public UserValidationResult validateAndUpdateUser(UserUpdateForm updatedUser) {
+        UserValidationResult result = new UserValidationResult(true, new ArrayList<>(), new ArrayList<>());
 
         Long id = updatedUser.getId();
 
@@ -142,20 +158,20 @@ public class UserService {
             return result;
         }
 
-        if (userRepository.existsByUsernameIgnoreCaseAndIdNot(updatedUser.getUsername().trim().toLowerCase(), id)) {
-            result.addFieldError(new ValidationError("username", "This username already exists! Choose another one."));
+        if (userRepository.existsByUsernameIgnoreCaseAndIdNot(updatedUser.getUsername().trim().toLowerCase(Locale.ROOT), id)) {
+            result.addFieldError(new ValidationError("username", "error.username"));
         }
 
-        if (userRepository.existsByEmailIgnoreCaseAndIdNot(updatedUser.getEmail().trim().toLowerCase(), id)) {
-            result.addFieldError(new ValidationError("email", "This email address already exists! Choose another one."));
+        if (userRepository.existsByEmailIgnoreCaseAndIdNot(updatedUser.getEmail().trim().toLowerCase(Locale.ROOT), id)) {
+            result.addFieldError(new ValidationError("email", "error.email"));
         }
 
         if (userRepository.existsByNameIgnoreCaseAndIdNot(updatedUser.getName().trim(), id)) {
-            result.addFieldError(new ValidationError("name", "This name already exists! Choose another one."));
+            result.addFieldError(new ValidationError("name", "error.name"));
         }
 
         if (updatedUser.getAllowedShiftTypes() == null || updatedUser.getAllowedShiftTypes().isEmpty()) {
-            result.addFieldError(new ValidationError("allowedShiftTypes", "Please select at least one shift type!"));
+            result.addFieldError(new ValidationError("allowedShiftTypes", "error.allowedShiftTypes"));
         }
 
         if (!result.getFieldErrors().isEmpty() || !result.getGlobalErrors().isEmpty()) {
@@ -166,10 +182,10 @@ public class UserService {
         try {
             transactionalUpdater.update(updatedUser);
         } catch (ObjectOptimisticLockingFailureException exception) {
-            result.addGlobalError(new ValidationError("concurrentUpdate", "This user was modified by another administrator. Reload the page and try again."));
+            result.addGlobalError(new ValidationError("concurrentUpdate", "error.concurrentUpdate"));
             result.setValid(false);
         } catch (DataIntegrityViolationException exception) {
-            result.addGlobalError(new ValidationError("concurrentDuplicate", "The submitted username, name, or email was used by another administrator before your update completed."));
+            result.addGlobalError(new ValidationError("concurrentDuplicate", "error.concurrentDuplicate"));
             result.setValid(false);
         }
 

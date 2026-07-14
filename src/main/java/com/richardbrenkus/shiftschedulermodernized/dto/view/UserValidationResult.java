@@ -11,7 +11,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserUpdateValidationResult{
+public class UserValidationResult {
 
     private boolean isValid;
 
@@ -26,8 +26,8 @@ public class UserUpdateValidationResult{
         this.globalErrors.add(validationError);
     }
 
-    public static UserUpdateValidationResult valid() {
-        return new UserUpdateValidationResult(true, List.of(), List.of());
+    public static UserValidationResult valid() {
+        return new UserValidationResult(true, List.of(), List.of());
     }
 
 }

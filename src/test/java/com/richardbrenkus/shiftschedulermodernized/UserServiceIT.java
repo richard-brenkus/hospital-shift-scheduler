@@ -45,7 +45,7 @@ class UserServiceIT extends AbstractMySqlContainerTest {
         form.setNote("Integration test");
         form.setAllowedShiftTypes(new HashSet<>(Set.of(1, 2, 3)));
 
-        userService.createUser(form);
+        userService.validateAndCreateUser(form);
 
         Optional<User> saved = userRepository.findByUsername("charlie.doe");
         assertThat(saved).isPresent();

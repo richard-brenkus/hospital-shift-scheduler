@@ -242,7 +242,7 @@
                  aria-live="polite">
 
                 <p th:each="error : ${#fields.globalErrors()}"
-                   th:text="${error.defaultMessage}">
+                   th:text="${error}">
                     The user could not be updated because of a concurrent database change.
                 </p>
 

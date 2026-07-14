@@ -250,6 +250,19 @@
                 </button>
             </div>
 
+            <!-- Database errors that are not associated with a single form field. -->
+            <div class="register-user-global-errors error-red"
+                 th:if="${#fields.hasGlobalErrors()}"
+                 role="alert"
+                 aria-live="polite">
+
+                <p th:each="error : ${#fields.globalErrors()}"
+                   th:text="${error}">
+                    The user could not be saved because of a database error.
+                </p>
+
+            </div>
+
         </form>
 
     </section>

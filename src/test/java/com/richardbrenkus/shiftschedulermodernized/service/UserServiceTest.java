@@ -3,7 +3,7 @@ package com.richardbrenkus.shiftschedulermodernized.service;
 import com.richardbrenkus.shiftschedulermodernized.config.PasswordEncoderConfig;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserRegisterForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserUpdateForm;
-import com.richardbrenkus.shiftschedulermodernized.dto.view.UserUpdateValidationResult;
+import com.richardbrenkus.shiftschedulermodernized.dto.view.UserValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ValidationError;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
@@ -48,11 +48,14 @@ class UserServiceTest {
     @Mock
     private UserTransactionalUpdater userTransactionalUpdater;
 
+    @Mock
+    private UserTransactionalCreator userTransactionalCreator;
+
     private UserService service;
 
     @BeforeEach
     void setUp() {
-        service = new UserService(userRepository, passwordEncoderConfig, passwordEncoderConfig, userMapper, userTransactionalUpdater);
+        service = new UserService(userRepository, passwordEncoderConfig, passwordEncoderConfig, userMapper, userTransactionalUpdater, userTransactionalCreator);
     }
 
     @Test
@@ -136,7 +139,7 @@ class UserServiceTest {
         when(passwordEncoderConfig.passwordEncoder()).thenReturn(passwordEncoder);
         when(passwordEncoder.encode("Plain1")).thenReturn("hashed-Plain1");
 
-        service.createUser(form);
+        service.validateAndCreateUser(form);
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(captor.capture());
@@ -284,7 +287,7 @@ class UserServiceTest {
         form.setId(99L);
         //when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-        UserUpdateValidationResult result = service.validateAndUpdateUser(form);
+        UserValidationResult result = service.validateAndUpdateUser(form);
         assertThat(result.isValid()).isFalse();
         assertThat(result.getGlobalErrors().getFirst().message()).isEqualTo("The selected user no longer exists.");
     }
@@ -302,7 +305,7 @@ class UserServiceTest {
         when(userRepository.existsByEmailIgnoreCaseAndIdNot("new@x.test", 1L)).thenReturn(false);
         when(userRepository.existsByNameIgnoreCaseAndIdNot("New", 1L)).thenReturn(false);
 
-        UserUpdateValidationResult result = service.validateAndUpdateUser(form);
+        UserValidationResult result = service.validateAndUpdateUser(form);
 
         assertThat(result.isValid()).isTrue();
         assertThat(result.getFieldErrors()).isEmpty();
@@ -322,7 +325,7 @@ class UserServiceTest {
         when(userRepository.existsByEmailIgnoreCaseAndIdNot("dup@x.test", 1L)).thenReturn(true);
         when(userRepository.existsByNameIgnoreCaseAndIdNot("Dup", 1L)).thenReturn(true);
 
-        UserUpdateValidationResult result = service.validateAndUpdateUser(form);
+        UserValidationResult result = service.validateAndUpdateUser(form);
 
         assertThat(result.isValid()).isFalse();
 
@@ -346,7 +349,7 @@ class UserServiceTest {
         when(userRepository.existsByEmailIgnoreCaseAndIdNot(any(), any())).thenReturn(false);
         when(userRepository.existsByNameIgnoreCaseAndIdNot(any(), any())).thenReturn(false);
 
-        UserUpdateValidationResult result = service.validateAndUpdateUser(form);
+        UserValidationResult result = service.validateAndUpdateUser(form);
 
         List<String> errorFields = result.getFieldErrors().stream()
                 .map(ValidationError::field)

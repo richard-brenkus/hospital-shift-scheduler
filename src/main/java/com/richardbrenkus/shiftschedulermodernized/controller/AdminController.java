@@ -80,31 +80,23 @@ public class AdminController {
 
     @PostMapping(path = "/admin/add")
     public String addNewUser(@Valid @ModelAttribute(ModelAttributeName.USER_REGISTER_FORM) UserRegisterForm userRegisterForm, BindingResult bindingResult, Model model) {
-
         prepareModelService.prepareRegisterUserModel(model);
 
-        if (userRegisterForm.getAllowedShiftTypes() == null || userRegisterForm.getAllowedShiftTypes().isEmpty()) {
-            bindingResult.rejectValue("allowedShiftTypes", "error.allowedShiftTypes");
-        }
+        if (!bindingResult.hasErrors()) {
+            UserValidationResult validationResult = userService.validateAndCreateUser(userRegisterForm);
 
-        if (userService.existsByUsernameIgnoreCase(userRegisterForm.getUsername())) {
-            bindingResult.rejectValue("username", "error.username");
-        }
+            for (ValidationError fieldError : validationResult.getFieldErrors()) {
+                bindingResult.rejectValue(fieldError.field(), fieldError.message());
+            }
 
-        if (userService.existsByEmailIgnoreCase(userRegisterForm.getEmail())) {
-            bindingResult.rejectValue("email", "error.email");
-        }
-
-        if (userService.existsByNameIgnoreCase(userRegisterForm.getName())) {
-            bindingResult.rejectValue("name", "error.name");
+            for (ValidationError globalError : validationResult.getGlobalErrors()) {
+                bindingResult.reject(globalError.field(), globalError.message());
+            }
         }
 
         if (bindingResult.hasErrors()) {
-
             return "admin/register_user";
         }
-
-        userService.createUser(userRegisterForm);
 
         return "admin/user_update_success";
     }
@@ -213,18 +205,18 @@ public class AdminController {
 
 
         if(!bindingResult.hasErrors()) {
-            UserUpdateValidationResult userUpdateValidationResult = userService.validateAndUpdateUser(updatedUser);
-            if (!userUpdateValidationResult.isValid()) {
-                for (int i = 0; i < userUpdateValidationResult.getFieldErrors().size(); i++) {
-                    ValidationError fieldError = userUpdateValidationResult.getFieldErrors().get(i);
+            UserValidationResult userValidationResult = userService.validateAndUpdateUser(updatedUser);
+            if (!userValidationResult.isValid()) {
+                for (int i = 0; i < userValidationResult.getFieldErrors().size(); i++) {
+                    ValidationError fieldError = userValidationResult.getFieldErrors().get(i);
                     String rejectedField = fieldError.field();
                     String errorCode = "error." + rejectedField;
-                    String defaultMessage = userUpdateValidationResult.getFieldErrors().get(i).message();
+                    String defaultMessage = userValidationResult.getFieldErrors().get(i).message();
 
                     bindingResult.rejectValue(rejectedField, errorCode, defaultMessage);
                 }
-                for (int i = 0; i < userUpdateValidationResult.getGlobalErrors().size(); i++) {
-                    ValidationError validationError = userUpdateValidationResult.getGlobalErrors().get(i);
+                for (int i = 0; i < userValidationResult.getGlobalErrors().size(); i++) {
+                    ValidationError validationError = userValidationResult.getGlobalErrors().get(i);
                     String rejectedField = validationError.field();
                     String errorCode = "error." + rejectedField;
                     String defaultMessage = validationError.message();
