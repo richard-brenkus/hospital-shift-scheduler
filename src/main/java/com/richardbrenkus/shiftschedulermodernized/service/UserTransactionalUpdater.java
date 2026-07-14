@@ -39,7 +39,10 @@ public class UserTransactionalUpdater {
         existingUser.setProfession(updatedUser.getProfession());
 
         existingUser.getAllowedShiftTypes().clear();
-        existingUser.getAllowedShiftTypes().addAll(updatedUser.getAllowedShiftTypes());
+
+        if (updatedUser.getAllowedShiftTypes() != null) {
+            existingUser.getAllowedShiftTypes().addAll(updatedUser.getAllowedShiftTypes());
+        }
 
         /*
          * Forces Hibernate to issue SQL now, while this method is executing.

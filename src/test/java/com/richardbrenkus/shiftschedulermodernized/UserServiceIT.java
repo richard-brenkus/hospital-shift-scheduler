@@ -43,7 +43,7 @@ class UserServiceIT extends AbstractMySqlContainerTest {
         form.setBirthday("1990-01-01");
         form.setTitle("MUDr.");
         form.setNote("Integration test");
-        form.setAllowedShiftTypes(Set.of(1, 2, 3));
+        form.setAllowedShiftTypes(new HashSet<>(Set.of(1, 2, 3)));
 
         userService.createUser(form);
 
@@ -83,7 +83,7 @@ class UserServiceIT extends AbstractMySqlContainerTest {
         form.setBirthday("1990-05-05");
         form.setTitle("Bc.");
         form.setProfession("Doctor");
-        form.setAllowedShiftTypes(new HashSet<>(Set.of(5, 6)));
+        form.setAllowedShiftTypes(new HashSet<>(new HashSet<>(Set.of(5, 6))));
 
         userService.validateAndUpdateUser(form);
 

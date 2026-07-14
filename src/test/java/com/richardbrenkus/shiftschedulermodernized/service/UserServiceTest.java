@@ -131,7 +131,7 @@ class UserServiceTest {
         form.setProfession("psychiatrist");
         form.setBirthday("1967-01-24");
         form.setNote("Test");
-        form.setAllowedShiftTypes(Set.of(1, 2, 3));
+        form.setAllowedShiftTypes(new HashSet<>(Set.of(1, 2, 3)));
 
         when(passwordEncoderConfig.passwordEncoder()).thenReturn(passwordEncoder);
         when(passwordEncoder.encode("Plain1")).thenReturn("hashed-Plain1");
@@ -243,52 +243,50 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldMutateExistingUser_whenUpdatingUser() {
-        User existing = TestFixtures.user(1L, "old");
-        existing.setEmail("old@x.test");
+    void shouldDelegateUpdateToTransactionalUpdater() {
         UserUpdateForm form = new UserUpdateForm();
         form.setId(1L);
-        form.setName("New Name");
-        form.setUsername("newname");
+        form.setUsername("new");
+        form.setVersion(0);
         form.setEmail("new@x.test");
-        form.setNote("note");
-        form.setTitle("Bc.");
-        form.setBirthday("1990-01-01");
-        form.setProfession("Doctor");
-        form.setAllowedShiftTypes(Set.of(1, 2));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
+        form.setName("New");
+
+        when(userRepository.existsById(1L)).thenReturn(true);
+        when(userRepository.existsByUsernameIgnoreCaseAndIdNot(any(), any())).thenReturn(false);
+        when(userRepository.existsByEmailIgnoreCaseAndIdNot(any(), any())).thenReturn(false);
+        when(userRepository.existsByNameIgnoreCaseAndIdNot(any(), any())).thenReturn(false);
+
+        form.setAllowedShiftTypes(new HashSet<>(Set.of(1)));
 
         service.validateAndUpdateUser(form);
 
-        assertThat(existing.getName()).isEqualTo("New Name");
-        assertThat(existing.getUsername()).isEqualTo("newname");
-        assertThat(existing.getEmail()).isEqualTo("new@x.test");
-        assertThat(existing.getTitle()).isEqualTo("Bc.");
-        assertThat(existing.getAllowedShiftTypes()).containsExactlyInAnyOrder(1, 2);
+        verify(userTransactionalUpdater).update(form);
     }
 
     @Test
-    void shouldSetEmptyAllowedShiftTypes_whenFormValueIsNull() {
+    void shouldSetAllowedShiftTypes_whenFormValueIsNull() {
         User existing = TestFixtures.user(1L, "u");
         existing.setAllowedShiftTypes(new HashSet<>(Set.of(1, 2)));
         UserUpdateForm form = new UserUpdateForm();
         form.setId(1L);
         form.setAllowedShiftTypes(null);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
+        //when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
 
         service.validateAndUpdateUser(form);
 
-        assertThat(existing.getAllowedShiftTypes()).isEmpty();
+        assertThat(existing.getAllowedShiftTypes()).containsExactly(1, 2);
+
     }
 
     @Test
-    void shouldThrowIllegalArgumentException_whenUpdatingNonexistentUser() {
+    void shouldReturnGlobalValidationError_whenUpdatingNonexistentUser() {
         UserUpdateForm form = new UserUpdateForm();
         form.setId(99L);
-        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+        //when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.validateAndUpdateUser(form))
-                .isInstanceOf(IllegalArgumentException.class);
+        UserUpdateValidationResult result = service.validateAndUpdateUser(form);
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getGlobalErrors().getFirst().message()).isEqualTo("The selected user no longer exists.");
     }
 
     @Test
@@ -298,7 +296,8 @@ class UserServiceTest {
         form.setUsername("new");
         form.setEmail("new@x.test");
         form.setName("New");
-        form.setAllowedShiftTypes(Set.of(1));
+        form.setAllowedShiftTypes(new HashSet<>(Set.of(1)));
+        when(userRepository.existsById(any())).thenReturn(true);
         when(userRepository.existsByUsernameIgnoreCaseAndIdNot("new", 1L)).thenReturn(false);
         when(userRepository.existsByEmailIgnoreCaseAndIdNot("new@x.test", 1L)).thenReturn(false);
         when(userRepository.existsByNameIgnoreCaseAndIdNot("New", 1L)).thenReturn(false);
@@ -317,7 +316,8 @@ class UserServiceTest {
         form.setUsername("dup");
         form.setEmail("dup@x.test");
         form.setName("Dup");
-        form.setAllowedShiftTypes(Set.of());
+        form.setAllowedShiftTypes(new HashSet<>(Set.of()));
+        when(userRepository.existsById(any())).thenReturn(true);
         when(userRepository.existsByUsernameIgnoreCaseAndIdNot("dup", 1L)).thenReturn(true);
         when(userRepository.existsByEmailIgnoreCaseAndIdNot("dup@x.test", 1L)).thenReturn(true);
         when(userRepository.existsByNameIgnoreCaseAndIdNot("Dup", 1L)).thenReturn(true);
@@ -336,11 +336,12 @@ class UserServiceTest {
     @Test
     void shouldRejectAllowedShiftTypes_whenNull() {
         UserUpdateForm form = new UserUpdateForm();
-        form.setId(1L);
+        form.setId(1001L);
         form.setUsername("new");
         form.setEmail("new@x.test");
         form.setName("New");
         form.setAllowedShiftTypes(null);
+        when(userRepository.existsById(any())).thenReturn(true);
         when(userRepository.existsByUsernameIgnoreCaseAndIdNot(any(), any())).thenReturn(false);
         when(userRepository.existsByEmailIgnoreCaseAndIdNot(any(), any())).thenReturn(false);
         when(userRepository.existsByNameIgnoreCaseAndIdNot(any(), any())).thenReturn(false);
