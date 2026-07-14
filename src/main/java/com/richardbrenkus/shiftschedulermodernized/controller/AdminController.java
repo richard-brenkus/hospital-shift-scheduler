@@ -181,6 +181,16 @@ public class AdminController {
         ShiftRequestForm shiftRequestForm = shiftRequestService.getShiftRequestFormByUserId(id);
         prepareModelService.populateUserIndexModelForAdmin(model, shiftRequestForm, true, id);
 
+        String username = userService.getUsernameByUserId(id);
+
+        Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = shiftRequestService.getShiftRequestViewRecord(username);
+        submittedShiftRequestRecord.ifPresentOrElse(record -> {
+                    model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, userService.hasShiftRequest(username));
+                    model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, record);
+                },
+                () -> model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, userService.hasShiftRequest(username))
+        );
+
         return "user/userIndex";
     }
 
