@@ -476,6 +476,7 @@ public class AdminController {
     @ExceptionHandler(CalculationAlreadyRunningException.class)
     public String handleCalculationAlreadyRunning(Model model) {
         prepareModelService.prepareCalculateScheduleModel(model);
+
         model.addAttribute("calculationErrorCode", "error.calculationAlreadyRunning");
 
         return "admin/calculate_schedule_select";

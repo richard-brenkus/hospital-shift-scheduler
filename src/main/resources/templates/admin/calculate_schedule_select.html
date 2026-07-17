@@ -25,8 +25,9 @@
     </header>
 
     <div class="error-red"
-         th:if="${calculationErrorMessage != null}"
-         th:text="${calculationErrorMessage}">
+         th:if="${calculationErrorCode != null}"
+         th:text="#{__${calculationErrorCode}__}">
+        Another schedule calculation is already running.
     </div>
 
     <section class="page-section calculate-schedule-section">
