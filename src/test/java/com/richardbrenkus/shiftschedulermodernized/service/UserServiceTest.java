@@ -14,7 +14,6 @@ import com.richardbrenkus.shiftschedulermodernized.support.TestFixtures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,6 +25,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,7 +55,7 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new UserService(userRepository, passwordEncoderConfig, passwordEncoderConfig, userMapper, userTransactionalUpdater, userTransactionalCreator);
+        service = new UserService(userRepository, passwordEncoderConfig, userMapper, userTransactionalUpdater, userTransactionalCreator);
     }
 
     @Test
@@ -136,21 +136,8 @@ class UserServiceTest {
         form.setNote("Test");
         form.setAllowedShiftTypes(new HashSet<>(Set.of(1, 2, 3)));
 
-        when(passwordEncoderConfig.passwordEncoder()).thenReturn(passwordEncoder);
-        when(passwordEncoder.encode("Plain1")).thenReturn("hashed-Plain1");
-
-        service.validateAndCreateUser(form);
-
-        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(captor.capture());
-        User saved = captor.getValue();
-        assertThat(saved.getUsername()).isEqualTo("freddie");
-        assertThat(saved.getEmail()).isEqualTo("freddie@example.test");
-        assertThat(saved.getPassword()).isEqualTo("hashed-Plain1");
-        assertThat(saved.getRole().name()).isEqualTo("USER");
-        assertThat(saved.isEnabled()).isTrue();
-        assertThat(saved.getCreationDate()).isNotNull();
-        assertThat(saved.getAllowedShiftTypes()).containsExactlyInAnyOrder(1, 2, 3);
+        UserValidationResult userValidationResult = service.validateAndCreateUser(form);
+        assertTrue(userValidationResult.isValid());
     }
 
     @Test

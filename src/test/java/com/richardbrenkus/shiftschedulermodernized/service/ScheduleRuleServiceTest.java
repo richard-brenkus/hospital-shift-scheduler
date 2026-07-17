@@ -34,7 +34,7 @@ class ScheduleRuleServiceTest {
     void shouldReturnTrue_whenTotalShiftCapIsNull() {
         User user = TestFixtures.user(1L, "u");
         CalculationCounters counters = new CalculationCounters();
-        counters.incrementWeekday(user, 1);
+        counters.incrementWeekday(user.getId(), 1);
 
         assertThat(service.isWithinTotalShiftLimit(null, user, counters)).isTrue();
     }
@@ -51,8 +51,8 @@ class ScheduleRuleServiceTest {
     void shouldReturnTrue_whenTotalShiftCountBelowCap() {
         User user = TestFixtures.user(1L, "u");
         CalculationCounters counters = new CalculationCounters();
-        counters.incrementWeekday(user, 1);
-        counters.incrementWeekday(user, 1);
+        counters.incrementWeekday(user.getId(), 1);
+        counters.incrementWeekday(user.getId(), 1);
 
         assertThat(service.isWithinTotalShiftLimit(3, user, counters)).isTrue();
     }
@@ -61,8 +61,8 @@ class ScheduleRuleServiceTest {
     void shouldReturnFalse_whenTotalShiftCountEqualsCap() {
         User user = TestFixtures.user(1L, "u");
         CalculationCounters counters = new CalculationCounters();
-        counters.incrementWeekday(user, 1);
-        counters.incrementWeekend(user, 2);
+        counters.incrementWeekday(user.getId(), 1);
+        counters.incrementWeekend(user.getId(), 2);
 
         assertThat(service.isWithinTotalShiftLimit(2, user, counters)).isFalse();
     }
@@ -90,7 +90,7 @@ class ScheduleRuleServiceTest {
         TestFixtures.attachRequest(user, List.of(),
                 TestFixtures.preference(1, 1, 2, 0, false, List.of()));
         CalculationCounters counters = new CalculationCounters();
-        counters.incrementWeekday(user, 1);
+        counters.incrementWeekday(user.getId(), 1);
 
         assertThat(service.isWithinRequestedWeekdayLimit(user, 1, counters)).isTrue();
     }
@@ -101,7 +101,7 @@ class ScheduleRuleServiceTest {
         TestFixtures.attachRequest(user, List.of(),
                 TestFixtures.preference(1, 1, 1, 0, false, List.of()));
         CalculationCounters counters = new CalculationCounters();
-        counters.incrementWeekday(user, 1);
+        counters.incrementWeekday(user.getId(), 1);
 
         assertThat(service.isWithinRequestedWeekdayLimit(user, 1, counters)).isFalse();
     }
@@ -112,7 +112,7 @@ class ScheduleRuleServiceTest {
         TestFixtures.attachRequest(user, List.of(),
                 TestFixtures.preference(1, 1, 0, 2, false, List.of()));
         CalculationCounters counters = new CalculationCounters();
-        counters.incrementWeekend(user, 1);
+        counters.incrementWeekend(user.getId(), 1);
 
         assertThat(service.isWithinRequestedWeekendLimit(user, 1, counters)).isTrue();
     }
@@ -224,7 +224,7 @@ class ScheduleRuleServiceTest {
         User user = TestFixtures.user(1L, "u");
         TestFixtures.attachRequest(user, List.of());
         CalculationCounters counters = new CalculationCounters();
-        counters.incrementWeekday(user, 1);
+        counters.incrementWeekday(user.getId(), 1);
 
         assertThat(service.isValidWithinTotalShiftLimit(1, user, counters)).isTrue();
     }
@@ -234,7 +234,7 @@ class ScheduleRuleServiceTest {
         User user = TestFixtures.user(1L, "u");
         TestFixtures.attachRequest(user, List.of()); // no preference for shiftType 1
         CalculationCounters counters = new CalculationCounters();
-        counters.incrementWeekday(user, 1);
+        counters.incrementWeekday(user.getId(), 1);
 
         assertThat(service.isValidWithinRequestedWeekdayLimit(user, 1, counters)).isFalse();
     }
@@ -245,8 +245,8 @@ class ScheduleRuleServiceTest {
         ShiftPreference pref = TestFixtures.preference(1, 1, 2, 0, false, List.of());
         TestFixtures.attachRequest(user, List.of(), pref);
         CalculationCounters counters = new CalculationCounters();
-        counters.incrementWeekday(user, 1);
-        counters.incrementWeekday(user, 1);
+        counters.incrementWeekday(user.getId(), 1);
+        counters.incrementWeekday(user.getId(), 1);
 
         assertThat(service.isValidWithinRequestedWeekdayLimit(user, 1, counters)).isTrue();
     }
@@ -257,8 +257,8 @@ class ScheduleRuleServiceTest {
         TestFixtures.attachRequest(user, List.of(),
                 TestFixtures.preference(1, 1, 1, 0, false, List.of()));
         CalculationCounters counters = new CalculationCounters();
-        counters.incrementWeekday(user, 1);
-        counters.incrementWeekday(user, 1);
+        counters.incrementWeekday(user.getId(), 1);
+        counters.incrementWeekday(user.getId(), 1);
 
         assertThat(service.isValidWithinRequestedWeekdayLimit(user, 1, counters)).isFalse();
     }
@@ -269,7 +269,7 @@ class ScheduleRuleServiceTest {
         TestFixtures.attachRequest(user, List.of(),
                 TestFixtures.preference(1, 1, 0, 1, false, List.of()));
         CalculationCounters counters = new CalculationCounters();
-        counters.incrementWeekend(user, 1);
+        counters.incrementWeekend(user.getId(), 1);
 
         assertThat(service.isValidWithinRequestedWeekendLimit(user, 1, counters)).isTrue();
     }

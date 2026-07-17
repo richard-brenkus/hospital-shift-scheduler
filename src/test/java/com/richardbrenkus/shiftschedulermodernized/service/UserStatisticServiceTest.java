@@ -142,7 +142,7 @@ class UserStatisticServiceTest {
         ScheduleMonth month = TestFixtures.emptyScheduleMonth(AUGUST_2026);
         TestFixtures.assign(month, date, 1, user);
         CalculationCounters counters = new CalculationCounters();
-        counters.incrementWeekday(user, 1);
+        counters.incrementWeekday(user.getId(), 1);
 
         Map<Integer, Set<UserStatViewRecord>> result = service.returnQuickUserStats(month, 10, counters);
 
@@ -164,8 +164,8 @@ class UserStatisticServiceTest {
         ScheduleMonth month = TestFixtures.emptyScheduleMonth(AUGUST_2026);
         TestFixtures.assign(month, date, 1, user);
         CalculationCounters counters = new CalculationCounters();
-        counters.incrementWeekday(user, 1);
-        counters.incrementWeekday(user, 1);
+        counters.incrementWeekday(user.getId(), 1);
+        counters.incrementWeekday(user.getId(), 1);
 
         Map<Integer, Set<UserStatViewRecord>> result = service.returnQuickUserStats(month, 2, counters);
 
@@ -196,7 +196,7 @@ class UserStatisticServiceTest {
         ScheduleMonth month = TestFixtures.emptyScheduleMonth(AUGUST_2026);
         TestFixtures.assign(month, date, 1, user);
         CalculationCounters counters = new CalculationCounters();
-        counters.incrementWeekday(user, 1);
+        counters.incrementWeekday(user.getId(), 1);
         when(userRepository.findAll()).thenReturn(List.of(user));
         when(shiftTypeService.getShiftTypes()).thenReturn(List.of(1));
 
@@ -286,8 +286,8 @@ class UserStatisticServiceTest {
         TestFixtures.assign(month, date1, 1, user);
         TestFixtures.assign(month, date2, 1, user);
         CalculationCounters counters = new CalculationCounters();
-        counters.incrementWeekday(user, 1);
-        counters.incrementWeekday(user, 1);
+        counters.incrementWeekday(user.getId(), 1);
+        counters.incrementWeekday(user.getId(), 1);
 
         Map<Integer, Set<UserStatViewRecord>> result = service.returnFullUserStats(month, counters);
 

@@ -1,6 +1,10 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
 import com.richardbrenkus.shiftschedulermodernized.algorithm.*;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.record.CalculatedScheduleDay;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.record.CalculatedScheduleMonth;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.record.ShiftPreferenceCalculationData;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.record.UserCalculationData;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftPreference;
 import com.richardbrenkus.shiftschedulermodernized.entity.StoredScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
@@ -10,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.*;
 import java.util.stream.IntStream;
 
@@ -215,7 +220,7 @@ public class ScheduleRuleService {
             return true;
         }
 
-        return counters.getTotalCount(user) <= shiftCountCap;
+        return counters.getTotalCount(user.getId()) <= shiftCountCap;
     }
 
     boolean isValidWithinRequestedWeekendLimit(User user, int shiftType, CalculationCounters counters) {
@@ -227,7 +232,7 @@ public class ScheduleRuleService {
 
         int requestedWeekendCount = preference == null ? 0 : preference.getWeekendCount();
 
-        int assignedWeekendCount = counters.getWeekendCount(user, shiftType);
+        int assignedWeekendCount = counters.getWeekendCount(user.getId(), shiftType);
 
         return assignedWeekendCount <= requestedWeekendCount;
     }
@@ -241,7 +246,7 @@ public class ScheduleRuleService {
 
         int requestedWeekdayCount = preference == null ? 0 : preference.getWeekdayCount();
 
-        int assignedWeekdayCount = counters.getWeekdayCount(user, shiftType);
+        int assignedWeekdayCount = counters.getWeekdayCount(user.getId(), shiftType);
 
         return assignedWeekdayCount <= requestedWeekdayCount;
     }
@@ -281,6 +286,102 @@ public class ScheduleRuleService {
                 .mapToObj(firstDayOfAdminMonth::minusDays)
                 .toList();
     }
+
+    // Overloaded methods for multithreading:
+    boolean isWithinTotalShiftLimit(
+            Integer shiftCountCap,
+            UserCalculationData user,
+            CalculationCounters counters
+    ) {
+        if (shiftCountCap == null) return true;
+        return counters.getTotalCount(user.userId()) < shiftCountCap;
+    }
+
+    boolean isWithinRequestedWeekdayLimit(
+            UserCalculationData user,
+            int shiftType,
+            CalculationCounters counters
+    ) {
+        ShiftPreferenceCalculationData preference = user.preferenceFor(shiftType).orElse(null);
+        if (preference == null) return false;
+        return preference.weekdayCount() != 0
+                && counters.getWeekdayCount(user.userId(), shiftType) < preference.weekdayCount();
+    }
+
+    boolean isWithinRequestedWeekendLimit(
+            UserCalculationData user,
+            int shiftType,
+            CalculationCounters counters
+    ) {
+        ShiftPreferenceCalculationData preference = user.preferenceFor(shiftType).orElse(null);
+        if (preference == null) return false;
+        return preference.weekendCount() != 0
+                && counters.getWeekendCount(user.userId(), shiftType) < preference.weekendCount();
+    }
+
+    boolean respectsMinimalGap(
+            LocalDate date,
+            int minimalGap,
+            UserCalculationData user,
+            CalculatedScheduleMonth scheduleMonth,
+            int currentShiftType
+    ) {
+        if (date == null
+                || user == null
+                || user.userId() == null
+                || scheduleMonth == null
+                || minimalGap <= 0) {
+            return true;
+        }
+
+        LocalDate startDate = date.minusDays(minimalGap);
+        LocalDate endDate = date.plusDays(minimalGap);
+
+        for (CalculatedScheduleDay day : scheduleMonth.getDays()) {
+            if (day == null || day.getDate() == null || day.getAssignments() == null) continue;
+            LocalDate checkedDate = day.getDate();
+            if (checkedDate.isBefore(startDate) || checkedDate.isAfter(endDate)) continue;
+
+            boolean assignedInsideGap = day.getAssignments().stream()
+                    .filter(Objects::nonNull)
+                    .anyMatch(assignment -> {
+                        boolean sameSlot = checkedDate.equals(date)
+                                && assignment.shiftType() == currentShiftType;
+                        return !sameSlot && Objects.equals(assignment.userId(), user.userId());
+                    });
+
+            if (assignedInsideGap) return false;
+        }
+        return true;
+    }
+
+    boolean respectsPreviousMonthGap(
+            int minimalGap,
+            LocalDate candidateDate,
+            UserCalculationData user,
+            YearMonth calculationMonth
+    ) {
+        if (minimalGap <= 0
+                || candidateDate == null
+                || user == null
+                || calculationMonth == null) {
+            return true;
+        }
+
+        LocalDate firstDay = calculationMonth.atDay(1);
+
+        if (!candidateDate.isBefore(firstDay.plusDays(minimalGap))) {
+            return true;
+        }
+
+        LocalDate earliestAllowed = candidateDate.minusDays(minimalGap);
+
+        return user.previousMonthAssignedDates().stream()
+                .noneMatch(previousDate -> previousDate != null
+                        && !previousDate.isBefore(earliestAllowed)
+                        && previousDate.isBefore(firstDay));
+    }
+
 
 
 }

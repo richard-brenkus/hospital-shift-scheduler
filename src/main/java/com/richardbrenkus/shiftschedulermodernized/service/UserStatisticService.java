@@ -113,14 +113,14 @@ public class UserStatisticService {
                     continue;
                 }
 
-                int totalAssignedForUser = counters.getTotalCount(user);
+                int totalAssignedForUser = counters.getTotalCount(user.getId());
 
                 if (totalAssignedForUser >= shiftCountCap) {
                     continue;
                 }
 
-                int calculatedWeekdays = counters.getWeekdayCount(user, shiftType);
-                int calculatedWeekends = counters.getWeekendCount(user, shiftType);
+                int calculatedWeekdays = counters.getWeekdayCount(user.getId(), shiftType);
+                int calculatedWeekends = counters.getWeekendCount(user.getId(), shiftType);
 
                 int remainingWeekdays = preference.getWeekdayCount() - calculatedWeekdays;
                 int remainingWeekends = preference.getWeekendCount() - calculatedWeekends;
@@ -232,7 +232,7 @@ public class UserStatisticService {
                 }
 
                 boolean notAssignedAnywhere =
-                        counters.getTotalCount(user) == 0;
+                        counters.getTotalCount(user.getId()) == 0;
 
                 if (!notAssignedAnywhere) {
                     continue;
@@ -291,8 +291,8 @@ public class UserStatisticService {
                 int requestedWeekends = preference == null ? 0 : preference.getWeekendCount();
                 boolean anyDateSelected = preference == null || preference.isAnyDateSelected();
 
-                int assignedWeekdays = counters.getWeekdayCount(user, shiftType);
-                int assignedWeekends = counters.getWeekendCount(user, shiftType);
+                int assignedWeekdays = counters.getWeekdayCount(user.getId(), shiftType);
+                int assignedWeekends = counters.getWeekendCount(user.getId(), shiftType);
 
                 UserStatBuilderData builderData =
                         statsByShiftTypeAndUser

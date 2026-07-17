@@ -242,9 +242,9 @@ public class ScheduleValidationService {
                 int shiftType = assignment.getShiftType();
 
                 if (day.isWeekendOrHoliday()) {
-                    counters.incrementWeekend(user, shiftType);
+                    counters.incrementWeekend(user.getId(), shiftType);
                 } else {
-                    counters.incrementWeekday(user, shiftType);
+                    counters.incrementWeekday(user.getId(), shiftType);
                 }
             }
         }
