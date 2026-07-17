@@ -18,6 +18,8 @@ public class ScheduleCalculationExecutorConfig {
         executor.setMaxPoolSize(properties.numberOfThreads());
         executor.setQueueCapacity(0);
         executor.setThreadNamePrefix("schedule-calc-");
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(30);
         executor.initialize();
 
         return executor;

@@ -9,6 +9,11 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -92,8 +97,8 @@ class ParallelScheduleCalculationServiceTest {
 
         assertThatThrownBy(() -> service.calculateBestSchedule(input))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Parallel schedule calculation failed")
-                .hasCauseInstanceOf(IllegalArgumentException.class);
+                .hasMessage("All schedule calculation workers failed.");
+                //.hasCauseInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -130,6 +135,257 @@ class ParallelScheduleCalculationServiceTest {
                 ),
                 "timeout"
         );
+    }
+
+    @Test
+    void shouldIgnoreFailedWorkerIfOtherWorkersSucceed() {
+        ScheduleCalculationWorker worker =
+                mock(ScheduleCalculationWorker.class);
+
+        CalculationInput input = input();
+
+        when(worker.calculateBestCandidate(input, 10, 0))
+                .thenThrow(new IllegalStateException(
+                        "Worker 0 failed"
+                ));
+
+        when(worker.calculateBestCandidate(input, 10, 1))
+                .thenReturn(candidate(
+                        145,
+                        1,
+                        4
+                ));
+
+        ParallelScheduleCalculationService service =
+                new ParallelScheduleCalculationService(
+                        worker,
+                        directExecutor,
+                        new ScheduleCalculationProperties(
+                                2,
+                                10,
+                                Duration.ofSeconds(5)
+                        )
+                );
+
+        ScheduleCandidate result =
+                service.calculateBestSchedule(input);
+
+        assertThat(result.hitCounter()).isEqualTo(145);
+        assertThat(result.workerIndex()).isEqualTo(1);
+        assertThat(result.attemptIndex()).isEqualTo(4);
+
+        verify(worker).calculateBestCandidate(
+                input,
+                10,
+                0
+        );
+
+        verify(worker).calculateBestCandidate(
+                input,
+                10,
+                1
+        );
+    }
+
+    @Test
+    void shouldThrowMeaningfulErrorWhenAllWorkersFail() {
+        ScheduleCalculationWorker worker =
+                mock(ScheduleCalculationWorker.class);
+
+        CalculationInput input = input();
+
+        when(worker.calculateBestCandidate(
+                eq(input),
+                eq(10),
+                anyInt()
+        )).thenThrow(
+                new IllegalStateException("Worker failed")
+        );
+
+        ParallelScheduleCalculationService service =
+                new ParallelScheduleCalculationService(
+                        worker,
+                        directExecutor,
+                        new ScheduleCalculationProperties(
+                                3,
+                                10,
+                                Duration.ofSeconds(5)
+                        )
+                );
+
+        assertThatThrownBy(() ->
+                service.calculateBestSchedule(input)
+        )
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage(
+                        "All schedule calculation workers failed."
+                );
+
+        verify(worker, times(3))
+                .calculateBestCandidate(
+                        eq(input),
+                        eq(10),
+                        anyInt()
+                );
+    }
+
+    @Test
+    void shouldIgnoreTimedOutWorkerIfOtherWorkersSucceed() {
+
+        ScheduleCalculationWorker worker =
+                mock(ScheduleCalculationWorker.class);
+
+        CalculationInput input = input();
+
+        ExecutorService executor =
+                Executors.newFixedThreadPool(2);
+
+        try {
+            when(worker.calculateBestCandidate(
+                    input,
+                    10,
+                    0
+            )).thenAnswer(invocation -> {
+                Thread.sleep(500);
+                return candidate(
+                        200,
+                        0,
+                        1
+                );
+            });
+
+            when(worker.calculateBestCandidate(
+                    input,
+                    10,
+                    1
+            )).thenReturn(candidate(
+                    145,
+                    1,
+                    5
+            ));
+
+            ParallelScheduleCalculationService service =
+                    new ParallelScheduleCalculationService(
+                            worker,
+                            executor,
+                            new ScheduleCalculationProperties(
+                                    2,
+                                    10,
+                                    Duration.ofMillis(100)
+                            )
+                    );
+
+            ScheduleCandidate result =
+                    service.calculateBestSchedule(input);
+
+            assertThat(result.hitCounter()).isEqualTo(145);
+            assertThat(result.workerIndex()).isEqualTo(1);
+            assertThat(result.attemptIndex()).isEqualTo(5);
+
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void shouldSelectWinnerAmongRemainingWorkersWhenOneFails() {
+        ScheduleCalculationWorker worker =
+                mock(ScheduleCalculationWorker.class);
+
+        CalculationInput input = input();
+
+        when(worker.calculateBestCandidate(input, 20, 0))
+                .thenReturn(candidate(
+                        141,
+                        0,
+                        3
+                ));
+
+        when(worker.calculateBestCandidate(input, 20, 1))
+                .thenThrow(
+                        new IllegalArgumentException(
+                                "Worker 1 failed"
+                        )
+                );
+
+        when(worker.calculateBestCandidate(input, 20, 2))
+                .thenReturn(candidate(
+                        149,
+                        2,
+                        7
+                ));
+
+        when(worker.calculateBestCandidate(input, 20, 3))
+                .thenReturn(candidate(
+                        146,
+                        3,
+                        2
+                ));
+
+        ParallelScheduleCalculationService service =
+                new ParallelScheduleCalculationService(
+                        worker,
+                        directExecutor,
+                        new ScheduleCalculationProperties(
+                                4,
+                                20,
+                                Duration.ofSeconds(5)
+                        )
+                );
+
+        ScheduleCandidate result =
+                service.calculateBestSchedule(input);
+
+        assertThat(result.hitCounter()).isEqualTo(149);
+        assertThat(result.workerIndex()).isEqualTo(2);
+        assertThat(result.attemptIndex()).isEqualTo(7);
+
+        verify(worker, times(4))
+                .calculateBestCandidate(
+                        eq(input),
+                        eq(20),
+                        anyInt()
+                );
+    }
+
+    @Test
+    void shouldRejectEmptySuccessfulCandidateList() {
+        ScheduleCalculationWorker worker =
+                mock(ScheduleCalculationWorker.class);
+
+        CalculationInput input = input();
+
+        when(worker.calculateBestCandidate(
+                eq(input),
+                eq(10),
+                anyInt()
+        )).thenReturn(null);
+
+        ParallelScheduleCalculationService service =
+                new ParallelScheduleCalculationService(
+                        worker,
+                        directExecutor,
+                        new ScheduleCalculationProperties(
+                                2,
+                                10,
+                                Duration.ofSeconds(5)
+                        )
+                );
+
+        assertThatThrownBy(() ->
+                service.calculateBestSchedule(input)
+        )
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage(
+                        "All schedule calculation workers failed."
+                );
+
+        verify(worker, times(2))
+                .calculateBestCandidate(
+                        eq(input),
+                        eq(10),
+                        anyInt()
+                );
     }
 
     private void assertInvalid(

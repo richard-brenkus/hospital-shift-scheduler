@@ -1,24 +1,27 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
 import com.richardbrenkus.shiftschedulermodernized.config.SelectionLists;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeName;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeValue;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Profession;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 
+import java.time.YearMonth;
+import java.util.ArrayList;
+
 @Service
+@AllArgsConstructor
 public class PrepareModelService {
 
     private final ShiftTypeService shiftTypeService;
     private final UserService userService;
-
-    public PrepareModelService(ShiftTypeService shiftTypeService, UserService userService) {
-        this.shiftTypeService = shiftTypeService;
-        this.userService = userService;
-    }
+    private final CalculationProfileService calculationProfileService;
 
     public void populateUserIndexModelForUser(Model model, ShiftRequestForm shiftRequestForm, boolean isAdmin, String usernamePassed) {
         model.addAttribute(ModelAttributeName.SHIFT_REQUEST_FORM, shiftRequestForm);
@@ -54,6 +57,21 @@ public class PrepareModelService {
         model.addAttribute(ModelAttributeName.PROFESSIONS, Profession.values());
         model.addAttribute(ModelAttributeName.SHIFT_TYPES, shiftTypeService.getShiftTypes());
         model.addAttribute(ModelAttributeName.ACTION_TYPE, ModelAttributeValue.ACTION_TYPE_UPDATE);
+    }
+
+    public void prepareCalculateScheduleModel(Model model) {
+        CalculationProfileForm calculationProfileForm = CalculationProfileForm.builder()
+                .calculationMonth(YearMonth.now(ApplicationConstants.ZONE_ID).plusMonths(2))
+                .shiftCountCap(5)
+                .gapBetweenShifts(5)
+                .forceFillShiftTypes(new ArrayList<>())
+                .build();
+
+        model.addAttribute(ModelAttributeName.CALCULATION_PROFILE_FORM, calculationProfileForm);
+        model.addAttribute(ModelAttributeName.MONTH_OPTIONS, calculationProfileService.getAvailableCalculationMonths());
+        model.addAttribute(ModelAttributeName.GAP_BETWEEN_SHIFTS, calculationProfileService.getGenericOneToTenList());
+        model.addAttribute(ModelAttributeName.SHIFT_COUNT_MAX, calculationProfileService.getGenericOneToTenList());
+        model.addAttribute(ModelAttributeName.SHIFT_TYPES, calculationProfileService.getAvailableShiftTypes());
     }
 }
 

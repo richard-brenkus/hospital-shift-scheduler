@@ -8,6 +8,7 @@ import com.richardbrenkus.shiftschedulermodernized.config.constants.Profession;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.*;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.*;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
+import com.richardbrenkus.shiftschedulermodernized.exception.CalculationAlreadyRunningException;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ScheduleMapper;
 import com.richardbrenkus.shiftschedulermodernized.service.*;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,10 +20,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.time.Clock;
@@ -312,38 +310,24 @@ public class AdminController {
     @GetMapping("/admin/calculate_schedule_select")
     public String calculateScheduleMenu(Model model) {
 
-        CalculationProfileForm calculationProfileForm = CalculationProfileForm.builder()
-                .calculationMonth(YearMonth.now(ApplicationConstants.ZONE_ID).plusMonths(2))
-                .shiftCountCap(5)
-                .gapBetweenShifts(5)
-                .forceFillShiftTypes(new ArrayList<>())
-                .build();
-
-        model.addAttribute(ModelAttributeName.CALCULATION_PROFILE_FORM, calculationProfileForm);
-        model.addAttribute(ModelAttributeName.MONTH_OPTIONS, calculationProfileService.getAvailableCalculationMonths());
-        model.addAttribute(ModelAttributeName.GAP_BETWEEN_SHIFTS, calculationProfileService.getGenericOneToTenList());
-        model.addAttribute(ModelAttributeName.SHIFT_COUNT_MAX, calculationProfileService.getGenericOneToTenList());
-        model.addAttribute(ModelAttributeName.SHIFT_TYPES, calculationProfileService.getAvailableShiftTypes());
+        prepareModelService.prepareCalculateScheduleModel(model);
 
         return "admin/calculate_schedule_select";
     }
 
     @PostMapping("/admin/new_calculation")
-    public String calculateSchedule(
-            Model model,
-            HttpSession session,
-            @ModelAttribute("calculationProfileForm") CalculationProfileForm calculationProfileForm
-    ) {
+    public String calculateSchedule(Model model, HttpSession session, @ModelAttribute("calculationProfileForm") CalculationProfileForm calculationProfileForm) {
         ScheduleMonth scheduleMonth = scheduleCalculationService.calculateSchedule(calculationProfileForm);
 
         List<Integer> shiftTypes = shiftTypeService.getShiftTypes();
+
         ScheduleEditForm scheduleEditForm = scheduleMapper.toEditForm(scheduleMonth, calculationProfileForm, shiftTypes);
 
-        ScheduleValidationResult scheduleValidationResult = scheduleValidationService.initializeValidationAndUserStats(scheduleMonth);
+        ScheduleValidationResult validationResult = scheduleValidationService.initializeValidationAndUserStats(scheduleMonth);
 
-        userStatisticService.storeFullStatisticsInSession(session, scheduleValidationResult, scheduleEditForm);
+        userStatisticService.storeFullStatisticsInSession(session, validationResult, scheduleEditForm);
 
-        addScheduleTableAttributes(model, scheduleEditForm, scheduleValidationResult);
+        addScheduleTableAttributes(model, scheduleEditForm, validationResult);
 
         return "admin/schedule_table";
     }
@@ -438,7 +422,6 @@ public class AdminController {
         SavedScheduleView savedScheduleView = storedScheduleService.loadSavedScheduleView(selectedMonth);
 
         model.addAttribute("savedSchedule", savedScheduleView);
-        //model.addAttribute("calendar", savedScheduleView);
         model.addAttribute("month", selectedMonth);
         model.addAttribute("year", selectedMonth.getYear());
         model.addAttribute("monthInt", selectedMonth.getMonthValue());
@@ -490,5 +473,12 @@ public class AdminController {
         model.addAttribute("usersWithNoRequestString", String.join(", ", usersWithNoRequest));
     }
 
+    @ExceptionHandler(CalculationAlreadyRunningException.class)
+    public String handleCalculationAlreadyRunning(Model model) {
+        prepareModelService.prepareCalculateScheduleModel(model);
+        model.addAttribute("calculationErrorCode", "error.calculationAlreadyRunning");
+
+        return "admin/calculate_schedule_select";
+    }
 
 }

@@ -24,6 +24,11 @@
         </h1>
     </header>
 
+    <div class="error-red"
+         th:if="${calculationErrorMessage != null}"
+         th:text="${calculationErrorMessage}">
+    </div>
+
     <section class="page-section calculate-schedule-section">
 
         <form th:action="@{/admin/new_calculation}"
