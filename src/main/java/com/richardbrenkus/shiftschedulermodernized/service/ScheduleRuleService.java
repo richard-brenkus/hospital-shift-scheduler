@@ -377,9 +377,10 @@ public class ScheduleRuleService {
         LocalDate earliestAllowed = candidateDate.minusDays(minimalGap);
 
         return user.previousMonthAssignedDates().stream()
-                .noneMatch(previousDate -> previousDate != null
-                        && !previousDate.isBefore(earliestAllowed)
-                        && previousDate.isBefore(firstDay));
+                .noneMatch(previousDate ->
+                        !previousDate.isBefore(earliestAllowed)
+                                && previousDate.isBefore(firstDay)
+                );
     }
 
 
