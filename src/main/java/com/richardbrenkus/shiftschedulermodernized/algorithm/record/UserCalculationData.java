@@ -56,12 +56,8 @@ public record UserCalculationData(
         return date != null && unavailableDates.contains(date);
     }
 
-    public Optional<ShiftPreferenceCalculationData> preferenceFor(
-            int shiftType
-    ) {
-        return Optional.ofNullable(
-                preferencesByShiftType.get(shiftType)
-        );
+    public Optional<ShiftPreferenceCalculationData> preferenceFor(int shiftType) {
+        return Optional.ofNullable(preferencesByShiftType.get(shiftType));
     }
 
     public static Map<Integer, ShiftPreferenceCalculationData>

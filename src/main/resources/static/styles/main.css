@@ -2562,3 +2562,64 @@ img.flag {
     }
 
 }
+
+.confirmation-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.65);
+}
+
+.confirmation-modal {
+    width: min(34rem, 100%);
+    padding: 2rem;
+
+    text-align: center;
+    background: #30343b;
+    border: 1px solid #8b93a1;
+    border-radius: 0.5rem;
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.5);
+}
+
+.confirmation-modal h2 {
+    margin-top: 0;
+}
+
+.confirmation-modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.confirmation-modal-actions form {
+    margin: 0;
+}
+
+#calculationProgressMessage {
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+button:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+.calculation-form-busy {
+    pointer-events: none;
+    opacity: 0.65;
+    cursor: wait;
+}
+
+.calculation-progress {
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+}

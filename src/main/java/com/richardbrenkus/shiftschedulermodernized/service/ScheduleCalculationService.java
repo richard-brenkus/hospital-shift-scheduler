@@ -21,8 +21,7 @@ public class ScheduleCalculationService {
     private final ParallelScheduleCalculationService parallelService;
     private final CalculatedScheduleConverter calculatedScheduleConverter;
 
-    private final AtomicBoolean calculationRunning =
-            new AtomicBoolean(false);
+    private final AtomicBoolean calculationRunning = new AtomicBoolean(false);
 
     public ScheduleMonth calculateSchedule(
             CalculationProfileForm form
@@ -32,17 +31,11 @@ public class ScheduleCalculationService {
         }
 
         try {
-            CalculationInput input =
-                    calculationInputLoader.load(form);
+            CalculationInput input = calculationInputLoader.load(form);
 
-            ScheduleCandidate bestCandidate =
-                    parallelService.calculateBestSchedule(input);
+            ScheduleCandidate bestCandidate = parallelService.calculateBestSchedule(input);
 
-            return calculatedScheduleConverter
-                    .toLegacyScheduleMonth(
-                            bestCandidate,
-                            form
-                    );
+            return calculatedScheduleConverter.toLegacyScheduleMonth(bestCandidate, form);
 
         } finally {
             calculationRunning.set(false);

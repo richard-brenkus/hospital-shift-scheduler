@@ -17,16 +17,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
+
+import static com.richardbrenkus.shiftschedulermodernized.config.constants.ApplicationConstants.*;
 
 @Service
 @RequiredArgsConstructor
 public class StoredScheduleService {
-
-    private static final DateTimeFormatter MONTH_YEAR_FORMATTER = DateTimeFormatter.ofPattern("MM/yyyy");
-    private static final DateTimeFormatter MONTH_YEAR_ID_FORMATTER = DateTimeFormatter.ofPattern("MM/yyyy");
-    private static final DateTimeFormatter MONTH_LABEL_FORMATTER = DateTimeFormatter.ofPattern("MM/yyyy");
 
     private final StoredScheduleDayRepository storedScheduleDayRepository;
     private final ShiftTypeService shiftTypeService;
@@ -121,6 +118,11 @@ public class StoredScheduleService {
         return months.stream()
                 .map(this::toMonthOption)
                 .toList();
+    }
+
+    @Transactional
+    public boolean existsByMonthYearId(String monthYearId) {
+        return storedScheduleDayRepository.existsByMonthYearId(monthYearId);
     }
 
     private SavedScheduleDayView toDayView(YearMonth month, int dayOfMonth, StoredScheduleDay storedDay, List<Integer> shiftTypes) {

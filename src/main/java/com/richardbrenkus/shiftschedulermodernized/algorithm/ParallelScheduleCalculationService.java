@@ -41,49 +41,20 @@ public class ParallelScheduleCalculationService {
         this.properties = properties;
     }
 
-    public ScheduleCandidate calculateBestSchedule(
-            CalculationInput input
-    ) {
+    public ScheduleCandidate calculateBestSchedule(CalculationInput input) {
         validateProperties();
 
         Duration timeout = properties.timeout();
 
-        List<CompletableFuture<ScheduleCandidate>> futures =
-                IntStream.range(
-                                0,
-                                properties.numberOfThreads()
-                        )
+        List<CompletableFuture<ScheduleCandidate>> futures = IntStream.range(0, properties.numberOfThreads())
                         .mapToObj(workerNumber -> {
-                            log.info(
-                                    "Submitting schedule worker {} from thread {}",
-                                    workerNumber,
-                                    Thread.currentThread().getName()
-                            );
+                            log.info("Submitting schedule worker {} from thread {}", workerNumber, Thread.currentThread().getName());
 
-                            return CompletableFuture
-                                    .supplyAsync(
-                                            () -> worker
-                                                    .calculateBestCandidate(
-                                                            input,
-                                                            properties
-                                                                    .attemptsPerThread(),
-                                                            workerNumber
-                                                    ),
-                                            scheduleCalculationExecutor
-                                    )
-                                    .orTimeout(
-                                            timeout.toMillis(),
-                                            TimeUnit.MILLISECONDS
-                                    )
+                            return CompletableFuture.supplyAsync(() -> worker.calculateBestCandidate(input, properties.attemptsPerThread(), workerNumber), scheduleCalculationExecutor)
+                                    .orTimeout(timeout.toMillis(), TimeUnit.MILLISECONDS)
                                     .exceptionally(exception -> {
-                                        Throwable cause =
-                                                unwrapException(exception);
-
-                                        log.error(
-                                                "Schedule worker {} failed or timed out",
-                                                workerNumber,
-                                                cause
-                                        );
+                                        Throwable cause = unwrapException(exception);
+                                        log.error("Schedule worker {} failed or timed out", workerNumber, cause);
 
                                         return null;
                                     });
@@ -112,42 +83,24 @@ public class ParallelScheduleCalculationService {
 
             Throwable cause = unwrapException(exception);
 
-            throw new IllegalStateException(
-                    "Parallel schedule calculation failed unexpectedly.",
-                    cause
-            );
+            throw new IllegalStateException("Parallel schedule calculation failed unexpectedly.", cause);
         }
 
         if (successfulCandidates.isEmpty()) {
-            throw new IllegalStateException(
-                    "All schedule calculation workers failed."
-            );
+            throw new IllegalStateException("All schedule calculation workers failed.");
         }
 
-        ScheduleCandidate winner =
-                successfulCandidates.stream()
-                        .max(
-                                ScheduleCandidateComparators.BY_QUALITY
-                        )
-                        .orElseThrow(() ->
-                                new IllegalStateException(
-                                        "No valid schedule candidate was produced."
-                                )
-                        );
+        ScheduleCandidate winner = successfulCandidates.stream()
+                        .max(ScheduleCandidateComparators.BY_QUALITY)
+                        .orElseThrow(() -> new IllegalStateException("No valid schedule candidate was produced."));
 
-        log.info(
-                "Winning candidate: worker={}, attempt={}, hitCounter={}",
-                winner.workerIndex(),
-                winner.attemptIndex(),
-                winner.hitCounter()
-        );
+        log.info("Winning candidate: worker={}, attempt={}, hitCounter={}", winner.workerIndex(), winner.attemptIndex(), winner.hitCounter());
 
         return winner;
     }
 
     private Throwable unwrapException(Throwable exception) {
-        if (exception instanceof CompletionException
-                && exception.getCause() != null) {
+        if (exception instanceof CompletionException && exception.getCause() != null) {
             return exception.getCause();
         }
 
@@ -156,23 +109,15 @@ public class ParallelScheduleCalculationService {
 
     private void validateProperties() {
         if (properties.numberOfThreads() <= 0) {
-            throw new IllegalStateException(
-                    "numberOfThreads must be positive"
-            );
+            throw new IllegalStateException("numberOfThreads must be positive");
         }
 
         if (properties.attemptsPerThread() <= 0) {
-            throw new IllegalStateException(
-                    "attemptsPerThread must be positive"
-            );
+            throw new IllegalStateException("attemptsPerThread must be positive");
         }
 
-        if (properties.timeout() == null
-                || properties.timeout().isZero()
-                || properties.timeout().isNegative()) {
-            throw new IllegalStateException(
-                    "timeout must be positive"
-            );
+        if (properties.timeout() == null || properties.timeout().isZero() || properties.timeout().isNegative()) {
+            throw new IllegalStateException("timeout must be positive");
         }
     }
 }

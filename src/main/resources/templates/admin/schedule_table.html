@@ -14,6 +14,58 @@
 
 <body>
 
+<div id="existingScheduleSaveConfirmation"
+     class="confirmation-modal-backdrop"
+     th:if="${showExistingScheduleSaveConfirmation}">
+
+    <section class="confirmation-modal"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="existingScheduleSaveConfirmationTitle"
+             aria-describedby="existingScheduleSaveConfirmationMessage">
+
+        <h2 id="existingScheduleSaveConfirmationTitle"
+            th:text="#{schedule.confirmExistingSave.title}">
+            Stored schedule already exists
+        </h2>
+
+        <p id="existingScheduleSaveConfirmationMessage"
+           th:text="#{schedule.confirmExistingSave.message(
+                        ${#temporals.format(
+                            existingScheduleMonth.atDay(1),
+                            'MM/yyyy'
+                        )}
+                    )}">
+            A stored schedule already exists for this month.
+            Do you really want to replace it?
+        </p>
+
+        <div class="confirmation-modal-actions">
+
+            <button type="submit"
+                    form="scheduleEditForm"
+                    th:formaction="@{/admin/save_schedule}"
+                    formmethod="post"
+                    name="confirmed"
+                    value="true"
+                    class="standard-button"
+                    th:text="#{button.confirm}">
+                Confirm
+            </button>
+
+            <button type="button"
+                    class="standard-button"
+                    onclick="closeExistingScheduleSaveConfirmation()"
+                    th:text="#{button.cancel}">
+                Cancel
+            </button>
+
+        </div>
+
+    </section>
+
+</div>
+
 <button class="openbtn" onclick="openNav()">menu</button>
 
 <main id="main" class="centered schedule-tablet-wrapper">
@@ -171,7 +223,8 @@
         </form>
     </section>
 
-    <form th:action="@{/admin/evaluate_edit}"
+    <form id="scheduleEditForm"
+          th:action="@{/admin/evaluate_edit}"
           method="post"
           th:object="${scheduleEditForm}"
           class="schedule-edit-form">
@@ -494,6 +547,16 @@
 
     function closeNav() {
         document.getElementById("adminSidebar").style.width = "0";
+    }
+
+    function closeExistingScheduleSaveConfirmation() {
+        const modal = document.getElementById(
+            "existingScheduleSaveConfirmation"
+        );
+
+        if (modal !== null) {
+            modal.style.display = "none";
+        }
     }
 </script>
 

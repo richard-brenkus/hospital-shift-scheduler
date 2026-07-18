@@ -28,6 +28,8 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.*;
 
+import static com.richardbrenkus.shiftschedulermodernized.config.constants.ApplicationConstants.MONTH_YEAR_FORMATTER;
+
 @Controller
 @RequiredArgsConstructor
 public class AdminController {
@@ -316,7 +318,37 @@ public class AdminController {
     }
 
     @PostMapping("/admin/new_calculation")
-    public String calculateSchedule(Model model, HttpSession session, @ModelAttribute("calculationProfileForm") CalculationProfileForm calculationProfileForm) {
+    public String calculateSchedule(Model model, HttpSession session, @ModelAttribute("calculationProfileForm") CalculationProfileForm calculationProfileForm, @RequestParam(name = "confirmed", defaultValue = "false") boolean confirmed) {
+        String monthYearId = calculationProfileForm.getCalculationMonth().format(MONTH_YEAR_FORMATTER);
+
+        boolean storedScheduleExists = storedScheduleService.existsByMonthYearId(monthYearId);
+
+        if (calculationProfileForm.getCalculationMonth() == null) {
+            prepareModelService.prepareCalculateScheduleModel(model);
+            model.addAttribute("calculationProfileForm", calculationProfileForm);
+            model.addAttribute("calculationErrorCode", "error.calculationMonthRequired");
+
+            return "admin/calculate_schedule_select";
+        }
+
+        if (storedScheduleExists && !confirmed) {
+            /*
+             * Recreate all lists and other attributes required by
+             * calculate_schedule_select.html.
+             */
+            prepareModelService.prepareCalculateScheduleModel(model);
+
+            /*
+             * Make sure the submitted values are retained if the preparation
+             * service creates a new CalculationProfileForm.
+             */
+            model.addAttribute("calculationProfileForm", calculationProfileForm);
+            model.addAttribute("showExistingScheduleConfirmation", true);
+            model.addAttribute("existingScheduleMonth", calculationProfileForm.getCalculationMonth());
+
+            return "admin/calculate_schedule_select";
+        }
+
         ScheduleMonth scheduleMonth = scheduleCalculationService.calculateSchedule(calculationProfileForm);
 
         List<Integer> shiftTypes = shiftTypeService.getShiftTypes();
@@ -347,7 +379,7 @@ public class AdminController {
     public String recalculateSchedule(Model model, HttpSession session, @ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm) {
         CalculationProfileForm calculationProfileForm = scheduleEditForm.toCalculationProfileForm();
 
-        return calculateSchedule(model, session, calculationProfileForm);
+        return calculateSchedule(model, session, calculationProfileForm, true);
     }
 
     @GetMapping("/admin/show_full_current_statistics")
@@ -373,19 +405,30 @@ public class AdminController {
     }
 
     @PostMapping("/admin/save_schedule")
-    public String saveSchedule(Model model, HttpSession session, @ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm) {
-        ScheduleValidationResult validationResult = scheduleValidationService.validateSchedule(scheduleEditForm);
+    public String saveSchedule(Model model, HttpSession session, @ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm, @RequestParam(name = "confirmed", defaultValue = "false") boolean confirmed) {
 
+        ScheduleValidationResult validationResult = scheduleValidationService.validateSchedule(scheduleEditForm);
         if (validationResult.isErrorsExist()) {
             userStatisticService.storeFullStatisticsInSession(session, validationResult, scheduleEditForm);
-
             addScheduleTableAttributes(model, scheduleEditForm, validationResult);
 
             return "admin/schedule_table";
         }
 
-        ScheduleMonth scheduleMonth = scheduleMapper.toScheduleMonth(scheduleEditForm, scheduleEditForm.toCalculationProfileForm());
+        String monthYearId = scheduleEditForm.getMonth().format(MONTH_YEAR_FORMATTER);
+        boolean storedScheduleExists = storedScheduleService.existsByMonthYearId(monthYearId);
+        if (storedScheduleExists && !confirmed) {
+            userStatisticService.storeFullStatisticsInSession(session, validationResult, scheduleEditForm);
+            addScheduleTableAttributes(model, scheduleEditForm, validationResult);
 
+            model.addAttribute("scheduleEditForm", scheduleEditForm);
+            model.addAttribute("existingScheduleMonth", scheduleEditForm.getMonth());
+            model.addAttribute("showExistingScheduleSaveConfirmation", true);
+
+            return "admin/schedule_table";
+        }
+
+        ScheduleMonth scheduleMonth = scheduleMapper.toScheduleMonth(scheduleEditForm, scheduleEditForm.toCalculationProfileForm());
         storedScheduleService.saveSchedule(scheduleMonth);
 
         userStatisticService.replaceStatsForMonth(scheduleEditForm.getMonth(), validationResult.getFullUserStatsByShiftType());

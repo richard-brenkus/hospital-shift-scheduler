@@ -14,4 +14,10 @@ public final class ApplicationConstants {
 
     public static final DateTimeFormatter FILE_TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
+    public static final DateTimeFormatter MONTH_YEAR_FORMATTER = DateTimeFormatter.ofPattern("MM/yyyy");
+
+    public static final DateTimeFormatter MONTH_YEAR_ID_FORMATTER = DateTimeFormatter.ofPattern("MM/yyyy");
+
+    public static final DateTimeFormatter MONTH_LABEL_FORMATTER = DateTimeFormatter.ofPattern("MM/yyyy");
+
 }

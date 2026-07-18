@@ -14,9 +14,81 @@
 
 <body>
 
+<div id="existingScheduleConfirmationModal"
+     class="confirmation-modal-backdrop"
+     th:if="${showExistingScheduleConfirmation}">
+
+    <section class="confirmation-modal"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="existingScheduleConfirmationTitle">
+
+        <h2 id="existingScheduleConfirmationTitle"
+            th:text="#{schedule.confirmExistingCalculation.title}">
+            Schedule already exists
+        </h2>
+
+        <p th:text="#{schedule.confirmExistingCalculation.message(
+                ${existingScheduleMonth}
+        )}">
+            A stored schedule already exists for this month.
+            Do you really want to start another calculation?
+        </p>
+
+        <div class="confirmation-modal-actions">
+
+            <form id="confirmedCalculationForm"
+                  th:action="@{/admin/new_calculation}"
+                  method="post"
+                  th:object="${calculationProfileForm}"
+                  onsubmit="return showCalculationProgress(this);">
+
+                <input type="hidden"
+                       th:field="*{calculationMonth}"/>
+
+                <input type="hidden"
+                       th:field="*{shiftCountCap}"/>
+
+                <input type="hidden"
+                       th:field="*{gapBetweenShifts}"/>
+
+                <input type="hidden"
+                       th:field="*{sortByDatesAmount}"/>
+
+                <input type="hidden"
+                       name="confirmed"
+                       value="true"/>
+
+                <input th:each="shiftType : *{forceFillShiftTypes}"
+                       type="hidden"
+                       name="forceFillShiftTypes"
+                       th:value="${shiftType}"/>
+
+                <button type="submit"
+                        class="standard-button calculation-submit-button"
+                        th:text="#{button.confirm}">
+                    Confirm
+                </button>
+
+            </form>
+
+            <button type="button"
+                    class="standard-button"
+                    onclick="closeExistingScheduleConfirmation()"
+                    th:text="#{button.cancel}">
+                Cancel
+            </button>
+
+        </div>
+
+    </section>
+
+</div>
+
 <button class="openbtn" onclick="openNav()">menu</button>
 
-<main id="main" class="centered calculate-schedule-wrapper">
+<main id="main"
+      class="centered calculate-schedule-wrapper">
 
     <header class="page-header">
         <h1 data-th-text="#{calcSchedMenu.header}">
@@ -24,17 +96,34 @@
         </h1>
     </header>
 
+    <!-- Server-side error returned when another calculation is already active. -->
     <div class="error-red"
          th:if="${calculationErrorCode != null}"
-         th:text="#{__${calculationErrorCode}__}">
+         th:text="#{__${calculationErrorCode}__}"
+         role="alert">
         Another schedule calculation is already running.
+    </div>
+
+    <!--
+        Initially hidden. JavaScript displays this immediately before either
+        calculation form is submitted.
+    -->
+    <div id="calculationProgressMessage"
+         class="calculation-progress"
+         style="display: none;"
+         role="status"
+         aria-live="polite"
+         th:text="#{schedule.calculation.inProgress}">
+        Schedule calculation in progress. Please wait...
     </div>
 
     <section class="page-section calculate-schedule-section">
 
-        <form th:action="@{/admin/new_calculation}"
+        <form id="newCalculationForm"
+              th:action="@{/admin/new_calculation}"
               method="post"
-              th:object="${calculationProfileForm}">
+              th:object="${calculationProfileForm}"
+              onsubmit="return showCalculationProgress(this);">
 
             <table class="table-no-lines calculate-schedule-table">
 
@@ -147,7 +236,7 @@
 
             <div class="form-actions">
                 <button type="submit"
-                        class="standard-button"
+                        class="standard-button calculation-submit-button"
                         data-th-text="#{calcSchedMenu.calculate}">
                     Calculate
                 </button>
@@ -170,12 +259,76 @@
 <div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar}"></div>
 
 <script>
+    let calculationSubmissionStarted = false;
+
     function openNav() {
         document.getElementById("adminSidebar").style.width = "250px";
     }
 
     function closeNav() {
         document.getElementById("adminSidebar").style.width = "0";
+    }
+
+    function closeExistingScheduleConfirmation() {
+        const modal = document.getElementById(
+            "existingScheduleConfirmationModal"
+        );
+
+        if (modal !== null) {
+            modal.style.display = "none";
+        }
+    }
+
+    function showCalculationProgress(submittedForm) {
+        if (calculationSubmissionStarted) {
+            return false;
+        }
+
+        calculationSubmissionStarted = true;
+
+        /*
+         * Hide the confirmation dialog.
+         */
+        closeExistingScheduleConfirmation();
+
+        /*
+         * Display the progress message.
+         */
+        const progressMessage =
+            document.getElementById("calculationProgressMessage");
+
+        if (progressMessage !== null) {
+            progressMessage.style.display = "block";
+
+            progressMessage.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+        }
+
+        /*
+         * Disable buttons to prevent duplicate submissions.
+         *
+         * Do not disable input, select, or textarea elements:
+         * disabled form controls are omitted from the POST request.
+         */
+        document.querySelectorAll("button")
+            .forEach(button => {
+                button.disabled = true;
+            });
+
+        submittedForm.setAttribute("aria-busy", "true");
+        submittedForm.classList.add("calculation-form-busy");
+
+        /*
+         * Give the browser time to hide the modal and render the
+         * progress message before submitting.
+         */
+        window.setTimeout(() => {
+            submittedForm.submit();
+        }, 75);
+
+        return false;
     }
 </script>
 

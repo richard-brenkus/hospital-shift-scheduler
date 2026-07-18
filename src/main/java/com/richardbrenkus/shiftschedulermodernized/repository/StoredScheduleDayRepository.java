@@ -12,6 +12,8 @@ public interface StoredScheduleDayRepository extends JpaRepository<StoredSchedul
 
     List<StoredScheduleDay> findByMonthYearIdOrderByDayIntegerAsc(String monthYearId);
 
+    boolean existsByMonthYearId(String monthYearId);
+
     @Query("select distinct d.monthYearId from StoredScheduleDay d")
     List<String> findDistinctMonthYearIds();
 
