@@ -151,6 +151,7 @@ public class UserStatisticService {
                         .assignedWeekends(calculatedWeekends)
                         .assignedTotal(calculatedWeekdays + calculatedWeekends)
                         .month(scheduleMonth.getMonth())
+                        .allowedShiftTypesAsCommaSeparatedString(this.allowedShiftTypesToCommaSeparatedString(user))
                         .build();
 
                 userStatMap
@@ -574,5 +575,11 @@ public class UserStatisticService {
                 .filter(preference -> preference.getShiftType() == shiftType)
                 .findFirst()
                 .orElse(null);
+    }
+
+    private String allowedShiftTypesToCommaSeparatedString(User user) {
+        return user.getAllowedShiftTypes().stream()
+                .map(shiftType -> Integer.toString(shiftType))
+                .collect(Collectors.joining(", "));
     }
 }

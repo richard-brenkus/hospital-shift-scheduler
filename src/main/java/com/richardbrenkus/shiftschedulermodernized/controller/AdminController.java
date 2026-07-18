@@ -40,7 +40,6 @@ public class AdminController {
     private final ShiftTypeService shiftTypeService;
     private final ShiftRequestService shiftRequestService;
     private final PrepareModelService prepareModelService;
-    private final CalculationProfileService calculationProfileService;
     private final ScheduleCalculationService scheduleCalculationService;
     private final ScheduleValidationService scheduleValidationService;
     private final ScheduleMapper scheduleMapper;

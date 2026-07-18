@@ -168,7 +168,7 @@
                     <td class="centered" th:text="${stat.requestedWeekends}">0</td>
                     <td class="centered" th:if="${stat.anyDateSelected}" data-th-text="#{scheduleTable.yes}">YES</td>
                     <td class="centered" th:if="${!stat.anyDateSelected}" data-th-text="#{scheduleTable.no}">NO</td>
-                    <td class="centered" th:text="${stat.user != null ? stat.user.note : ''}"></td>
+                    <td class="centered" th:text="${stat.user != null ? stat.allowedShiftTypesAsCommaSeparatedString : ''}"></td>
                 </tr>
             </th:block>
             </tbody>

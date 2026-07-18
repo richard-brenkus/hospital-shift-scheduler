@@ -32,7 +32,9 @@ public record UserStatViewRecord(
 
         Set<Integer> assignedDateDays,
 
-        YearMonth month
+        YearMonth month,
+
+        String allowedShiftTypesAsCommaSeparatedString
 ) {
 
     public UserStatViewRecord withAssignedTotalAllShiftTypes(int assignedTotalAllShiftTypes) {
