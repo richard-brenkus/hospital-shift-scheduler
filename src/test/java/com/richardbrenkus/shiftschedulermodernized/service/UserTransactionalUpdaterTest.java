@@ -1,6 +1,7 @@
 
 package com.richardbrenkus.shiftschedulermodernized.service;
 
+import com.richardbrenkus.shiftschedulermodernized.activity.ActivityPublisher;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserUpdateForm;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
@@ -28,6 +29,9 @@ class UserTransactionalUpdaterTest {
 
     @Mock
     private EntityManager entityManager;
+
+    @Mock
+    ActivityPublisher activityPublisher;
 
     @InjectMocks
     private UserTransactionalUpdater updater;

@@ -1,5 +1,7 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
+import com.richardbrenkus.shiftschedulermodernized.activity.ActivityPublisher;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.ActivityType;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserRegisterForm;
@@ -22,6 +24,7 @@ public class UserTransactionalCreator {
     private final UserRepository userRepository;
     private final EntityManager entityManager;
     private final PasswordEncoder passwordEncoder;
+    private final ActivityPublisher activityPublisher;
 
     @Transactional
     public void createUser(UserRegisterForm form) {
@@ -42,5 +45,12 @@ public class UserTransactionalCreator {
 
         userRepository.save(user);
         entityManager.flush();
+
+        activityPublisher.publishSuccess(
+                ActivityType.USER_CREATED,
+                "User",
+                String.valueOf(user.getId()),
+                "Created user '" + user.getUsername() + "'"
+        );
     }
 }

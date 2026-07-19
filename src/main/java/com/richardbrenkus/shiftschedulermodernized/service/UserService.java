@@ -53,9 +53,14 @@ public class UserService {
         String newEncodedPassword = encoder.passwordEncoder().encode(newPassword);
 
         user.setPassword(newEncodedPassword);
-        userRepository.save(user);
+        userRepository.saveAndFlush(user);
 
-        activityPublisher.publishSuccess(ActivityType.PASSWORD_CHANGED, "User", user.getId().toString(), "User password changed");
+        activityPublisher.publishSuccess(
+                ActivityType.PASSWORD_CHANGED,
+                "User",
+                user.getId().toString(),
+                "User password changed"
+        );
     }
 
     public boolean hasShiftRequest(String username) {
@@ -132,7 +137,17 @@ public class UserService {
     }
 
     public void deleteUser(User user) {
+        Long userId = user.getId();
+
         userRepository.delete(user);
+        userRepository.flush();
+
+        activityPublisher.publishSuccess(
+                ActivityType.USER_DELETED,
+                "User",
+                userId.toString(),
+                "User account deleted"
+        );
     }
 
     public List<User> getAllUsersWithShiftRequestByNameAsc() {

@@ -100,7 +100,7 @@ class UserServiceTest {
         service.changeUserPassword("freddie", "newpass");
 
         assertThat(user.getPassword()).isEqualTo("encoded-newpass");
-        verify(userRepository).save(user);
+        verify(userRepository).saveAndFlush(user);
     }
 
     @Test

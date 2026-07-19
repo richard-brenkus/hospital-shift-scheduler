@@ -1,5 +1,6 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
+import com.richardbrenkus.shiftschedulermodernized.activity.ActivityPublisher;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.CalculatedScheduleConverter;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.CalculationInputLoader;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ParallelScheduleCalculationService;
@@ -39,6 +40,9 @@ class ScheduleCalculationServiceTest {
 
     @Mock
     private CalculatedScheduleConverter calculatedScheduleConverter;
+
+    @Mock
+    private ActivityPublisher activityPublisher;
 
     @InjectMocks
     private ScheduleCalculationService service;
