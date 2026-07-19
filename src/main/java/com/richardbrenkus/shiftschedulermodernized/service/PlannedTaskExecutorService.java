@@ -58,7 +58,7 @@ public class PlannedTaskExecutorService {
         shiftRequestService.deleteAllShiftRequests();
 
         task.setActive(false);
-        cleanupTaskRepository.save(task);
+        cleanupTaskRepository.saveAndFlush(task);
     }
 
     private void executeReminderTaskIfDue(LocalDateTime now) {
@@ -84,6 +84,6 @@ public class PlannedTaskExecutorService {
             task.setStartSendingTime(task.getStartSendingTime().plusDays(task.getFrequencyInDays()));
         }
 
-        sendReminderTaskRepository.save(task);
+        sendReminderTaskRepository.saveAndFlush(task);
     }
 }

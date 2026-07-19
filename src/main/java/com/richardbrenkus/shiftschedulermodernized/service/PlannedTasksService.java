@@ -1,5 +1,7 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
+import com.richardbrenkus.shiftschedulermodernized.activity.ActivityPublisher;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.ActivityType;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.CleanupTaskForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.SendReminderTaskForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.CleanupTaskRecord;
@@ -22,6 +24,7 @@ public class PlannedTasksService {
 
     private final CleanupTaskRepository cleanupTaskRepository;
     private final SendReminderTaskRepository sendReminderTaskRepository;
+    private final ActivityPublisher activityPublisher;
 
     public void saveCleanupTask(CleanupTaskForm form) {
 
@@ -49,7 +52,14 @@ public class PlannedTasksService {
             task.setCreationTime(LocalDateTime.now());
         }
 
-        cleanupTaskRepository.save(task);
+        cleanupTaskRepository.saveAndFlush(task);
+
+        activityPublisher.publishSuccess(
+                ActivityType.ADMIN_SETTINGS_CHANGED,
+                "CleanupTask",
+                String.valueOf(task.getId()),
+                "Cleanup task configuration updated"
+        );
     }
 
     public void saveSendReminderTask(SendReminderTaskForm form) {
@@ -81,7 +91,14 @@ public class PlannedTasksService {
             task.setCreationTime(LocalDateTime.now());
         }
 
-        sendReminderTaskRepository.save(task);
+        sendReminderTaskRepository.saveAndFlush(task);
+
+        activityPublisher.publishSuccess(
+                ActivityType.ADMIN_SETTINGS_CHANGED,
+                "SendReminderTask",
+                String.valueOf(task.getId()),
+                "Reminder task configuration updated"
+        );
     }
 
     public boolean hasDayError(SendReminderTaskForm form) {
@@ -153,7 +170,14 @@ public class PlannedTasksService {
         cleanupTaskRepository.findAll().forEach(task -> {
             if (task.isActive()) {
                 task.setActive(false);
-                cleanupTaskRepository.save(task);
+                cleanupTaskRepository.saveAndFlush(task);
+
+                activityPublisher.publishSuccess(
+                        ActivityType.ADMIN_SETTINGS_CHANGED,
+                        "CleanupTask",
+                        String.valueOf(task.getId()),
+                        "Cleanup task disabled"
+                );
             }
         });
     }
@@ -162,7 +186,14 @@ public class PlannedTasksService {
         sendReminderTaskRepository.findAll().forEach(task -> {
             if (task.isActive()) {
                 task.setActive(false);
-                sendReminderTaskRepository.save(task);
+                sendReminderTaskRepository.saveAndFlush(task);
+
+                activityPublisher.publishSuccess(
+                        ActivityType.ADMIN_SETTINGS_CHANGED,
+                        "SendReminderTask",
+                        null,
+                        "Reminder task disabled"
+                );
             }
         });
     }

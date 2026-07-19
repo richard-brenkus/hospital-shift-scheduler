@@ -18,7 +18,6 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.StreamSupport;
 
 @Service
 @AllArgsConstructor
@@ -117,7 +116,7 @@ public class UserService {
     }
 
     public List<User> getAllUsersWithoutAdminByNameAsc() {
-        return StreamSupport.stream(userRepository.findAll().spliterator(), false)
+        return userRepository.findAll().stream()
                 .filter(user -> !user.isAdmin())
                 .sorted(Comparator.comparing(User::getName))
                 .toList();
@@ -137,20 +136,20 @@ public class UserService {
     }
 
     public List<User> getAllUsersWithShiftRequestByNameAsc() {
-        return StreamSupport.stream(userRepository.findAll().spliterator(), false)
+        return userRepository.findAll().stream()
                 .filter(User::hasShiftRequest)
                 .sorted(Comparator.comparing(User::getName))
                 .toList();
     }
 
     public List<User> getAllUsersAndAdminsByNameAsc() {
-        return StreamSupport.stream(userRepository.findAll().spliterator(), false)
+        return userRepository.findAll().stream()
                 .sorted(Comparator.comparing(User::getName))
                 .toList();
     }
 
     public List<UserViewRecord> getAllUserSummaryViewRecordsByNameAsc() {
-        return StreamSupport.stream(userRepository.findAll().spliterator(), false)
+        return userRepository.findAll().stream()
                 .sorted(Comparator.comparing(User::getName))
                 .map(userMapper::entityToUserViewRecord)
                 .toList();
@@ -204,7 +203,7 @@ public class UserService {
     @Transactional
     public List<UserViewRecord> findAllUsersForSelectionByNameAsc() {
 
-        return StreamSupport.stream(userRepository.findAll().spliterator(), false)
+        return userRepository.findAll().stream()
                 .sorted(Comparator.comparing(User::getName))
                 .map(userMapper::entityToUserViewRecord)
                 .toList();

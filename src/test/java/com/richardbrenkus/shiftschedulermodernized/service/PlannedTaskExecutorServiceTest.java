@@ -73,7 +73,7 @@ class PlannedTaskExecutorServiceTest {
 
         verify(shiftRequestService).deleteAllShiftRequests();
         assertThat(cleanup.isActive()).isFalse();
-        verify(cleanupTaskRepository).save(cleanup);
+        verify(cleanupTaskRepository).saveAndFlush(cleanup);
     }
 
     @Test
@@ -136,7 +136,7 @@ class PlannedTaskExecutorServiceTest {
         assertThat(reminder.isActive()).isTrue();
         assertThat(reminder.getStartSendingTime())
                 .isEqualTo(NOW.minusMinutes(10).plusDays(2));
-        verify(sendReminderTaskRepository).save(reminder);
+        verify(sendReminderTaskRepository).saveAndFlush(reminder);
     }
 
     @Test
@@ -160,7 +160,7 @@ class PlannedTaskExecutorServiceTest {
         verify(emailReminderService).sendShiftRequestReminderEmails(20);
         assertThat(reminder.getCounter()).isEqualTo(2);
         assertThat(reminder.isActive()).isFalse();
-        verify(sendReminderTaskRepository).save(reminder);
+        verify(sendReminderTaskRepository).saveAndFlush(reminder);
     }
 
     @Test

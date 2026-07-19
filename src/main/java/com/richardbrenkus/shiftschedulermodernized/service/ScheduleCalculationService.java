@@ -23,9 +23,7 @@ public class ScheduleCalculationService {
 
     private final AtomicBoolean calculationRunning = new AtomicBoolean(false);
 
-    public ScheduleMonth calculateSchedule(
-            CalculationProfileForm form
-    ) {
+    public ScheduleMonth calculateSchedule(CalculationProfileForm form) {
         if (!calculationRunning.compareAndSet(false, true)) {
             throw new CalculationAlreadyRunningException("Another schedule calculation is already running.");
         }

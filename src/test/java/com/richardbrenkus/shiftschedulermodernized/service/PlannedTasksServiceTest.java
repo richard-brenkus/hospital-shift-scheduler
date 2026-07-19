@@ -1,5 +1,6 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
+import com.richardbrenkus.shiftschedulermodernized.activity.ActivityPublisher;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.CleanupTaskForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.SendReminderTaskForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.CleanupTaskRecord;
@@ -34,6 +35,9 @@ class PlannedTasksServiceTest {
     @Mock
     private SendReminderTaskRepository sendReminderTaskRepository;
 
+    @Mock
+    private ActivityPublisher activityPublisher;
+
     @InjectMocks
     private PlannedTasksService service;
 
@@ -52,7 +56,7 @@ class PlannedTasksServiceTest {
         service.saveCleanupTask(form);
 
         assertThat(activeExisting.isActive()).isFalse();
-        verify(cleanupTaskRepository).save(activeExisting);
+        verify(cleanupTaskRepository).saveAndFlush(activeExisting);
         verify(cleanupTaskRepository, never()).save(inactiveExisting);
     }
 
@@ -69,7 +73,7 @@ class PlannedTasksServiceTest {
         service.saveCleanupTask(form);
 
         ArgumentCaptor<CleanupTask> captor = ArgumentCaptor.forClass(CleanupTask.class);
-        verify(cleanupTaskRepository).save(captor.capture());
+        verify(cleanupTaskRepository).saveAndFlush(captor.capture());
         CleanupTask saved = captor.getValue();
         assertThat(saved.isActive()).isTrue();
         LocalDateTime expected = expectedNextMonthDateTime(10, 6, 45);
@@ -90,7 +94,7 @@ class PlannedTasksServiceTest {
         service.saveCleanupTask(form);
 
         ArgumentCaptor<CleanupTask> captor = ArgumentCaptor.forClass(CleanupTask.class);
-        verify(cleanupTaskRepository).save(captor.capture());
+        verify(cleanupTaskRepository).saveAndFlush(captor.capture());
 
         YearMonth nextMonth = YearMonth.now().plusMonths(1);
         LocalDateTime expected = LocalDateTime.of(nextMonth.atEndOfMonth(), java.time.LocalTime.MAX);
@@ -115,7 +119,7 @@ class PlannedTasksServiceTest {
         service.saveCleanupTask(form);
 
         // deactivateAllCleanupTasks saves it once, and then final save reactivates+persists
-        verify(cleanupTaskRepository, times(2)).save(existing);
+        verify(cleanupTaskRepository, times(2)).saveAndFlush(existing);
         assertThat(existing.isActive()).isTrue();
     }
 
@@ -132,7 +136,7 @@ class PlannedTasksServiceTest {
         service.saveSendReminderTask(form);
 
         assertThat(activeExisting.isActive()).isFalse();
-        verify(sendReminderTaskRepository).save(activeExisting);
+        verify(sendReminderTaskRepository).saveAndFlush(activeExisting);
     }
 
     @Test
@@ -151,7 +155,7 @@ class PlannedTasksServiceTest {
         service.saveSendReminderTask(form);
 
         ArgumentCaptor<SendReminderTask> captor = ArgumentCaptor.forClass(SendReminderTask.class);
-        verify(sendReminderTaskRepository).save(captor.capture());
+        verify(sendReminderTaskRepository).saveAndFlush(captor.capture());
         SendReminderTask saved = captor.getValue();
         assertThat(saved.isActive()).isTrue();
         assertThat(saved.getRepetitions()).isEqualTo(3);

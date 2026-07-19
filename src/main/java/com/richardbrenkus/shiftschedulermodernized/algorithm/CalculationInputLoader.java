@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.IntStream;
-import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -45,7 +44,7 @@ public class CalculationInputLoader {
         Map<Integer, StoredScheduleDay> previousStoredDays = scheduleRuleService.loadPreviousStoredScheduleDays(month.atDay(1), form.getGapBetweenShifts());
         Map<Long, Set<LocalDate>> previousDatesByUser = mapPreviousAssignmentsByUser(month, previousStoredDays);
 
-        List<UserCalculationData> users = StreamSupport.stream(userRepository.findAll().spliterator(), false)
+        List<UserCalculationData> users = userRepository.findAll().stream()
                 .filter(User::isEnabled)
                 .filter(User::hasShiftRequest)
                 .map(user -> userCalculationDataMapper.toCalculationData(user, previousDatesByUser.getOrDefault(user.getId(), Set.of())))
