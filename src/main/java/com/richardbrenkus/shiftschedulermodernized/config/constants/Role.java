@@ -2,7 +2,8 @@ package com.richardbrenkus.shiftschedulermodernized.config.constants;
 
 public enum Role {
     USER,
-    ADMIN;
+    ADMIN,
+    SYSTEM;
 
     public String asAuthority() {
         return "ROLE_" + this.name();

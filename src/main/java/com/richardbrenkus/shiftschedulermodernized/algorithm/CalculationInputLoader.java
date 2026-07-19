@@ -42,47 +42,21 @@ public class CalculationInputLoader {
         List<Integer> priorities = IntStream.rangeClosed(1, 10).boxed().toList();
         List<LocalDate> holidays = getHolidaysCzechRepublic(month);
 
-        Map<Integer, StoredScheduleDay> previousStoredDays =
-                scheduleRuleService.loadPreviousStoredScheduleDays(
-                        month.atDay(1),
-                        form.getGapBetweenShifts()
-                );
+        Map<Integer, StoredScheduleDay> previousStoredDays = scheduleRuleService.loadPreviousStoredScheduleDays(month.atDay(1), form.getGapBetweenShifts());
+        Map<Long, Set<LocalDate>> previousDatesByUser = mapPreviousAssignmentsByUser(month, previousStoredDays);
 
-        Map<Long, Set<LocalDate>> previousDatesByUser =
-                mapPreviousAssignmentsByUser(month, previousStoredDays);
-
-        List<UserCalculationData> users = StreamSupport.stream(
-                        userRepository.findAll().spliterator(), false)
+        List<UserCalculationData> users = StreamSupport.stream(userRepository.findAll().spliterator(), false)
                 .filter(User::isEnabled)
                 .filter(User::hasShiftRequest)
-                .map(user -> userCalculationDataMapper.toCalculationData(
-                        user,
-                        previousDatesByUser.getOrDefault(user.getId(), Set.of())
-                ))
+                .map(user -> userCalculationDataMapper.toCalculationData(user, previousDatesByUser.getOrDefault(user.getId(), Set.of())))
                 .toList();
 
-        CalculationProfile profile = new CalculationProfile(
-                form.getShiftCountCap(),
-                form.getGapBetweenShifts(),
-                form.isSortByDatesAmount(),
-                form.getForceFillShiftTypes()
-        );
+        CalculationProfile profile = new CalculationProfile(form.getShiftCountCap(), form.getGapBetweenShifts(), form.isSortByDatesAmount(), form.getForceFillShiftTypes());
 
-        return new CalculationInput(
-                month,
-                users,
-                shiftTypes,
-                calculationOrder,
-                priorities,
-                holidays,
-                profile
-        );
+        return new CalculationInput(month, users, shiftTypes, calculationOrder, priorities, holidays, profile);
     }
 
-    private List<Integer> resolveShiftCalculationOrder(
-            CalculationProfileForm form,
-            List<Integer> shiftTypes
-    ) {
+    private List<Integer> resolveShiftCalculationOrder(CalculationProfileForm form, List<Integer> shiftTypes) {
         List<Integer> forceFill = form.getForceFillShiftTypes() == null
                 ? List.of()
                 : form.getForceFillShiftTypes();
@@ -91,10 +65,7 @@ public class CalculationInputLoader {
         return List.copyOf(result);
     }
 
-    private Map<Long, Set<LocalDate>> mapPreviousAssignmentsByUser(
-            YearMonth calculationMonth,
-            Map<Integer, StoredScheduleDay> previousStoredDays
-    ) {
+    private Map<Long, Set<LocalDate>> mapPreviousAssignmentsByUser(YearMonth calculationMonth, Map<Integer, StoredScheduleDay> previousStoredDays) {
         Map<Long, Set<LocalDate>> result = new HashMap<>();
         LocalDate firstDay = calculationMonth.atDay(1);
 

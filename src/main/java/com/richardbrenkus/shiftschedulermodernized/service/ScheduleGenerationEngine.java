@@ -160,14 +160,12 @@ public class ScheduleGenerationEngine {
 
     private Map<Integer, List<UserCalculationData>> prepareUsersByShiftType(CalculationInput input) {
         return input.shiftTypes().stream()
-                .collect(Collectors.toUnmodifiableMap(
-                        Function.identity(),
-                        shiftType -> input.users().stream()
-                                .filter(user -> user.canWorkShiftType(shiftType))
-                                .filter(user -> user.preferenceFor(shiftType)
-                                        .filter(preference -> !preference.noShiftRequested())
-                                        .isPresent())
-                                .toList()
+                .collect(Collectors.toUnmodifiableMap(Function.identity(), shiftType -> input.users().stream()
+                        .filter(user -> user.canWorkShiftType(shiftType))
+                        .filter(user -> user.preferenceFor(shiftType)
+                                .filter(preference -> !preference.noShiftRequested())
+                                .isPresent())
+                        .toList()
                 ));
     }
 

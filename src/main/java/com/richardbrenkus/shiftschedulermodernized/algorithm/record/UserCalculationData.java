@@ -60,8 +60,7 @@ public record UserCalculationData(
         return Optional.ofNullable(preferencesByShiftType.get(shiftType));
     }
 
-    public static Map<Integer, ShiftPreferenceCalculationData>
-    indexPreferences(List<ShiftPreferenceCalculationData> preferences) {
+    public static Map<Integer, ShiftPreferenceCalculationData> indexPreferences(List<ShiftPreferenceCalculationData> preferences) {
         if (preferences == null || preferences.isEmpty()) {
             return Map.of();
         }
