@@ -1,5 +1,6 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
+import com.richardbrenkus.shiftschedulermodernized.activity.ActivityPublisher;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftPreferenceForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftRequestValidationResult;
@@ -35,6 +36,9 @@ class ShiftRequestServiceTest {
 
     @Mock
     private ShiftRequestMapper shiftRequestMapper;
+
+    @Mock
+    private ActivityPublisher activityPublisher;
 
     @InjectMocks
     private ShiftRequestService service;

@@ -1,5 +1,7 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
+import com.richardbrenkus.shiftschedulermodernized.activity.ActivityPublisher;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.ActivityType;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftPreferenceForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftRequestValidationResult;
@@ -14,7 +16,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class ShiftRequestService {
@@ -22,13 +30,24 @@ public class ShiftRequestService {
     private final UserRepository userRepository;
     private final UserService userService;
     private final ShiftRequestMapper shiftRequestMapper;
+    private final ActivityPublisher activityPublisher;
 
-    public ShiftRequestService(UserRepository userRepository, UserService userService, ShiftRequestMapper shiftRequestMapper) {
+    public ShiftRequestService(
+            UserRepository userRepository,
+            UserService userService,
+            ShiftRequestMapper shiftRequestMapper,
+            ActivityPublisher activityPublisher
+    ) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.shiftRequestMapper = shiftRequestMapper;
+        this.activityPublisher = activityPublisher;
     }
 
+    /*
+     * ACTIVITY LOG REVIEW: intentionally not logged.
+     * This method only validates submitted data and does not change application state.
+     */
     public ShiftRequestValidationResult validateShiftRequest(ShiftRequestForm form) {
 
         ShiftRequestValidationResult noShiftsOnly = validateNoShiftsOnly(form);
@@ -46,6 +65,10 @@ public class ShiftRequestService {
         return validateAllPreferences(form);
     }
 
+    /*
+     * ACTIVITY LOG REVIEW: intentionally not logged.
+     * This changes only the in-memory form before submission.
+     */
     public void applyDefaultUserPriorities(ShiftRequestForm form) {
         form.getPreferences().forEach(preference -> preference.setPriority(5));
     }
@@ -54,17 +77,46 @@ public class ShiftRequestService {
     public ShiftRequest submitShiftRequest(String username, ShiftRequestForm form) {
         User user = userRepository.getUserByUsername(username);
 
+        if (user == null) {
+            throw new IllegalArgumentException("Invalid username: " + username);
+        }
+
         ShiftRequest existingRequest = user.getShiftRequest();
+        boolean requestCreated = existingRequest == null;
+
         ShiftRequest shiftRequest;
 
-        if (existingRequest == null) {
+        if (requestCreated) {
             shiftRequest = shiftRequestMapper.formToEntity(form);
         } else {
             shiftRequest = updateEntity(existingRequest, form);
         }
 
         user.setShiftRequest(shiftRequest);
-        return shiftRequest;
+
+        /*
+         * Flush before publishing so that persistence and constraint failures occur
+         * before the success event is registered for AFTER_COMMIT processing.
+         */
+        User savedUser = userRepository.saveAndFlush(user);
+        ShiftRequest savedRequest = savedUser.getShiftRequest();
+
+        ActivityType activityType = requestCreated
+                ? ActivityType.SHIFT_REQUEST_CREATED
+                : ActivityType.SHIFT_REQUEST_UPDATED;
+
+        activityPublisher.publishSuccess(
+                activityType,
+                "ShiftRequest",
+                savedRequest != null && savedRequest.getShiftRequestId() != null
+                        ? savedRequest.getShiftRequestId().toString()
+                        : username,
+                requestCreated
+                        ? "Shift request created"
+                        : "Shift request updated"
+        );
+
+        return savedRequest;
     }
 
     @Transactional
@@ -72,16 +124,64 @@ public class ShiftRequestService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user Id: " + userId));
 
+        ShiftRequest existingRequest = user.getShiftRequest();
+
+        /*
+         * ACTIVITY LOG REVIEW: no event is written when there is nothing to delete.
+         * Log a failed/no-op deletion only if that is meaningful for your audit requirements.
+         */
+        if (existingRequest == null) {
+            return;
+        }
+
+        String shiftRequestId = existingRequest.getShiftRequestId() != null
+                ? existingRequest.getShiftRequestId().toString()
+                : "user:" + userId;
+
         user.setShiftRequest(null);
-        userRepository.save(user);
+        userRepository.saveAndFlush(user);
+
+        activityPublisher.publishSuccess(
+                ActivityType.SHIFT_REQUEST_DELETED,
+                "ShiftRequest",
+                shiftRequestId,
+                "Shift request deleted"
+        );
     }
 
     @Transactional
     public void deleteAllShiftRequests() {
-        userRepository.findAll().forEach(user -> user.setShiftRequest(null));
-        userRepository.saveAll(userRepository.findAll());
+        List<User> users = userRepository.findAll();
+
+        long deletedRequestCount = users.stream()
+                .filter(User::hasShiftRequest)
+                .count();
+
+        if (deletedRequestCount == 0) {
+            return;
+        }
+
+        users.forEach(user -> user.setShiftRequest(null));
+        userRepository.saveAllAndFlush(users);
+
+        /*
+         * ACTIVITY LOG REVIEW: the enum has no bulk-deletion activity type.
+         * This uses SHIFT_REQUEST_DELETED once for the complete administrative action,
+         * rather than producing one audit row per affected user.
+         * Consider adding SHIFT_REQUESTS_DELETED if you want bulk actions distinguished.
+         */
+        activityPublisher.publishSuccess(
+                ActivityType.SHIFT_REQUEST_DELETED,
+                "ShiftRequestBatch",
+                "ALL",
+                "All shift requests deleted; affected requests: " + deletedRequestCount
+        );
     }
 
+    /*
+     * ACTIVITY LOG REVIEW: intentionally not logged.
+     * Private validation helper with no persistent state change.
+     */
     private ShiftRequestValidationResult validateNoShiftsOnly(ShiftRequestForm form) {
 
         List<String> rejectedFields = new ArrayList<>();
@@ -108,6 +208,10 @@ public class ShiftRequestService {
         return ShiftRequestValidationResult.valid();
     }
 
+    /*
+     * ACTIVITY LOG REVIEW: intentionally not logged.
+     * Private validation helper with no persistent state change.
+     */
     private ShiftRequestValidationResult validateConflictingDates(ShiftRequestForm form) {
 
         Map<LocalDate, List<String>> dateToFields = new HashMap<>();
@@ -144,6 +248,10 @@ public class ShiftRequestService {
         return ShiftRequestValidationResult.valid();
     }
 
+    /*
+     * ACTIVITY LOG REVIEW: intentionally not logged.
+     * Private validation helper with no persistent state change.
+     */
     private ShiftRequestValidationResult validateAllPreferences(ShiftRequestForm form) {
 
         for (int i = 0; i < form.getPreferences().size(); i++) {
@@ -160,7 +268,15 @@ public class ShiftRequestService {
         return ShiftRequestValidationResult.valid();
     }
 
-    private ShiftRequestValidationResult validateSingleShiftPreference(ShiftRequestForm form, ShiftPreferenceForm preference, int index) {
+    /*
+     * ACTIVITY LOG REVIEW: intentionally not logged.
+     * Private validation helper with no persistent state change.
+     */
+    private ShiftRequestValidationResult validateSingleShiftPreference(
+            ShiftRequestForm form,
+            ShiftPreferenceForm preference,
+            int index
+    ) {
 
         boolean noShift = preference.isNoShiftRequested();
         boolean anyDate = preference.isAnyDateSelected();
@@ -218,20 +334,39 @@ public class ShiftRequestService {
         return ShiftRequestValidationResult.valid();
     }
 
+    /*
+     * ACTIVITY LOG REVIEW: intentionally not logged.
+     * Utility method only.
+     */
     private List<LocalDate> emptyIfNull(List<LocalDate> dates) {
         return dates == null ? Collections.emptyList() : dates;
     }
 
-    public ShiftRequest updateEntity(ShiftRequest existingRequest, @NotNull ShiftRequestForm form) {
+    /*
+     * ACTIVITY LOG REVIEW: intentionally not logged directly.
+     * This helper mutates an entity, but submitShiftRequest() logs the complete
+     * SHIFT_REQUEST_UPDATED business action after persistence succeeds.
+     */
+    public ShiftRequest updateEntity(
+            ShiftRequest existingRequest,
+            @NotNull ShiftRequestForm form
+    ) {
 
-        if (form.getDatesNo() != null)
-            existingRequest.setDatesNo(new ArrayList<>(emptyIfNull(form.getDatesNo())));
+        if (form.getDatesNo() != null) {
+            existingRequest.setDatesNo(
+                    new ArrayList<>(emptyIfNull(form.getDatesNo()))
+            );
+        }
 
         for (ShiftPreferenceForm preferenceForm : form.getPreferences()) {
-            ShiftPreference existingPreference = findPreferenceByShiftType(existingRequest, preferenceForm.getShiftType());
+            ShiftPreference existingPreference = findPreferenceByShiftType(
+                    existingRequest,
+                    preferenceForm.getShiftType()
+            );
 
             if (existingPreference == null) {
-                ShiftPreference newPreference = shiftRequestMapper.preferenceFormToEntity(preferenceForm);
+                ShiftPreference newPreference =
+                        shiftRequestMapper.preferenceFormToEntity(preferenceForm);
                 newPreference.setShiftRequest(existingRequest);
                 existingRequest.getPreferences().add(newPreference);
                 continue;
@@ -243,42 +378,100 @@ public class ShiftRequestService {
         return existingRequest;
     }
 
+    /*
+     * ACTIVITY LOG REVIEW: intentionally not logged.
+     * Read-only lookup used to prepare a form.
+     */
     public ShiftRequestForm getShiftRequestFormByUserId(long id) {
 
         User user = userService.getUserById(id);
-        if (user != null)
+        if (user != null) {
             return getShiftRequestForm(user.getUsername());
-        else throw new IllegalArgumentException("Invalid user Id: " + id);
+        }
 
+        throw new IllegalArgumentException("Invalid user Id: " + id);
     }
 
+    /*
+     * ACTIVITY LOG REVIEW: intentionally not logged.
+     * Read-only lookup used to display or edit a form.
+     */
     public ShiftRequestForm getShiftRequestForm(String username) {
         ShiftRequestForm shiftRequestForm = new ShiftRequestForm();
         User currentUser = userRepository.getUserByUsername(username);
 
         if (currentUser.getShiftRequest() != null) {
-            shiftRequestForm = shiftRequestMapper.entityToForm(currentUser.getShiftRequest());
-        } else
-            this.fillAllowedShiftTypes(currentUser, shiftRequestForm);
+            shiftRequestForm = shiftRequestMapper.entityToForm(
+                    currentUser.getShiftRequest()
+            );
+        } else {
+            fillAllowedShiftTypes(currentUser, shiftRequestForm);
+        }
 
         return shiftRequestForm;
     }
 
-    public Optional<ShiftRequestViewRecord> getShiftRequestViewRecord(String username) {
+    /*
+     * ACTIVITY LOG REVIEW: intentionally not logged.
+     * Read-only lookup for displaying a submitted request.
+     */
+    public Optional<ShiftRequestViewRecord> getShiftRequestViewRecord(
+            String username
+    ) {
         User user = userRepository.getUserByUsername(username);
         if (user == null || !user.hasShiftRequest()) {
             return Optional.empty();
         }
-        return Optional.of(shiftRequestMapper.entityToViewRecord(user, user.getShiftRequest()));
+
+        return Optional.of(
+                shiftRequestMapper.entityToViewRecord(
+                        user,
+                        user.getShiftRequest()
+                )
+        );
     }
 
+    @Transactional
     public void deleteShiftRequest(String username) {
         User user = userRepository.getUserByUsername(username);
+
+        if (user == null) {
+            throw new IllegalArgumentException("Invalid username: " + username);
+        }
+
+        ShiftRequest existingRequest = user.getShiftRequest();
+
+        /*
+         * ACTIVITY LOG REVIEW: no event is written when there is nothing to delete.
+         * Log a failed/no-op deletion only if your audit requirements need it.
+         */
+        if (existingRequest == null) {
+            return;
+        }
+
+        String shiftRequestId = existingRequest.getShiftRequestId() != null
+                ? existingRequest.getShiftRequestId().toString()
+                : "user:" + user.getId();
+
         user.setShiftRequest(null);
-        userRepository.save(user);
+        userRepository.saveAndFlush(user);
+
+        activityPublisher.publishSuccess(
+                ActivityType.SHIFT_REQUEST_DELETED,
+                "ShiftRequest",
+                shiftRequestId,
+                "Shift request deleted"
+        );
     }
 
-    private ShiftPreference findPreferenceByShiftType(ShiftRequest request, int shiftType) {
+    /*
+     * ACTIVITY LOG REVIEW: intentionally not logged directly.
+     * Internal lookup used as part of a request update.
+     */
+    private ShiftPreference findPreferenceByShiftType(
+            ShiftRequest request,
+            int shiftType
+    ) {
         return request.getPreferences()
                 .stream()
                 .filter(preference -> preference.getShiftType() == shiftType)
@@ -286,45 +479,78 @@ public class ShiftRequestService {
                 .orElse(null);
     }
 
-    private void updatePreferenceIfChanged(ShiftPreference existingPreference, ShiftPreferenceForm preferenceForm) {
+    /*
+     * ACTIVITY LOG REVIEW: intentionally not logged directly.
+     * Changes to individual preferences are represented by the single
+     * SHIFT_REQUEST_UPDATED event published by submitShiftRequest().
+     */
+    private void updatePreferenceIfChanged(
+            ShiftPreference existingPreference,
+            ShiftPreferenceForm preferenceForm
+    ) {
 
         if (existingPreference.getShiftType() != preferenceForm.getShiftType()) {
             existingPreference.setShiftType(preferenceForm.getShiftType());
         }
 
-        if (existingPreference.isNoShiftRequested() != preferenceForm.isNoShiftRequested()) {
-            existingPreference.setNoShiftRequested(preferenceForm.isNoShiftRequested());
+        if (existingPreference.isNoShiftRequested()
+                != preferenceForm.isNoShiftRequested()) {
+            existingPreference.setNoShiftRequested(
+                    preferenceForm.isNoShiftRequested()
+            );
         }
 
-        if (existingPreference.isAnyDateSelected() != preferenceForm.isAnyDateSelected()) {
-            existingPreference.setAnyDateSelected(preferenceForm.isAnyDateSelected());
+        if (existingPreference.isAnyDateSelected()
+                != preferenceForm.isAnyDateSelected()) {
+            existingPreference.setAnyDateSelected(
+                    preferenceForm.isAnyDateSelected()
+            );
         }
 
-        if (existingPreference.getWeekdayCount() != preferenceForm.getWeekdayCount()) {
-            existingPreference.setWeekdayCount(preferenceForm.getWeekdayCount());
+        if (existingPreference.getWeekdayCount()
+                != preferenceForm.getWeekdayCount()) {
+            existingPreference.setWeekdayCount(
+                    preferenceForm.getWeekdayCount()
+            );
         }
 
-        if (existingPreference.getWeekendCount() != preferenceForm.getWeekendCount()) {
-            existingPreference.setWeekendCount(preferenceForm.getWeekendCount());
+        if (existingPreference.getWeekendCount()
+                != preferenceForm.getWeekendCount()) {
+            existingPreference.setWeekendCount(
+                    preferenceForm.getWeekendCount()
+            );
         }
 
         if (existingPreference.getPriority() != preferenceForm.getPriority()) {
             existingPreference.setPriority(preferenceForm.getPriority());
         }
 
-        if (!Objects.equals(existingPreference.getDatesYes(), preferenceForm.getDatesYes())) {
-            existingPreference.setDatesYes(new ArrayList<>(preferenceForm.getDatesYes()));
+        if (!Objects.equals(
+                existingPreference.getDatesYes(),
+                preferenceForm.getDatesYes()
+        )) {
+            existingPreference.setDatesYes(
+                    new ArrayList<>(emptyIfNull(preferenceForm.getDatesYes()))
+            );
         }
     }
 
-    private void fillAllowedShiftTypes(User currentUser, ShiftRequestForm shiftRequestForm) {
-        List<Integer> allowedShiftTypes = new ArrayList<>(currentUser.getAllowedShiftTypes());
+    /*
+     * ACTIVITY LOG REVIEW: intentionally not logged.
+     * This only prepares an unsaved form for display.
+     */
+    private void fillAllowedShiftTypes(
+            User currentUser,
+            ShiftRequestForm shiftRequestForm
+    ) {
+        List<Integer> allowedShiftTypes =
+                new ArrayList<>(currentUser.getAllowedShiftTypes());
+
         for (Integer shiftType : allowedShiftTypes) {
-            ShiftPreferenceForm shiftPreferenceForm = new ShiftPreferenceForm();
+            ShiftPreferenceForm shiftPreferenceForm =
+                    new ShiftPreferenceForm();
             shiftPreferenceForm.setShiftType(shiftType);
             shiftRequestForm.getPreferences().add(shiftPreferenceForm);
         }
     }
-
-
 }

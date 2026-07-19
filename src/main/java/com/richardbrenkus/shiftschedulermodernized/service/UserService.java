@@ -1,6 +1,8 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
+import com.richardbrenkus.shiftschedulermodernized.activity.ActivityPublisher;
 import com.richardbrenkus.shiftschedulermodernized.config.PasswordEncoderConfig;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.ActivityType;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserRegisterForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserUpdateForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserViewRecord;
@@ -27,6 +29,7 @@ public class UserService {
     private final UserMapper userMapper;
     private final UserTransactionalUpdater transactionalUpdater;
     private final UserTransactionalCreator userTransactionalCreator;
+    private final ActivityPublisher activityPublisher;
 
     public String getDisplayNameByUserName(String userName) {
         User currentUser = userRepository.getUserByUsername(userName);
@@ -44,10 +47,16 @@ public class UserService {
     public void changeUserPassword(String username, String newPassword) {
         User user = userRepository.getUserByUsername(username);
 
+        if (user == null) {
+            throw new IllegalArgumentException("User not found: " + username);
+        }
+
         String newEncodedPassword = encoder.passwordEncoder().encode(newPassword);
 
         user.setPassword(newEncodedPassword);
         userRepository.save(user);
+
+        activityPublisher.publishSuccess(ActivityType.PASSWORD_CHANGED, "User", user.getId().toString(), "User password changed");
     }
 
     public boolean hasShiftRequest(String username) {

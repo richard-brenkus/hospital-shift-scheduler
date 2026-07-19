@@ -1,5 +1,6 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
+import com.richardbrenkus.shiftschedulermodernized.activity.ActivityPublisher;
 import com.richardbrenkus.shiftschedulermodernized.config.PasswordEncoderConfig;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserRegisterForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserUpdateForm;
@@ -51,11 +52,14 @@ class UserServiceTest {
     @Mock
     private UserTransactionalCreator userTransactionalCreator;
 
+    @Mock
+    ActivityPublisher activityPublisher;
+
     private UserService service;
 
     @BeforeEach
     void setUp() {
-        service = new UserService(userRepository, passwordEncoderConfig, userMapper, userTransactionalUpdater, userTransactionalCreator);
+        service = new UserService(userRepository, passwordEncoderConfig, userMapper, userTransactionalUpdater, userTransactionalCreator, activityPublisher);
     }
 
     @Test
