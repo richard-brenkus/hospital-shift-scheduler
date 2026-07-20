@@ -39,6 +39,31 @@ public class ActivityPublisher {
         );
     }
 
+    public void publishFailure(
+            ActivityType activityType,
+            String targetType,
+            String targetId,
+            String description,
+            String failureReason,
+            RequestMetadata requestMetadata
+    ) {
+
+        Actor actor = currentActor();
+
+        eventPublisher.publishEvent(
+                ActivityEvent.failure(
+                        activityType,
+                        actor.username(),
+                        actor.role(),
+                        targetType,
+                        targetId,
+                        description,
+                        failureReason,
+                        requestMetadataProvider.current()
+                )
+        );
+    }
+
     private Actor currentActor() {
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();

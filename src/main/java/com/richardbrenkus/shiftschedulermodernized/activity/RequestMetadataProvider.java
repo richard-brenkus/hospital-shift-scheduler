@@ -9,8 +9,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 public class RequestMetadataProvider {
 
     public RequestMetadata current() {
-        ServletRequestAttributes attributes =
-                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 
         if (attributes == null) {
             return RequestMetadata.system();
@@ -18,11 +17,7 @@ public class RequestMetadataProvider {
 
         HttpServletRequest request = attributes.getRequest();
 
-        return new RequestMetadata(
-                request.getMethod(),
-                request.getRequestURI(),
-                resolveClientIp(request)
-        );
+        return new RequestMetadata(request.getMethod(), request.getRequestURI(), resolveClientIp(request));
     }
 
     private String resolveClientIp(HttpServletRequest request) {

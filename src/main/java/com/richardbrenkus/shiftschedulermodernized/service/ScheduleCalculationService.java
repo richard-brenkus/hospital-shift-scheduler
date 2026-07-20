@@ -1,6 +1,7 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
 import com.richardbrenkus.shiftschedulermodernized.activity.ActivityPublisher;
+import com.richardbrenkus.shiftschedulermodernized.activity.RequestMetadataProvider;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.CalculatedScheduleConverter;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.CalculationInputLoader;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ParallelScheduleCalculationService;
@@ -26,6 +27,7 @@ public class ScheduleCalculationService {
     private final ActivityPublisher activityPublisher;
 
     private final AtomicBoolean calculationRunning = new AtomicBoolean(false);
+    private final RequestMetadataProvider requestMetadataProvider;
 
     public ScheduleMonth calculateSchedule(CalculationProfileForm form) {
         if (!calculationRunning.compareAndSet(false, true)) {
@@ -85,28 +87,15 @@ public class ScheduleCalculationService {
             return result;
 
         } catch (RuntimeException exception) {
-            /*
-             * ACTIVITY LOG REVIEW:
-             *
-             * Do not call publishSuccess(...) with
-             * SCHEDULE_CALCULATION_FAILED.
-             *
-             * Add a publishFailure(...) method to ActivityPublisher and enable
-             * a call here, for example:
-             *
-             * activityPublisher.publishFailure(
-             *         ActivityType.SCHEDULE_CALCULATION_FAILED,
-             *         "ScheduleCalculation",
-             *         calculationMonth,
-             *         "Schedule calculation failed for " + calculationMonth,
-             *         "Schedule calculation failed."
-             * );
-             *
-             * Keep the stored error message generic. Do not persist stack
-             * traces, SQL errors, passwords, tokens or form contents.
-             */
+            activityPublisher.publishFailure(
+                    ActivityType.SCHEDULE_CALCULATION_FAILED,
+                    "ScheduleCalculation",
+                    calculationMonth,
+                    "Schedule calculation failed for " + calculationMonth,
+                    "Schedule calculation failed.",
+                    requestMetadataProvider.current()
+            );
             throw exception;
-
         } finally {
             calculationRunning.set(false);
         }

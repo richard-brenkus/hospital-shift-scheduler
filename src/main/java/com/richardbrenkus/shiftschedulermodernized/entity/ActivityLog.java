@@ -38,11 +38,11 @@ public class ActivityLog {
     private String actorUsername;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "actor_role", nullable = false, updatable = false)
+    @Column(name = "actor_role", nullable = false, updatable = false, length = 20)
     private Role actorRole;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "activity_type", nullable = false, updatable = false)
+    @Column(name = "activity_type", nullable = false, updatable = false, length = 50)
     private ActivityType activityType;
 
     @Column(name = "target_type", updatable = false)
