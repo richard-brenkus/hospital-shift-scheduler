@@ -5,11 +5,11 @@ import com.richardbrenkus.shiftschedulermodernized.dto.view.SendReminderTaskReco
 import com.richardbrenkus.shiftschedulermodernized.entity.CleanupTask;
 import com.richardbrenkus.shiftschedulermodernized.entity.SendReminderTask;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
-@RequiredArgsConstructor
+import java.util.Objects;
+
+@Component
 public class PlannedTaskMapper {
 
     public CleanupTaskRecord entityToCleanupTaskRecord(CleanupTask entity) {
@@ -25,12 +25,7 @@ public class PlannedTaskMapper {
                 entity.getRepetitions(),
                 entity.getFrequencyInDays(),
                 entity.getStartSendingTime(),
-                entity.getFinalSubmissionDay()
+                entity.getFinalRequestSubmissionDate().getDayOfMonth()
         );
     }
-
-
-
-
-
 }

@@ -12,10 +12,10 @@ import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import java.util.*;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Component
 @RequiredArgsConstructor
 public class ScheduleMapper {
 

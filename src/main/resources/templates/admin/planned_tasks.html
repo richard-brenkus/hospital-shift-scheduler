@@ -112,25 +112,31 @@
                         </label>
                     </td>
                     <td>
-                        <input id="sendReminderTaskActive" type="checkbox" th:field="*{sendReminderTaskActive}"/>
+                        <input id="sendReminderTaskActive"
+                               type="checkbox"
+                               th:field="*{sendReminderTaskActive}"/>
                     </td>
                 </tr>
 
                 <tr>
-                    <td th:classappend="${hasDayError} ? ' error-red'">
+                    <td>
                         <label for="startSendingRemindersDay" data-th-text="#{scheduledTasks.reminder.send.label}">
                             Send reminder email on day:
                         </label>
                     </td>
                     <td>
-                        <select id="startSendingRemindersDay" th:field="*{startSendingRemindersDay}">
-                            <option th:each="day : ${daysList}" th:value="${day}" th:text="${day}">1</option>
+                        <select id="startSendingRemindersDay"
+                                th:field="*{startSendingRemindersDay}"
+                                th:errorclass="error-red">
+                            <option th:each="day : ${daysList}"
+                                    th:value="${day}"
+                                    th:text="${day}">1</option>
                         </select>
 
                         <span class="error-red planned-task-error"
-                              th:if="${hasDayError}"
-                              data-th-text="#{scheduledTasks.reminder.send.before.error}">
-                            must be before final submission day
+                              th:if="${#fields.hasErrors('startSendingRemindersDay')}"
+                              th:errors="*{startSendingRemindersDay}">
+                            Invalid reminder start day
                         </span>
                     </td>
                 </tr>
@@ -142,9 +148,19 @@
                         </label>
                     </td>
                     <td>
-                        <select id="startSendingRemindersHour" th:field="*{startSendingRemindersHour}">
-                            <option th:each="hour : ${hoursList}" th:value="${hour}" th:text="${hour}">8</option>
+                        <select id="startSendingRemindersHour"
+                                th:field="*{startSendingRemindersHour}"
+                                th:errorclass="error-red">
+                            <option th:each="hour : ${hoursList}"
+                                    th:value="${hour}"
+                                    th:text="${hour}">8</option>
                         </select>
+
+                        <span class="error-red planned-task-error"
+                              th:if="${#fields.hasErrors('startSendingRemindersHour')}"
+                              th:errors="*{startSendingRemindersHour}">
+                            Invalid reminder start hour
+                        </span>
                     </td>
                 </tr>
 
@@ -155,9 +171,19 @@
                         </label>
                     </td>
                     <td>
-                        <select id="startSendingRemindersMinute" th:field="*{startSendingRemindersMinute}">
-                            <option th:each="minute : ${minutesList}" th:value="${minute}" th:text="${minute}">0</option>
+                        <select id="startSendingRemindersMinute"
+                                th:field="*{startSendingRemindersMinute}"
+                                th:errorclass="error-red">
+                            <option th:each="minute : ${minutesList}"
+                                    th:value="${minute}"
+                                    th:text="${minute}">0</option>
                         </select>
+
+                        <span class="error-red planned-task-error"
+                              th:if="${#fields.hasErrors('startSendingRemindersMinute')}"
+                              th:errors="*{startSendingRemindersMinute}">
+                            Invalid reminder start minute
+                        </span>
                     </td>
                 </tr>
 
@@ -168,11 +194,19 @@
                         </label>
                     </td>
                     <td>
-                        <select id="reminderSendingFrequencyInDays" th:field="*{reminderSendingFrequencyInDays}">
-                            <option th:each="frequency : ${frequencyList}" th:value="${frequency}" th:text="${frequency}">
-                                1
-                            </option>
+                        <select id="reminderSendingFrequencyInDays"
+                                th:field="*{reminderSendingFrequencyInDays}"
+                                th:errorclass="error-red">
+                            <option th:each="frequency : ${frequencyList}"
+                                    th:value="${frequency}"
+                                    th:text="${frequency}">1</option>
                         </select>
+
+                        <span class="error-red planned-task-error"
+                              th:if="${#fields.hasErrors('reminderSendingFrequencyInDays')}"
+                              th:errors="*{reminderSendingFrequencyInDays}">
+                            Invalid reminder frequency
+                        </span>
                     </td>
                 </tr>
 
@@ -183,11 +217,19 @@
                         </label>
                     </td>
                     <td>
-                        <select id="reminderRepetitions" th:field="*{reminderRepetitions}">
-                            <option th:each="repetition : ${repetitionsList}" th:value="${repetition}" th:text="${repetition}">
-                                1
-                            </option>
+                        <select id="reminderRepetitions"
+                                th:field="*{reminderRepetitions}"
+                                th:errorclass="error-red">
+                            <option th:each="repetition : ${repetitionsList}"
+                                    th:value="${repetition}"
+                                    th:text="${repetition}">1</option>
                         </select>
+
+                        <span class="error-red planned-task-error"
+                              th:if="${#fields.hasErrors('reminderRepetitions')}"
+                              th:errors="*{reminderRepetitions}">
+                            Invalid number of repetitions
+                        </span>
                     </td>
                 </tr>
 
@@ -198,11 +240,19 @@
                         </label>
                     </td>
                     <td>
-                        <select id="finalSubmissionDay" th:field="*{finalSubmissionDay}">
-                            <option th:each="day : ${finalSubmissionDaysList}" th:value="${day}" th:text="${day}">
-                                15
-                            </option>
+                        <select id="finalSubmissionDay"
+                                th:field="*{finalSubmissionDay}"
+                                th:errorclass="error-red">
+                            <option th:each="day : ${finalSubmissionDaysList}"
+                                    th:value="${day}"
+                                    th:text="${day}">15</option>
                         </select>
+
+                        <span class="error-red planned-task-error"
+                              th:if="${#fields.hasErrors('finalSubmissionDay')}"
+                              th:errors="*{finalSubmissionDay}">
+                            Invalid final submission day
+                        </span>
                     </td>
                 </tr>
 
@@ -281,7 +331,9 @@
                         </label>
                     </td>
                     <td>
-                        <input id="cleanupTaskActive" type="checkbox" th:field="*{cleanupTaskActive}"/>
+                        <input id="cleanupTaskActive"
+                               type="checkbox"
+                               th:field="*{cleanupTaskActive}"/>
                     </td>
                 </tr>
 
@@ -292,9 +344,19 @@
                         </label>
                     </td>
                     <td>
-                        <select id="cleanupDay" th:field="*{cleanupDay}">
-                            <option th:each="day : ${daysList}" th:value="${day}" th:text="${day}">1</option>
+                        <select id="cleanupDay"
+                                th:field="*{cleanupDay}"
+                                th:errorclass="error-red">
+                            <option th:each="day : ${daysList}"
+                                    th:value="${day}"
+                                    th:text="${day}">1</option>
                         </select>
+
+                        <span class="error-red planned-task-error"
+                              th:if="${#fields.hasErrors('cleanupDay')}"
+                              th:errors="*{cleanupDay}">
+                            Cleanup day must be in the future
+                        </span>
                     </td>
                 </tr>
 
@@ -305,9 +367,19 @@
                         </label>
                     </td>
                     <td>
-                        <select id="cleanupHour" th:field="*{cleanupHour}">
-                            <option th:each="hour : ${hoursList}" th:value="${hour}" th:text="${hour}">22</option>
+                        <select id="cleanupHour"
+                                th:field="*{cleanupHour}"
+                                th:errorclass="error-red">
+                            <option th:each="hour : ${hoursList}"
+                                    th:value="${hour}"
+                                    th:text="${hour}">22</option>
                         </select>
+
+                        <span class="error-red planned-task-error"
+                              th:if="${#fields.hasErrors('cleanupHour')}"
+                              th:errors="*{cleanupHour}">
+                            Cleanup hour must be in the future
+                        </span>
                     </td>
                 </tr>
 
@@ -318,9 +390,19 @@
                         </label>
                     </td>
                     <td>
-                        <select id="cleanupMinute" th:field="*{cleanupMinute}">
-                            <option th:each="minute : ${minutesList}" th:value="${minute}" th:text="${minute}">0</option>
+                        <select id="cleanupMinute"
+                                th:field="*{cleanupMinute}"
+                                th:errorclass="error-red">
+                            <option th:each="minute : ${minutesList}"
+                                    th:value="${minute}"
+                                    th:text="${minute}">0</option>
                         </select>
+
+                        <span class="error-red planned-task-error"
+                              th:if="${#fields.hasErrors('cleanupMinute')}"
+                              th:errors="*{cleanupMinute}">
+                            Cleanup minute must be in the future
+                        </span>
                     </td>
                 </tr>
 
@@ -337,11 +419,6 @@
         </form>
 
     </section>
-
-    <p class="centered planned-task-info" data-th-text="#{scheduledTasks.infoText}">
-        In case the selected day exceeds the number of days in a month, the task will be carried out on the month's last
-        day.
-    </p>
 
     <nav class="page-actions planned-task-actions centered">
         <a th:href="@{/admin/adminIndex}"
