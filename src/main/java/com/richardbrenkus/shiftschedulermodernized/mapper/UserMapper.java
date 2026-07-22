@@ -3,17 +3,10 @@ package com.richardbrenkus.shiftschedulermodernized.mapper;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserUpdateForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
-import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UserMapper {
-
-    private final UserRepository userRepository;
-
-    public UserMapper(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
 
     public UserUpdateForm entityToUserUpdateForm(User user) {
         UserUpdateForm userRegisterForm = new UserUpdateForm();
@@ -40,8 +33,7 @@ public class UserMapper {
                 .build();
     }
 
-    public UserUpdateForm entityToUserUpdateFormByUserId(long userId) {
-        User user = userRepository.getUserById(userId);
+    public UserUpdateForm entityToUserUpdateFormByUserId(User user) {
         return entityToUserUpdateForm(user);
     }
 }

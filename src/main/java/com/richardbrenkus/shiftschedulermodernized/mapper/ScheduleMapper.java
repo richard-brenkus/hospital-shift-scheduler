@@ -3,61 +3,166 @@ package com.richardbrenkus.shiftschedulermodernized.mapper;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleMonth;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ShiftAssignment;
-import com.richardbrenkus.shiftschedulermodernized.dto.form.*;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileForm;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.ScheduleDayForm;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.ScheduleEditForm;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftAssignmentForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserStatViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.entity.UserStatEntity;
-import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
-
-import java.util.*;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 public class ScheduleMapper {
 
-    private final UserRepository userRepository;
+    public ScheduleEditForm toEditForm(
+            ScheduleMonth scheduleMonth,
+            CalculationProfileForm calculationProfileForm,
+            List<Integer> shiftTypes
+    ) {
+        Objects.requireNonNull(
+                scheduleMonth,
+                "scheduleMonth must not be null"
+        );
+        Objects.requireNonNull(
+                calculationProfileForm,
+                "calculationProfileForm must not be null"
+        );
+        Objects.requireNonNull(
+                shiftTypes,
+                "shiftTypes must not be null"
+        );
 
-    public ScheduleEditForm toEditForm(ScheduleMonth scheduleMonth, CalculationProfileForm calculationProfileForm, List<Integer> shiftTypes) {
+        List<ScheduleDay> scheduleDays =
+                Objects.requireNonNull(
+                        scheduleMonth.getDays(),
+                        "scheduleMonth.days must not be null"
+                );
+
         ScheduleEditForm form = ScheduleEditForm.builder()
                 .month(calculationProfileForm.getCalculationMonth())
                 .shiftCountCap(calculationProfileForm.getShiftCountCap())
-                .gapBetweenShifts(calculationProfileForm.getGapBetweenShifts())
-                .sortByDatesAmount(calculationProfileForm.isSortByDatesAmount())
-                .forceFillShiftTypes(new ArrayList<>(calculationProfileForm.getForceFillShiftTypes() == null? List.of() : calculationProfileForm.getForceFillShiftTypes()))
-                .overrideUserShiftRequestExceptNoDates(scheduleMonth.isOverrideUserShiftRequestExceptNoDates())
-                .overrideUserShiftRequestAll(scheduleMonth.isOverrideUserShiftRequestAll())
-                .overrideShiftCountCap(scheduleMonth.isOverrideShiftCountCap())
-                .overrideConflictingDates(scheduleMonth.isOverrideConflictingDates())
-                .overrideHasShiftRequest(scheduleMonth.isOverrideHasShiftRequest())
-                .overridePreviousMonthValid(scheduleMonth.isOverridePreviousMonthValid())
+                .gapBetweenShifts(
+                        calculationProfileForm.getGapBetweenShifts()
+                )
+                .sortByDatesAmount(
+                        calculationProfileForm.isSortByDatesAmount()
+                )
+                .forceFillShiftTypes(
+                        new ArrayList<>(
+                                calculationProfileForm
+                                        .getForceFillShiftTypes()
+                                        == null
+                                        ? List.of()
+                                        : calculationProfileForm
+                                        .getForceFillShiftTypes()
+                        )
+                )
+                .overrideUserShiftRequestExceptNoDates(
+                        scheduleMonth
+                                .isOverrideUserShiftRequestExceptNoDates()
+                )
+                .overrideUserShiftRequestAll(
+                        scheduleMonth.isOverrideUserShiftRequestAll()
+                )
+                .overrideShiftCountCap(
+                        scheduleMonth.isOverrideShiftCountCap()
+                )
+                .overrideConflictingDates(
+                        scheduleMonth.isOverrideConflictingDates()
+                )
+                .overrideHasShiftRequest(
+                        scheduleMonth.isOverrideHasShiftRequest()
+                )
+                .overridePreviousMonthValid(
+                        scheduleMonth.isOverridePreviousMonthValid()
+                )
                 .days(new ArrayList<>())
                 .build();
 
-        for (ScheduleDay scheduleDay : scheduleMonth.getDays()) {
+        for (ScheduleDay scheduleDay : scheduleDays) {
+            Objects.requireNonNull(
+                    scheduleDay,
+                    "scheduleMonth.days must not contain null entries"
+            );
+
+            List<ShiftAssignment> assignments =
+                    scheduleDay.getAssignments() == null
+                            ? List.of()
+                            : scheduleDay.getAssignments();
+
+            Map<Integer, ShiftAssignment> assignmentsByType =
+                    assignments.stream()
+                            .collect(Collectors.toMap(
+                                    ShiftAssignment::getShiftType,
+                                    Function.identity(),
+                                    (a, b) -> {
+                                        throw new IllegalStateException(
+                                                "Duplicate shift type "
+                                                        + a.getShiftType()
+                                        );
+                                    }
+                            ));
+
             ScheduleDayForm dayForm = ScheduleDayForm.builder()
                     .date(scheduleDay.getDate())
-                    .weekendOrHoliday(scheduleDay.isWeekendOrHoliday())
+                    .weekendOrHoliday(
+                            scheduleDay.isWeekendOrHoliday()
+                    )
                     .assignments(new ArrayList<>())
                     .build();
 
             for (Integer shiftType : shiftTypes) {
-                ShiftAssignment existingAssignment = scheduleDay.getAssignments()
-                        .stream()
-                        .filter(assignment -> assignment.getShiftType() == shiftType)
-                        .findFirst()
-                        .orElse(null);
+                Objects.requireNonNull(
+                        shiftType,
+                        "shiftTypes must not contain null entries"
+                );
 
-                User assignedUser = existingAssignment == null ? null : existingAssignment.getUser();
+                ShiftAssignment existingAssignment = assignmentsByType.get(shiftType);
+                        /*
+                        assignments.stream()
+                                .filter(Objects::nonNull)
+                                .filter(assignment ->
+                                        Objects.equals(
+                                                assignment.getShiftType(),
+                                                shiftType
+                                        )
+                                )
+                                .findFirst()
+                                .orElse(null);*/
 
-                dayForm.getAssignments().add(ShiftAssignmentForm.builder()
+                User assignedUser =
+                        existingAssignment == null
+                                ? null
+                                : existingAssignment.getUser();
+
+                dayForm.getAssignments().add(
+                        ShiftAssignmentForm.builder()
                                 .shiftType(shiftType)
-                                .userId(assignedUser == null ? null : assignedUser.getId())
-                                .name(assignedUser == null ? "" : assignedUser.getName())
-                                .title(assignedUser == null ? "" : assignedUser.getTitle())
+                                .userId(
+                                        assignedUser == null
+                                                ? null
+                                                : assignedUser.getId()
+                                )
+                                .name(
+                                        assignedUser == null
+                                                ? ""
+                                                : assignedUser.getName()
+                                )
+                                .title(
+                                        assignedUser == null
+                                                ? ""
+                                                : assignedUser.getTitle()
+                                )
                                 .build()
                 );
             }
@@ -68,39 +173,66 @@ public class ScheduleMapper {
         return form;
     }
 
-    @Transactional(readOnly = true)
-    public ScheduleMonth toScheduleMonth(ScheduleEditForm form, CalculationProfileForm calculationProfile) {
-        if (form == null) {
-            throw new IllegalArgumentException("Schedule edit form must not be null");
-        }
+    public ScheduleMonth toScheduleMonth(
+            ScheduleEditForm form,
+            CalculationProfileForm calculationProfile,
+            Map<Long, User> usersById
+    ) {
+        Objects.requireNonNull(
+                form,
+                "ScheduleEditForm must not be null"
+        );
+        Objects.requireNonNull(
+                calculationProfile,
+                "calculationProfile must not be null"
+        );
 
-        List<ScheduleDay> days = form.getDays() == null
-                ? new ArrayList<>()
-                : form.getDays()
-                .stream()
-                .map(this::toScheduleDay)
-                .toList();
+        List<ScheduleDay> days = new ArrayList<>();
+        for(ScheduleDayForm dayForm : form.getDays())
+            days.add(toScheduleDay(dayForm, usersById));
 
         return ScheduleMonth.builder()
                 .month(form.getMonth())
                 .calculationProfile(calculationProfile)
                 .days(new ArrayList<>(days))
-                .overrideUserShiftRequestExceptNoDates(form.isOverrideUserShiftRequestExceptNoDates())
-                .overrideUserShiftRequestAll(form.isOverrideUserShiftRequestAll())
-                .overrideShiftCountCap(form.isOverrideShiftCountCap())
-                .overrideConflictingDates(form.isOverrideConflictingDates())
-                .overrideHasShiftRequest(form.isOverrideHasShiftRequest())
-                .overridePreviousMonthValid(form.isOverridePreviousMonthValid())
+                .overrideUserShiftRequestExceptNoDates(
+                        form.isOverrideUserShiftRequestExceptNoDates()
+                )
+                .overrideUserShiftRequestAll(
+                        form.isOverrideUserShiftRequestAll()
+                )
+                .overrideShiftCountCap(
+                        form.isOverrideShiftCountCap()
+                )
+                .overrideConflictingDates(
+                        form.isOverrideConflictingDates()
+                )
+                .overrideHasShiftRequest(
+                        form.isOverrideHasShiftRequest()
+                )
+                .overridePreviousMonthValid(
+                        form.isOverridePreviousMonthValid()
+                )
                 .build();
     }
 
-    public UserStatEntity toUserStatEntity(UserStatViewRecord record) {
-        if (record == null) {
-            throw new IllegalArgumentException("UserStatViewRecord must not be null");
-        }
+    public UserStatEntity toUserStatEntity(
+            UserStatViewRecord record
+    ) {
+        Objects.requireNonNull(
+                record,
+                "UserStatViewRecord must not be null"
+        );
 
-        Long userId = record.user() == null ? null : record.user().getId();
-        String username = record.user() == null ? null : record.user().getUsername();
+        Long userId =
+                record.user() == null
+                        ? null
+                        : record.user().getId();
+
+        String username =
+                record.user() == null
+                        ? null
+                        : record.user().getUsername();
 
         return UserStatEntity.builder()
                 .yearMonth(record.month())
@@ -119,19 +251,22 @@ public class ScheduleMapper {
                 .assignedWeekdays(record.assignedWeekdays())
                 .assignedWeekends(record.assignedWeekends())
                 .assignedTotal(record.assignedTotal())
-                .assignedTotalAllShiftTypes(record.assignedTotalAllShiftTypes())
+                .assignedTotalAllShiftTypes(
+                        record.assignedTotalAllShiftTypes()
+                )
                 .assignedDateDays(record.assignedDateDays())
                 .build();
     }
 
-    public UserStatViewRecord toUserStatViewRecord(UserStatEntity entity) {
-        if (entity == null) {
-            throw new IllegalArgumentException("UserStatEntity must not be null");
-        }
+    public UserStatViewRecord toUserStatViewRecord(
+            UserStatEntity entity, Map<Long, User> usersById
+    ) {
+        Objects.requireNonNull(
+                entity,
+                "UserStatEntity must not be null"
+        );
 
-        User user = entity.getUserId() == null
-                ? null
-                : userRepository.findById(entity.getUserId()).orElse(null);
+        User user = entity.getUserId() == null ? null : usersById.get(entity.getUserId());
 
         return UserStatViewRecord.builder()
                 .user(user)
@@ -148,20 +283,25 @@ public class ScheduleMapper {
                 .assignedWeekdays(entity.getAssignedWeekdays())
                 .assignedWeekends(entity.getAssignedWeekends())
                 .assignedTotal(entity.getAssignedTotal())
-                .assignedTotalAllShiftTypes(entity.getAssignedTotalAllShiftTypes())
+                .assignedTotalAllShiftTypes(
+                        entity.getAssignedTotalAllShiftTypes()
+                )
                 .assignedDateDays(entity.getAssignedDateDays())
                 .month(entity.getYearMonth())
                 .build();
     }
 
-    private ScheduleDay toScheduleDay(ScheduleDayForm form) {
-        List<ShiftAssignment> assignments = form.getAssignments() == null
-                ? new ArrayList<>()
-                : form.getAssignments()
-                .stream()
-                .map(this::toShiftAssignment)
-                .filter(Objects::nonNull)
-                .toList();
+    private ScheduleDay toScheduleDay(
+            ScheduleDayForm form, Map<Long, User> usersById
+    ) {
+        Objects.requireNonNull(
+                form,
+                "ScheduleDayForm must not be null"
+        );
+
+        List<ShiftAssignment> assignments = new ArrayList<>();
+        for(ShiftAssignmentForm assignmentForm : form.getAssignments())
+            assignments.add(toShiftAssignment(assignmentForm, usersById));
 
         return ScheduleDay.builder()
                 .date(form.getDate())
@@ -170,14 +310,33 @@ public class ScheduleMapper {
                 .build();
     }
 
-    private ShiftAssignment toShiftAssignment(ShiftAssignmentForm form) {
-        if (form == null) {
-            return null;
-        }
+    private ShiftAssignment toShiftAssignment(
+            ShiftAssignmentForm form,
+            Map<Long, User> usersById
+    ) {
+        Objects.requireNonNull(
+                form,
+                "ShiftAssignmentForm must not be null"
+        );
 
-        User user = form.getUserId() == null
-                ? null
-                : userRepository.findById(form.getUserId()).orElse(null);
+        User user = null;
+
+        if (form.getUserId() != null) {
+            user = usersById.get(form.getUserId());
+            if (user == null) {
+                throw new IllegalArgumentException("No user exists for submitted assignment user ID " + form.getUserId());
+            }
+
+            /*user = userRepository
+                    .findById(form.getUserId())
+                    .orElseThrow(() ->
+                            new IllegalArgumentException(
+                                    "No user exists for submitted "
+                                            + "assignment user ID "
+                                            + form.getUserId()
+                            )
+                    );*/
+        }
 
         return ShiftAssignment.builder()
                 .shiftType(form.getShiftType())
@@ -185,5 +344,3 @@ public class ScheduleMapper {
                 .build();
     }
 }
-
-

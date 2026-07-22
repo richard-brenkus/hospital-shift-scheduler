@@ -232,7 +232,8 @@ public class UserService {
     }
 
     public UserUpdateForm getUserUpdateFormByUserId(long userId) {
-        return userMapper.entityToUserUpdateFormByUserId(userId);
+        User user = userRepository.getUserById(userId);
+        return userMapper.entityToUserUpdateFormByUserId(user);
     }
 
 }

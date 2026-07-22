@@ -47,6 +47,7 @@ public class AdminController {
     private final StoredScheduleService storedScheduleService;
     private final SpreadsheetService spreadsheetService;
     private final UserExcelExportService userExcelExportService;
+    private final ScheduleMapperService scheduleMapperService;
     private final Clock applicationClock;
 
 
@@ -427,7 +428,7 @@ public class AdminController {
             return "admin/schedule_table";
         }
 
-        ScheduleMonth scheduleMonth = scheduleMapper.toScheduleMonth(scheduleEditForm, scheduleEditForm.toCalculationProfileForm());
+        ScheduleMonth scheduleMonth = scheduleMapperService.toScheduleMonth(scheduleEditForm);
         storedScheduleService.saveSchedule(scheduleMonth);
 
         userStatisticService.replaceStatsForMonth(scheduleEditForm.getMonth(), validationResult.getFullUserStatsByShiftType());
@@ -437,7 +438,7 @@ public class AdminController {
 
     @PostMapping("/admin/save_schedule_override_validation")
     public String saveScheduleOverrideValidation(@ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm) {
-        ScheduleMonth scheduleMonth = scheduleMapper.toScheduleMonth(scheduleEditForm, scheduleEditForm.toCalculationProfileForm());
+        ScheduleMonth scheduleMonth = scheduleMapperService.toScheduleMonth(scheduleEditForm);
 
         storedScheduleService.saveSchedule(scheduleMonth);
 

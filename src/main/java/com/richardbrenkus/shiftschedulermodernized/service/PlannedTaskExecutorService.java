@@ -1,89 +1,79 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
-import com.richardbrenkus.shiftschedulermodernized.entity.CleanupTask;
-import com.richardbrenkus.shiftschedulermodernized.entity.SendReminderTask;
-import com.richardbrenkus.shiftschedulermodernized.repository.CleanupTaskRepository;
-import com.richardbrenkus.shiftschedulermodernized.repository.SendReminderTaskRepository;
+import com.richardbrenkus.shiftschedulermodernized.activity.ActivityPublisher;
+import com.richardbrenkus.shiftschedulermodernized.activity.RequestMetadata;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.ActivityType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Slf4j
 public class PlannedTaskExecutorService {
 
-    private final CleanupTaskRepository cleanupTaskRepository;
-    private final SendReminderTaskRepository sendReminderTaskRepository;
-    private final ShiftRequestService shiftRequestService;
-
-    /*
-     * Spring profiles:
-     * dev  -> LoggingEmailReminderService
-     * prod -> SmtpEmailReminderService
-     */
-    private final EmailReminderService emailReminderService;
-
-    /*
-     * Timezone-aware application clock.
-     * Defined in TimeConfig from app.time-zone.
-     */
+    private final PlannedTaskDispatchService plannedTaskDispatchService;
+    private final CleanupTaskExecutionService cleanupTaskExecutionService;
+    private final ActivityPublisher activityPublisher;
     private final Clock applicationClock;
 
-    @Scheduled(fixedDelayString = "${planned-tasks.executor.fixed-delay-ms:60000}")
+    @Scheduled(
+            fixedDelayString =
+                    "${planned-tasks.executor.fixed-delay-ms:60000}"
+    )
     public void executeDueTasks() {
         LocalDateTime now = LocalDateTime.now(applicationClock);
 
-        executeCleanupTaskIfDue(now);
-        executeReminderTaskIfDue(now);
+        executeCleanup(now);
+        createReminderOutboxJobs(now);
     }
 
-    private void executeCleanupTaskIfDue(LocalDateTime now) {
-        CleanupTask task = cleanupTaskRepository
-                .findFirstByIsActiveTrueOrderByExecutionTimeAsc()
-                .orElse(null);
+    private void executeCleanup(LocalDateTime now) {
+        try {
+            cleanupTaskExecutionService.executeCleanupTaskIfDue(now);
 
-        if (task == null || task.getExecutionTime() == null) {
-            return;
+        } catch (RuntimeException exception) {
+            log.error("Scheduled cleanup execution failed", exception);
+
+            /*
+             * Publish outside the rolled-back transaction.
+             */
+            activityPublisher.publishFailure(
+                    ActivityType.PLANNED_CLEANUP_FAILED,
+                    "CleanupTask",
+                    null,
+                    "Scheduled cleanup failed",
+                    "Cleanup task execution failed",
+                    RequestMetadata.system()
+            );
         }
-
-        if (task.getExecutionTime().isAfter(now)) {
-            return;
-        }
-
-        shiftRequestService.deleteAllShiftRequests();
-
-        task.setActive(false);
-        cleanupTaskRepository.saveAndFlush(task);
     }
 
-    private void executeReminderTaskIfDue(LocalDateTime now) {
-        SendReminderTask task = sendReminderTaskRepository
-                .findFirstByIsActiveTrueOrderByStartSendingTimeAsc()
-                .orElse(null);
+    private void createReminderOutboxJobs(LocalDateTime now) {
+        try {
+            plannedTaskDispatchService.createReminderOutboxJobsIfDue(now);
 
-        if (task == null || task.getStartSendingTime() == null) {
-            return;
+        } catch (RuntimeException exception) {
+            log.error(
+                    "Creation of reminder email outbox jobs failed",
+                    exception
+            );
+
+            /*
+             * Publish outside the rolled-back transaction.
+             */
+            activityPublisher.publishFailure(
+                    ActivityType.REMINDER_EMAIL_JOB_CREATION_FAILED,
+                    "SendReminderTask",
+                    null,
+                    "Reminder email job creation failed",
+                    "Unable to create reminder email outbox jobs",
+                    RequestMetadata.system()
+            );
         }
-
-        if (task.getStartSendingTime().isAfter(now)) {
-            return;
-        }
-
-        emailReminderService.sendShiftRequestReminderEmails(task.getFinalSubmissionDay());
-
-        task.setCounter(task.getCounter() + 1);
-
-        if (task.getCounter() >= task.getRepetitions()) {
-            task.setActive(false);
-        } else {
-            task.setStartSendingTime(task.getStartSendingTime().plusDays(task.getFrequencyInDays()));
-        }
-
-        sendReminderTaskRepository.saveAndFlush(task);
     }
 }

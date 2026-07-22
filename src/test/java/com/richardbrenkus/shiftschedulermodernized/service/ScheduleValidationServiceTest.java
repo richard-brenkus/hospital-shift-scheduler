@@ -8,6 +8,7 @@ import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileFo
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ScheduleEditForm;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ScheduleMapper;
+import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import com.richardbrenkus.shiftschedulermodernized.support.TestFixtures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,6 +43,9 @@ class ScheduleValidationServiceTest {
     @Mock
     private UserStatisticService userStatisticService;
 
+    @Mock
+    private UserRepository userRepository;
+
     private ScheduleValidationService service;
 
     @BeforeEach
@@ -50,7 +54,8 @@ class ScheduleValidationServiceTest {
                 new ShiftTypeProperties(6),
                 scheduleMapper,
                 scheduleRuleService,
-                userStatisticService
+                userStatisticService,
+                userRepository
         );
     }
 

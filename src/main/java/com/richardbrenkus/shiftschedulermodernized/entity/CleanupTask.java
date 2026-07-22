@@ -14,10 +14,15 @@ import java.time.LocalDateTime;
 @Builder
 public class CleanupTask {
 
+    public static final Long SINGLETON_ID = 1L;
+
     @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false, updatable = false)
     private Long id;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 
     private boolean isActive;
     private LocalDateTime executionTime;

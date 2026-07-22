@@ -1,21 +1,26 @@
 package com.richardbrenkus.shiftschedulermodernized.repository;
 
 import com.richardbrenkus.shiftschedulermodernized.entity.CleanupTask;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface CleanupTaskRepository extends JpaRepository<CleanupTask, Long> {
 
-    @Transactional
-    @Query("SELECT s FROM CleanupTask s WHERE s.isActive = true")
-    List<CleanupTask> findByIsActive();
+    Optional<CleanupTask> findById(Long id);
 
-    Optional<CleanupTask> findFirstByIsActiveTrueOrderByExecutionTimeAsc();
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+       select task
+       from CleanupTask task
+       where task.id = :id
+       """)
+    Optional<CleanupTask> findByIdForUpdate(@Param("id") Long id);
 
 }

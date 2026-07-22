@@ -18,6 +18,7 @@ import org.springframework.ui.Model;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -346,7 +347,7 @@ public class UserStatisticService {
     }
 
     public Set<String> returnUsersWithNoRequest() {
-        return StreamSupport.stream(userRepository.findAll().spliterator(), false)
+        return userRepository.findAll().stream()
                 .filter(user -> !user.hasShiftRequest())
                 .map(User::getName)
                 .filter(Objects::nonNull)
@@ -385,13 +386,17 @@ public class UserStatisticService {
             return Map.of();
         }
 
-        return userStatRepository.findByYearMonthOrderByShiftTypeAscNameAsc(yearMonth)
-                .stream()
-                .map(scheduleMapper::toUserStatViewRecord)
-                .collect(Collectors.groupingBy(
-                        UserStatViewRecord::shiftType,
-                        Collectors.toCollection(LinkedHashSet::new)
-                ));
+        Map<Long, User> usersById = userRepository.findAll().stream().collect(Collectors.toMap(User::getId, Function.identity()));
+
+        Map<Integer, Set<UserStatViewRecord>> userStatViewRecords = new HashMap<>();
+        List<UserStatEntity> userStatEntities = userStatRepository.findByYearMonthOrderByShiftTypeAscNameAsc(yearMonth);
+
+        for (UserStatEntity entity : userStatEntities) {
+            UserStatViewRecord record = scheduleMapper.toUserStatViewRecord(entity, usersById);
+            userStatViewRecords.computeIfAbsent(entity.getShiftType(), k -> new LinkedHashSet<>()).add(record);
+        }
+
+        return userStatViewRecords;
     }
 
 
@@ -458,7 +463,7 @@ public class UserStatisticService {
     }
 
     private List<User> findUsersWithRequest() {
-        return StreamSupport.stream(userRepository.findAll().spliterator(), false)
+        return userRepository.findAll().stream()
                 .filter(User::hasShiftRequest)
                 .toList();
     }

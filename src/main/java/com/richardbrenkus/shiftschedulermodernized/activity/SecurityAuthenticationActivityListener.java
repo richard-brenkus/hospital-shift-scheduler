@@ -46,9 +46,7 @@ public class SecurityAuthenticationActivityListener {
 
     @EventListener
     public void onLogoutSucceeded(LogoutSuccessEvent event) {
-
-        log.info("LogoutSuccessEvent received for {}", event.getAuthentication() != null ? event.getAuthentication().getName() : "UNKNOWN");
-
+        
         String username = "UNKNOWN";
         if(event.getAuthentication() != null)
             username = safeUsername(event.getAuthentication().getName());

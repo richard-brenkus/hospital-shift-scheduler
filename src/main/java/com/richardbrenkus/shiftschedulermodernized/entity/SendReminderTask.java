@@ -14,16 +14,21 @@ import java.time.LocalDateTime;
 @Builder
 public class SendReminderTask {
 
+    public static final Long SINGLETON_ID = 1L;
+
     @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false, updatable = false)
     private Long id;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 
     private boolean isActive;
     private LocalDateTime startSendingTime;
     private LocalDateTime creationTime;
     private int frequencyInDays;
     private int repetitions;
-    private int finalSubmissionDay;
+    private LocalDateTime finalRequestSubmissionDate;
     private int counter;
 }

@@ -1,21 +1,29 @@
 package com.richardbrenkus.shiftschedulermodernized.repository;
 
 import com.richardbrenkus.shiftschedulermodernized.entity.SendReminderTask;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface SendReminderTaskRepository extends JpaRepository<SendReminderTask, Long> {
 
-    @Transactional
-    @Query("SELECT s FROM SendReminderTask s WHERE s.isActive = true")
-    List<SendReminderTask> findByIsActive();
-
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<SendReminderTask> findFirstByIsActiveTrueOrderByStartSendingTimeAsc();
+
+    Optional<SendReminderTask> findById(Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+       select task
+       from SendReminderTask task
+       where task.id = :id
+       """)
+    Optional<SendReminderTask> findByIdForUpdate(@Param("id") Long id);
 
 }

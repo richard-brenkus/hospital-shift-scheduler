@@ -13,6 +13,7 @@ import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
 import com.richardbrenkus.shiftschedulermodernized.entity.StoredScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ScheduleMapper;
+import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +32,7 @@ public class ScheduleValidationService {
     private final ScheduleMapper scheduleMapper;
     private final ScheduleRuleService scheduleRuleService;
     private final UserStatisticService userStatisticService;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public ScheduleValidationResult initializeValidationAndUserStats(ScheduleMonth scheduleMonth) {
@@ -43,7 +47,9 @@ public class ScheduleValidationService {
 
     @Transactional(readOnly = true)
     public ScheduleValidationResult validateSchedule(ScheduleEditForm scheduleEditForm) {
-        ScheduleMonth editedScheduleMonth = scheduleMapper.toScheduleMonth(scheduleEditForm, scheduleEditForm.toCalculationProfileForm());
+        Map<Long, User> usersById = userRepository.findAll().stream().collect(Collectors.toMap(User::getId, Function.identity()));
+
+        ScheduleMonth editedScheduleMonth = scheduleMapper.toScheduleMonth(scheduleEditForm, scheduleEditForm.toCalculationProfileForm(), usersById);
 
         if (editedScheduleMonth == null) {
             return ScheduleValidationResult.builder()

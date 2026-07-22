@@ -9,6 +9,7 @@ import com.richardbrenkus.shiftschedulermodernized.entity.CleanupTask;
 import com.richardbrenkus.shiftschedulermodernized.entity.SendReminderTask;
 import com.richardbrenkus.shiftschedulermodernized.repository.CleanupTaskRepository;
 import com.richardbrenkus.shiftschedulermodernized.repository.SendReminderTaskRepository;
+import com.richardbrenkus.shiftschedulermodernized.util.CalendarDateIdUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -160,7 +161,7 @@ class PlannedTasksServiceTest {
         assertThat(saved.isActive()).isTrue();
         assertThat(saved.getRepetitions()).isEqualTo(3);
         assertThat(saved.getFrequencyInDays()).isEqualTo(2);
-        assertThat(saved.getFinalSubmissionDay()).isEqualTo(20);
+        assertThat(saved.getFinalRequestSubmissionDate()).isEqualTo(20);
         assertThat(saved.getStartSendingTime()).isEqualTo(expectedNextMonthDateTime(5, 9, 30));
         assertThat(saved.getCreationTime()).isNotNull();
     }
@@ -241,7 +242,7 @@ class PlannedTasksServiceTest {
                 .startSendingTime(LocalDateTime.of(2026, 8, 5, 9, 30))
                 .frequencyInDays(2)
                 .repetitions(3)
-                .finalSubmissionDay(20)
+                .finalRequestSubmissionDate(CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(20))
                 .build();
         when(sendReminderTaskRepository.findAll()).thenReturn(List.of(task));
 
@@ -300,7 +301,7 @@ class PlannedTasksServiceTest {
                 .startSendingTime(start)
                 .frequencyInDays(2)
                 .repetitions(3)
-                .finalSubmissionDay(20)
+                .finalRequestSubmissionDate(CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(20))
                 .build();
         when(sendReminderTaskRepository.findAll()).thenReturn(List.of(task));
 

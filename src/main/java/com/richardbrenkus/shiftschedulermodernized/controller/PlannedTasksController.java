@@ -3,6 +3,7 @@ package com.richardbrenkus.shiftschedulermodernized.controller;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.CleanupTaskForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.SendReminderTaskForm;
 import com.richardbrenkus.shiftschedulermodernized.service.PlannedTasksService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,6 +12,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.stream.IntStream;
 
 @Controller
@@ -18,6 +22,7 @@ import java.util.stream.IntStream;
 public class PlannedTasksController {
 
     private final PlannedTasksService plannedTasksService;
+    private final Clock applicationClock;
 
     @GetMapping("/admin/planned_tasks")
     public String showScheduledEvents(Model model) {
@@ -28,11 +33,13 @@ public class PlannedTasksController {
     @PostMapping("/admin/cleanup_task")
     public String postCleanupTask(
             Model model,
-            @ModelAttribute("cleanupTaskForm") CleanupTaskForm cleanupTaskForm,
+            @Valid @ModelAttribute("cleanupTaskForm") CleanupTaskForm cleanupTaskForm,
             BindingResult bindingResult
     ) {
+        LocalDateTime now = LocalDateTime.now(applicationClock);
+
         if (cleanupTaskForm.isCleanupTaskActive()
-                && !plannedTasksService.isCleanupTimeInFuture(cleanupTaskForm)) {
+                && !plannedTasksService.isCleanupTimeInFuture(cleanupTaskForm, now)) {
             bindingResult.rejectValue("cleanupDay", "error.cleanupDay");
             bindingResult.rejectValue("cleanupHour", "error.cleanupHour");
             bindingResult.rejectValue("cleanupMinute", "error.cleanupMinute");
@@ -43,18 +50,20 @@ public class PlannedTasksController {
             return "admin/planned_tasks";
         }
 
-        plannedTasksService.saveCleanupTask(cleanupTaskForm);
+        plannedTasksService.saveCleanupTask(cleanupTaskForm, now);
         return "redirect:/admin/planned_tasks";
     }
 
     @PostMapping("/admin/send_reminder_task")
     public String postSendReminderTask(
             Model model,
-            @ModelAttribute("sendReminderTaskForm") SendReminderTaskForm sendReminderTaskForm,
+            @Valid @ModelAttribute("sendReminderTaskForm") SendReminderTaskForm sendReminderTaskForm,
             BindingResult bindingResult
     ) {
+        LocalDateTime now = LocalDateTime.now(applicationClock);
+
         if (sendReminderTaskForm.isSendReminderTaskActive()) {
-            validateReminderTask(sendReminderTaskForm, bindingResult);
+            validateReminderTask(sendReminderTaskForm, bindingResult, now);
         }
 
         if (bindingResult.hasErrors()) {
@@ -62,29 +71,27 @@ public class PlannedTasksController {
             return "admin/planned_tasks";
         }
 
-        plannedTasksService.saveSendReminderTask(sendReminderTaskForm);
+        plannedTasksService.saveSendReminderTask(sendReminderTaskForm, now);
         return "redirect:/admin/planned_tasks";
     }
 
     private void validateReminderTask(
             SendReminderTaskForm form,
-            BindingResult bindingResult
+            BindingResult bindingResult,
+            LocalDateTime now
     ) {
-        if (!plannedTasksService.isFirstReminderInFuture(form)) {
+        if (!plannedTasksService.isFirstReminderInFuture(form, now)) {
             bindingResult.rejectValue(
                     "startSendingRemindersDay",
-                    "error.reminderStartFuture",
-                    "must be in the future"
+                    "error.reminderStartFuture"
             );
             bindingResult.rejectValue(
                     "startSendingRemindersHour",
-                    "error.reminderStartFuture",
-                    "must be in the future"
+                    "error.reminderStartFuture"
             );
             bindingResult.rejectValue(
                     "startSendingRemindersMinute",
-                    "error.reminderStartFuture",
-                    "must be in the future"
+                    "error.reminderStartFuture"
             );
         }
 
@@ -95,7 +102,7 @@ public class PlannedTasksController {
             );
         }
 
-        if (!plannedTasksService.isSendRemindersSetupValid(form)) {
+        if (!plannedTasksService.isSendRemindersSetupValid(form, now)) {
             bindingResult.rejectValue(
                     "reminderSendingFrequencyInDays",
                     "error.reminderSendingFrequencyInDays"
@@ -169,7 +176,7 @@ public class PlannedTasksController {
     private void addSelectionLists(Model model) {
         model.addAttribute(
                 "daysList",
-                IntStream.rangeClosed(1, 31).boxed().toList()
+                IntStream.rangeClosed(1, YearMonth.now(applicationClock).lengthOfMonth()).boxed().toList()
         );
         model.addAttribute(
                 "hoursList",
@@ -185,11 +192,11 @@ public class PlannedTasksController {
         );
         model.addAttribute(
                 "frequencyList",
-                IntStream.rangeClosed(1, 31).boxed().toList()
+                IntStream.rangeClosed(1, 10).boxed().toList()
         );
         model.addAttribute(
                 "finalSubmissionDaysList",
-                IntStream.rangeClosed(1, 31).boxed().toList()
+                IntStream.rangeClosed(1, YearMonth.now(applicationClock).lengthOfMonth()).boxed().toList()
         );
     }
 }

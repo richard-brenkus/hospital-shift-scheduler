@@ -3,6 +3,7 @@ package com.richardbrenkus.shiftschedulermodernized.service;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import com.richardbrenkus.shiftschedulermodernized.support.TestFixtures;
+import com.richardbrenkus.shiftschedulermodernized.util.CalendarDateIdUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,7 +49,7 @@ class SmtpEmailReminderServiceTest {
         second.setEmail("mick@example.test");
         when(userRepository.findUsersWithoutActiveShiftRequest()).thenReturn(List.of(first, second));
 
-        service.sendShiftRequestReminderEmails(20);
+        service.sendShiftRequestReminderEmails(CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(20).toLocalDate(), "test-idempotentKey-3");
 
         verify(mailSender, times(2)).send(org.mockito.ArgumentMatchers.any(SimpleMailMessage.class));
     }
@@ -59,7 +60,7 @@ class SmtpEmailReminderServiceTest {
         user.setEmail(null);
         when(userRepository.findUsersWithoutActiveShiftRequest()).thenReturn(List.of(user));
 
-        service.sendShiftRequestReminderEmails(20);
+        service.sendShiftRequestReminderEmails(CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(20).toLocalDate(), "test-idempotentKey-4");
 
         verifyNoInteractions(mailSender);
     }
@@ -70,7 +71,7 @@ class SmtpEmailReminderServiceTest {
         user.setEmail("   ");
         when(userRepository.findUsersWithoutActiveShiftRequest()).thenReturn(List.of(user));
 
-        service.sendShiftRequestReminderEmails(20);
+        service.sendShiftRequestReminderEmails(CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(20).toLocalDate(), "test-idempotentKey-4");
 
         verifyNoInteractions(mailSender);
     }
@@ -79,7 +80,7 @@ class SmtpEmailReminderServiceTest {
     void shouldNotSendAnyMessage_whenNoUsersMatch() {
         when(userRepository.findUsersWithoutActiveShiftRequest()).thenReturn(List.of());
 
-        service.sendShiftRequestReminderEmails(20);
+        service.sendShiftRequestReminderEmails(CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(20).toLocalDate(), "test-idempotentKey-5");
 
         verify(mailSender, never()).send(org.mockito.ArgumentMatchers.any(SimpleMailMessage.class));
     }
@@ -91,7 +92,7 @@ class SmtpEmailReminderServiceTest {
         user.setName("Freddie Mercury");
         when(userRepository.findUsersWithoutActiveShiftRequest()).thenReturn(List.of(user));
 
-        service.sendShiftRequestReminderEmails(15);
+        service.sendShiftRequestReminderEmails(CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(15).toLocalDate(), "test-idempotentKey-6");
 
         ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(mailSender).send(captor.capture());
@@ -112,7 +113,7 @@ class SmtpEmailReminderServiceTest {
         user.setName("");
         when(userRepository.findUsersWithoutActiveShiftRequest()).thenReturn(List.of(user));
 
-        service.sendShiftRequestReminderEmails(15);
+        service.sendShiftRequestReminderEmails(CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(15).toLocalDate(), "test-idempotentKey-7");
 
         ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(mailSender).send(captor.capture());

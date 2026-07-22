@@ -1,8 +1,8 @@
 package com.richardbrenkus.shiftschedulermodernized.dto.form;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.*;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -12,11 +12,28 @@ import java.time.LocalDateTime;
 public class SendReminderTaskForm {
 
     private boolean isSendReminderTaskActive;
-    private LocalDateTime startSendingReminders;
+
+    @Min(1)
+    @Max(31)
     private int startSendingRemindersDay;
+
+    @Min(0)
+    @Max(23)
     private int startSendingRemindersHour;
+
+    @Min(0)
+    @Max(59)
     private int startSendingRemindersMinute;
+
+    @Min(1)
+    @Max(10)
     private int reminderSendingFrequencyInDays;
+
+    @Min(1)
+    @Max(10)
     private int reminderRepetitions;
+
+    @Min(1)
+    @Max(31)
     private int finalSubmissionDay;
 }
