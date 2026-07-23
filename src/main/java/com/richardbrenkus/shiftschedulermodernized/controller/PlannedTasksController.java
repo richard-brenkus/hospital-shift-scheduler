@@ -31,11 +31,7 @@ public class PlannedTasksController {
     }
 
     @PostMapping("/admin/cleanup_task")
-    public String postCleanupTask(
-            Model model,
-            @Valid @ModelAttribute("cleanupTaskForm") CleanupTaskForm cleanupTaskForm,
-            BindingResult bindingResult
-    ) {
+    public String postCleanupTask(Model model, @Valid @ModelAttribute("cleanupTaskForm") CleanupTaskForm cleanupTaskForm, BindingResult bindingResult) {
         LocalDateTime now = LocalDateTime.now(applicationClock);
 
         if (cleanupTaskForm.isCleanupTaskActive()
@@ -46,7 +42,7 @@ public class PlannedTasksController {
         }
 
         if (bindingResult.hasErrors()) {
-            prefillPageKeepingSubmittedCleanupForm(model);
+            prefillPage(model, true, false);
             return "admin/planned_tasks";
         }
 
@@ -55,11 +51,7 @@ public class PlannedTasksController {
     }
 
     @PostMapping("/admin/send_reminder_task")
-    public String postSendReminderTask(
-            Model model,
-            @Valid @ModelAttribute("sendReminderTaskForm") SendReminderTaskForm sendReminderTaskForm,
-            BindingResult bindingResult
-    ) {
+    public String postSendReminderTask(Model model, @Valid @ModelAttribute("sendReminderTaskForm") SendReminderTaskForm sendReminderTaskForm, BindingResult bindingResult) {
         LocalDateTime now = LocalDateTime.now(applicationClock);
 
         if (sendReminderTaskForm.isSendReminderTaskActive()) {
@@ -67,7 +59,7 @@ public class PlannedTasksController {
         }
 
         if (bindingResult.hasErrors()) {
-            prefillPageKeepingSubmittedReminderForm(model);
+            prefillPage(model, false, true);
             return "admin/planned_tasks";
         }
 
@@ -75,128 +67,54 @@ public class PlannedTasksController {
         return "redirect:/admin/planned_tasks";
     }
 
-    private void validateReminderTask(
-            SendReminderTaskForm form,
-            BindingResult bindingResult,
-            LocalDateTime now
-    ) {
+    private void validateReminderTask(SendReminderTaskForm form, BindingResult bindingResult, LocalDateTime now) {
         if (!plannedTasksService.isFirstReminderInFuture(form, now)) {
-            bindingResult.rejectValue(
-                    "startSendingRemindersDay",
-                    "error.reminderStartFuture"
-            );
-            bindingResult.rejectValue(
-                    "startSendingRemindersHour",
-                    "error.reminderStartFuture"
-            );
-            bindingResult.rejectValue(
-                    "startSendingRemindersMinute",
-                    "error.reminderStartFuture"
-            );
+            bindingResult.rejectValue("startSendingRemindersDay", "error.reminderStartFuture");
+            bindingResult.rejectValue("startSendingRemindersHour", "error.reminderStartFuture");
+            bindingResult.rejectValue("startSendingRemindersMinute", "error.reminderStartFuture");
         }
 
         if (plannedTasksService.hasDayError(form)) {
-            bindingResult.rejectValue(
-                    "startSendingRemindersDay",
-                    "error.startSendingRemindersDay"
-            );
+            bindingResult.rejectValue("startSendingRemindersDay", "error.startSendingRemindersDay");
         }
 
         if (!plannedTasksService.isSendRemindersSetupValid(form, now)) {
-            bindingResult.rejectValue(
-                    "reminderSendingFrequencyInDays",
-                    "error.reminderSendingFrequencyInDays"
-            );
-            bindingResult.rejectValue(
-                    "reminderRepetitions",
-                    "error.reminderRepetitions"
-            );
-            bindingResult.rejectValue(
-                    "finalSubmissionDay",
-                    "error.finalSubmissionDay"
-            );
+            bindingResult.rejectValue("reminderSendingFrequencyInDays", "error.reminderSendingFrequencyInDays");
+            bindingResult.rejectValue("reminderRepetitions", "error.reminderRepetitions");
+            bindingResult.rejectValue("finalSubmissionDay", "error.finalSubmissionDay");
         }
     }
 
     private void prefillPage(Model model) {
-        model.addAttribute(
-                "cleanupTaskRecord",
-                plannedTasksService.getCleanupTaskRecord()
-        );
-        model.addAttribute(
-                "sendReminderTaskRecord",
-                plannedTasksService.getSendReminderTaskRecord()
-        );
-        model.addAttribute(
-                "cleanupTaskForm",
-                plannedTasksService.getCleanupTaskForm()
-        );
-        model.addAttribute(
-                "sendReminderTaskForm",
-                plannedTasksService.getSendReminderTaskForm()
-        );
+        model.addAttribute("cleanupTaskRecord", plannedTasksService.getCleanupTaskRecord());
+        model.addAttribute("sendReminderTaskRecord", plannedTasksService.getSendReminderTaskRecord());
+        model.addAttribute("cleanupTaskForm", plannedTasksService.getCleanupTaskForm());
+        model.addAttribute("sendReminderTaskForm", plannedTasksService.getSendReminderTaskForm());
 
         addSelectionLists(model);
     }
 
-    private void prefillPageKeepingSubmittedReminderForm(Model model) {
-        model.addAttribute(
-                "cleanupTaskRecord",
-                plannedTasksService.getCleanupTaskRecord()
-        );
-        model.addAttribute(
-                "sendReminderTaskRecord",
-                plannedTasksService.getSendReminderTaskRecord()
-        );
-        model.addAttribute(
-                "cleanupTaskForm",
-                plannedTasksService.getCleanupTaskForm()
-        );
+    private void prefillPage(Model model, boolean preserveCleanupForm, boolean preserveReminderForm) {
+        model.addAttribute("cleanupTaskRecord", plannedTasksService.getCleanupTaskRecord());
+        model.addAttribute("sendReminderTaskRecord", plannedTasksService.getSendReminderTaskRecord());
 
-        addSelectionLists(model);
-    }
+        if (!preserveCleanupForm) {
+            model.addAttribute("cleanupTaskForm", plannedTasksService.getCleanupTaskForm());
+        }
 
-    private void prefillPageKeepingSubmittedCleanupForm(Model model) {
-        model.addAttribute(
-                "cleanupTaskRecord",
-                plannedTasksService.getCleanupTaskRecord()
-        );
-        model.addAttribute(
-                "sendReminderTaskRecord",
-                plannedTasksService.getSendReminderTaskRecord()
-        );
-        model.addAttribute(
-                "sendReminderTaskForm",
-                plannedTasksService.getSendReminderTaskForm()
-        );
+        if (!preserveReminderForm) {
+            model.addAttribute("sendReminderTaskForm", plannedTasksService.getSendReminderTaskForm());
+        }
 
         addSelectionLists(model);
     }
 
     private void addSelectionLists(Model model) {
-        model.addAttribute(
-                "daysList",
-                IntStream.rangeClosed(1, YearMonth.now(applicationClock).lengthOfMonth()).boxed().toList()
-        );
-        model.addAttribute(
-                "hoursList",
-                IntStream.rangeClosed(0, 23).boxed().toList()
-        );
-        model.addAttribute(
-                "minutesList",
-                IntStream.rangeClosed(0, 59).boxed().toList()
-        );
-        model.addAttribute(
-                "repetitionsList",
-                IntStream.rangeClosed(1, 10).boxed().toList()
-        );
-        model.addAttribute(
-                "frequencyList",
-                IntStream.rangeClosed(1, 10).boxed().toList()
-        );
-        model.addAttribute(
-                "finalSubmissionDaysList",
-                IntStream.rangeClosed(1, YearMonth.now(applicationClock).lengthOfMonth()).boxed().toList()
-        );
+        model.addAttribute("daysList", IntStream.rangeClosed(1, YearMonth.now(applicationClock).lengthOfMonth()).boxed().toList());
+        model.addAttribute("hoursList", IntStream.rangeClosed(0, 23).boxed().toList());
+        model.addAttribute("minutesList", IntStream.rangeClosed(0, 59).boxed().toList());
+        model.addAttribute("repetitionsList", IntStream.rangeClosed(1, 10).boxed().toList());
+        model.addAttribute("frequencyList", IntStream.rangeClosed(1, 10).boxed().toList());
+        model.addAttribute("finalSubmissionDaysList", IntStream.rangeClosed(1, YearMonth.now(applicationClock).lengthOfMonth()).boxed().toList());
     }
 }
