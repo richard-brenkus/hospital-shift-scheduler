@@ -34,8 +34,7 @@ public class PlannedTasksController {
     public String postCleanupTask(Model model, @Valid @ModelAttribute("cleanupTaskForm") CleanupTaskForm cleanupTaskForm, BindingResult bindingResult) {
         LocalDateTime now = LocalDateTime.now(applicationClock);
 
-        if (cleanupTaskForm.isCleanupTaskActive()
-                && !plannedTasksService.isCleanupTimeInFuture(cleanupTaskForm, now)) {
+        if (cleanupTaskForm.isCleanupTaskActive() && !plannedTasksService.isCleanupTimeInFuture(cleanupTaskForm, now)) {
             bindingResult.rejectValue("cleanupDay", "error.cleanupDay");
             bindingResult.rejectValue("cleanupHour", "error.cleanupHour");
             bindingResult.rejectValue("cleanupMinute", "error.cleanupMinute");

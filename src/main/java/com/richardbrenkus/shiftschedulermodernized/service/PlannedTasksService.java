@@ -82,16 +82,11 @@ public class PlannedTasksService {
     }
 
     @Transactional
-    public void saveSendReminderTask(
-            SendReminderTaskForm form, LocalDateTime now
-    ) {
-        Objects.requireNonNull(
-                form,
-                "form must not be null"
-        );
+    public void saveSendReminderTask(SendReminderTaskForm form, LocalDateTime now) {
+        Objects.requireNonNull(form, "form must not be null");
+        Objects.requireNonNull(now, "now must not be null");
 
-        SendReminderTask task =
-                getSendReminderTaskForUpdate();
+        SendReminderTask task = getSendReminderTaskForUpdate();
 
         if (!form.isSendReminderTaskActive()) {
             if (task.isActive()) {
@@ -107,30 +102,17 @@ public class PlannedTasksService {
             return;
         }
 
-        LocalDateTime startSendingTime =
-                createReminderStartDateTime(form, now);
+        LocalDateTime startSendingTime = createReminderStartDateTime(form, now);
 
-        LocalDateTime finalSubmissionTime =
-                createFinalSubmissionDateTime(form, now);
+        LocalDateTime finalSubmissionTime = createFinalSubmissionDateTime(form, now);
 
-        validateReminderConfigurationForPersistence(
-                form,
-                startSendingTime,
-                finalSubmissionTime,
-                now
-        );
+        validateReminderConfigurationForPersistence(form, startSendingTime, finalSubmissionTime, now);
 
         task.setActive(true);
         task.setStartSendingTime(startSendingTime);
-        task.setRepetitions(
-                form.getReminderRepetitions()
-        );
-        task.setFrequencyInDays(
-                form.getReminderSendingFrequencyInDays()
-        );
-        task.setFinalRequestSubmissionDate(
-                finalSubmissionTime
-        );
+        task.setRepetitions(form.getReminderRepetitions());
+        task.setFrequencyInDays(form.getReminderSendingFrequencyInDays());
+        task.setFinalRequestSubmissionDate(finalSubmissionTime);
         task.setCounter(0);
 
         if (task.getCreationTime() == null) {
@@ -460,6 +442,11 @@ public class PlannedTasksService {
         );
     }
 
+    /**
+     * Must obtain the singleton row using PESSIMISTIC_WRITE.
+     * <p>
+     * Concurrent administrators must serialize updates.
+     **/
     private CleanupTask getCleanupTaskForUpdate() {
         return cleanupTaskRepository
                 .findByIdForUpdate(CleanupTask.SINGLETON_ID)
@@ -471,6 +458,11 @@ public class PlannedTasksService {
                 );
     }
 
+    /**
+     * Must obtain the singleton row using PESSIMISTIC_WRITE.
+     * <p>
+     * Concurrent administrators must serialize updates.
+     **/
     private SendReminderTask
     getSendReminderTaskForUpdate() {
         return sendReminderTaskRepository

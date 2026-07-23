@@ -29,7 +29,7 @@ public class ReminderEmailOutboxCompletionService {
         }
 
         outbox.markSent(claimToken, now);
-        repository.saveAndFlush(outbox);
+        //repository.saveAndFlush(outbox);
         return true;
     }
 
@@ -54,7 +54,7 @@ public class ReminderEmailOutboxCompletionService {
         LocalDateTime retryAt = calculateRetryAt(now, outbox.getAttemptCount());
 
         outbox.markFailed(claimToken, normalizedFailureReason, retryAt);
-        repository.saveAndFlush(outbox);
+        //repository.saveAndFlush(outbox);
         return true;
     }
 

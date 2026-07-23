@@ -17,19 +17,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Reminder delivery is at least once. A rare duplicate can occur when SMTP accepts a message but the persistence of the SENT state fails.
+ * For stricter behavior, use an email provider with an idempotent HTTP API that contractually supports a client-provided idempotency key. Even then, verify the provider’s exact guarantee.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ReminderEmailOutboxProcessor {
 
     private static final List<ReminderEmailOutboxStatus> DISPATCHABLE_STATUSES =
-            List.of(
-                    ReminderEmailOutboxStatus.PENDING,
-                    ReminderEmailOutboxStatus.FAILED
-            );
+            List.of(ReminderEmailOutboxStatus.PENDING, ReminderEmailOutboxStatus.FAILED);
 
-    private static final String SAFE_DELIVERY_FAILURE_REASON =
-            "Reminder email delivery failed";
+    private static final String SAFE_DELIVERY_FAILURE_REASON = "Reminder email delivery failed";
 
     private final ReminderEmailOutboxRepository repository;
     private final ReminderEmailOutboxClaimService claimService;

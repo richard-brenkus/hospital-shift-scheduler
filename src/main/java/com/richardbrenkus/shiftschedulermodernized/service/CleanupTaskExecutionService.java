@@ -19,24 +19,14 @@ public class CleanupTaskExecutionService {
     private final ActivityPublisher activityPublisher;
 
     @Transactional
-    public void executeCleanupTaskIfDue(
-            LocalDateTime now
-    ) {
+    public void executeCleanupTaskIfDue(LocalDateTime now) {
         if (now == null) {
-            throw new IllegalArgumentException(
-                    "now must not be null"
-            );
+            throw new IllegalArgumentException("now must not be null");
         }
 
         CleanupTask task = cleanupTaskRepository
-                .findById(CleanupTask.SINGLETON_ID)
-                .orElseThrow(() ->
-                        new IllegalStateException(
-                                "Required singleton row with ID "
-                                        + CleanupTask.SINGLETON_ID
-                                        + " is missing from cleanup_task"
-                        )
-                );
+                .findByIdForUpdate(CleanupTask.SINGLETON_ID)
+                .orElseThrow(() -> new IllegalStateException("Required singleton row with ID " + CleanupTask.SINGLETON_ID + " is missing from cleanup_task"));
 
         if (!isDue(task, now)) {
             return;
@@ -58,12 +48,7 @@ public class CleanupTaskExecutionService {
         );
     }
 
-    private boolean isDue(
-            CleanupTask task,
-            LocalDateTime now
-    ) {
-        return task.isActive()
-                && task.getExecutionTime() != null
-                && !task.getExecutionTime().isAfter(now);
+    private boolean isDue(CleanupTask task, LocalDateTime now) {
+        return task.isActive() && task.getExecutionTime() != null && !task.getExecutionTime().isAfter(now);
     }
 }

@@ -208,6 +208,18 @@ public class ReminderEmailOutbox {
         this.nextAttemptAt = nextAttemptAt;
     }
 
+    public void markDead(
+            String expectedClaimToken,
+            LocalDateTime now
+    ) {
+        requireNonNull(now, "now");
+        requireCurrentClaim(expectedClaimToken);
+        status = ReminderEmailOutboxStatus.DEAD;
+        clearClaim();
+    }
+
+
+
     public void releaseStaleClaim(
             String safeFailureReason,
             LocalDateTime nextAttemptAt

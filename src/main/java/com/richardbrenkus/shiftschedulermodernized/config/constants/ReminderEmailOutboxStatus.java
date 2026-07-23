@@ -4,5 +4,6 @@ public enum ReminderEmailOutboxStatus {
     PENDING,
     PROCESSING,
     SENT,
-    FAILED
+    FAILED,
+    DEAD
 }

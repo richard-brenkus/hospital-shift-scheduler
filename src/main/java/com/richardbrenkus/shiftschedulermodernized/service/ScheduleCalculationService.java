@@ -49,7 +49,7 @@ public class ScheduleCalculationService {
 
         try {
             /*
-             * Keep this call inside the try block. If publishing unexpectedly
+             * If publishing unexpectedly
              * throws, the finally block must still reset calculationRunning.
              */
             activityPublisher.publishSuccess(

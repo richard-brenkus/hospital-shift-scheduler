@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,7 +37,7 @@ public class ReminderEmailOutboxClaimService {
 
         String claimToken = UUID.randomUUID().toString();
         outbox.claim(workerId, claimToken, now);
-        repository.saveAndFlush(outbox);
+        //repository.saveAndFlush(outbox);
 
         return Optional.of(new ClaimedReminderEmailJob(
                 outbox.getId(),
@@ -90,6 +91,19 @@ public class ReminderEmailOutboxClaimService {
             if (claimToken == null || claimToken.isBlank()) {
                 throw new IllegalArgumentException("claimToken must not be blank");
             }
+            if (recipientEmail == null || recipientEmail.isBlank()) {
+                throw new IllegalArgumentException("recipientEmail must not be blank");
+            }
+
+            if (idempotencyKey == null || idempotencyKey.isBlank()) {
+                throw new IllegalArgumentException("idempotencyKey must not be blank");
+            }
+
+            Objects.requireNonNull(outboxId, "outboxId must not be null");
+            Objects.requireNonNull(recipientUserId, "recipientUserId must not be null");
+            Objects.requireNonNull(recipientDisplayName, "recipientDisplayName must not be null");
+            Objects.requireNonNull(finalSubmissionDay, "finalSubmissionDay must not be null");
+            if(attemptNumber <= 0) throw new IllegalArgumentException("attemptNumber must be greater than 0");
         }
     }
 }
