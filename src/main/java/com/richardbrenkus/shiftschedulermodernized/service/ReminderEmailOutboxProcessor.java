@@ -167,7 +167,7 @@ public class ReminderEmailOutboxProcessor {
     private void publishSentActivitySafely(Long outboxId) {
         try {
             activityPublisher.publishSuccess(
-                    ActivityType.REMINDER_EMAILS_SENT,
+                    ActivityType.REMINDER_EMAIL_SENT,
                     "ReminderEmailOutbox",
                     outboxId.toString(),
                     "Shift-request reminder email sent"
@@ -187,7 +187,7 @@ public class ReminderEmailOutboxProcessor {
     ) {
         try {
             activityPublisher.publishFailure(
-                    ActivityType.REMINDER_EMAILS_FAILED,
+                    ActivityType.REMINDER_EMAIL_FAILED,
                     "ReminderEmailOutbox",
                     outboxId.toString(),
                     "Sending shift-request reminder email failed",

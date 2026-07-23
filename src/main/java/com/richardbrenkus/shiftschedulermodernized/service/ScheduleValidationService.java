@@ -21,8 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +31,7 @@ public class ScheduleValidationService {
     private final ScheduleRuleService scheduleRuleService;
     private final UserStatisticService userStatisticService;
     private final UserRepository userRepository;
+    private final UserService userService;
 
     @Transactional(readOnly = true)
     public ScheduleValidationResult initializeValidationAndUserStats(ScheduleMonth scheduleMonth) {
@@ -47,9 +46,8 @@ public class ScheduleValidationService {
 
     @Transactional(readOnly = true)
     public ScheduleValidationResult validateSchedule(ScheduleEditForm scheduleEditForm) {
-        Map<Long, User> usersById = userRepository.findAll().stream().collect(Collectors.toMap(User::getId, Function.identity()));
 
-        ScheduleMonth editedScheduleMonth = scheduleMapper.toScheduleMonth(scheduleEditForm, scheduleEditForm.toCalculationProfileForm(), usersById);
+        ScheduleMonth editedScheduleMonth = userService.getScheduleMonth(scheduleEditForm);
 
         if (editedScheduleMonth == null) {
             return ScheduleValidationResult.builder()

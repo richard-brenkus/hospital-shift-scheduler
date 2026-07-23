@@ -1,14 +1,18 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
 import com.richardbrenkus.shiftschedulermodernized.activity.ActivityPublisher;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleMonth;
 import com.richardbrenkus.shiftschedulermodernized.config.PasswordEncoderConfig;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ActivityType;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.ScheduleEditForm;
+import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftAssignmentForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserRegisterForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserUpdateForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ValidationError;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
+import com.richardbrenkus.shiftschedulermodernized.mapper.ScheduleMapper;
 import com.richardbrenkus.shiftschedulermodernized.mapper.UserMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -18,6 +22,8 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -29,6 +35,7 @@ public class UserService {
     private final UserTransactionalUpdater transactionalUpdater;
     private final UserTransactionalCreator userTransactionalCreator;
     private final ActivityPublisher activityPublisher;
+    private final ScheduleMapper scheduleMapper;
 
     public String getDisplayNameByUserName(String userName) {
         User currentUser = userRepository.getUserByUsername(userName);
@@ -236,4 +243,17 @@ public class UserService {
         return userMapper.entityToUserUpdateFormByUserId(user);
     }
 
+    public ScheduleMonth getScheduleMonth(ScheduleEditForm scheduleEditForm) {
+
+        Set<Long> ids = scheduleEditForm.getDays()
+                .stream()
+                .flatMap(day -> day.getAssignments().stream())
+                .map(ShiftAssignmentForm::getUserId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<Long, User> usersById = userRepository.findAllById(ids).stream().collect(Collectors.toMap(User::getId, Function.identity()));
+
+        return scheduleMapper.toScheduleMonth(scheduleEditForm, scheduleEditForm.toCalculationProfileForm(), usersById);
+    }
 }

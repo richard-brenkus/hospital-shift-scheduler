@@ -46,6 +46,9 @@ class ScheduleValidationServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private UserService userService;
+
     private ScheduleValidationService service;
 
     @BeforeEach
@@ -55,7 +58,8 @@ class ScheduleValidationServiceTest {
                 scheduleMapper,
                 scheduleRuleService,
                 userStatisticService,
-                userRepository
+                userRepository,
+                userService
         );
     }
 

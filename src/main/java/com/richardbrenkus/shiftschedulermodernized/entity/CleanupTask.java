@@ -18,7 +18,7 @@ public class CleanupTask {
 
     @Id
     @Column(name = "id", nullable = false, updatable = false)
-    private Long id;
+    private Long id = SINGLETON_ID;
 
     @Version
     @Column(nullable = false)

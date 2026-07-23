@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Component
 @RequiredArgsConstructor
@@ -34,8 +33,7 @@ public class CalculatedScheduleConverter {
                 .map(CalculatedShiftAssignment::userId)
                 .collect(Collectors.toSet());
 
-        Map<Long, User> usersById = StreamSupport.stream(
-                        userRepository.findAllById(userIds).spliterator(), false)
+        Map<Long, User> usersById = userRepository.findAllById(userIds).stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
         return ScheduleMonth.builder()
