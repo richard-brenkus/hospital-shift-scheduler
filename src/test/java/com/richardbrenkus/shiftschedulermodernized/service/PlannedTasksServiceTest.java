@@ -161,7 +161,7 @@ class PlannedTasksServiceTest {
         assertThat(saved.isActive()).isTrue();
         assertThat(saved.getRepetitions()).isEqualTo(3);
         assertThat(saved.getFrequencyInDays()).isEqualTo(2);
-        assertThat(saved.getFinalRequestSubmissionDate()).isEqualTo(20);
+        assertThat(saved.getFinalRequestSubmissionDate().getDayOfMonth()).isEqualTo(20);
         assertThat(saved.getStartSendingTime()).isEqualTo(expectedNextMonthDateTime(5, 9, 30));
         assertThat(saved.getCreationTime()).isNotNull();
     }

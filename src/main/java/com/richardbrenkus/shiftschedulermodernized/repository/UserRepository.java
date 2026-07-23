@@ -2,7 +2,6 @@ package com.richardbrenkus.shiftschedulermodernized.repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import org.springframework.data.domain.Sort;
@@ -44,8 +43,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Transactional
     List<User> findAll(Sort ascending);
-
-    @Transactional
-    List<User> findAllById(Set<Long> ids);
 
 }
