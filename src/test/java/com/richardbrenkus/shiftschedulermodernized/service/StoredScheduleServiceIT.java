@@ -87,7 +87,7 @@ class StoredScheduleServiceIT extends AbstractMySqlContainerTest {
         }
         day.getAssignments().add(ShiftAssignment.builder()
                 .shiftType(shiftType)
-                .user(user)
+                .userCalculationData(user)
                 .build());
     }
 }

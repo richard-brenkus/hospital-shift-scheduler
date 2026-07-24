@@ -117,7 +117,7 @@ public final class TestFixtures {
 
         day.getAssignments().add(ShiftAssignment.builder()
                 .shiftType(shiftType)
-                .user(user)
+                .userCalculationData(user)
                 .build());
     }
 

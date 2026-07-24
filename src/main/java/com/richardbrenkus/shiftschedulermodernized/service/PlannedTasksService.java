@@ -355,8 +355,7 @@ public class PlannedTasksService {
             );
         }
 
-        return plannedTaskMapper
-                .entityToSendReminderTaskRecord(task);
+        return plannedTaskMapper.entityToSendReminderTaskRecord(task);
     }
 
     private void validateReminderConfigurationForPersistence(

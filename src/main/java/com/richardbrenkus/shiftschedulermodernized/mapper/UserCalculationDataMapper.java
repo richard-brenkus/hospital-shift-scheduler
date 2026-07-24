@@ -15,28 +15,54 @@ import java.util.Set;
 @Component
 public class UserCalculationDataMapper {
 
-    public UserCalculationData toCalculationData(User user, Set<LocalDate> previousMonthAssignedDates) {
+    public UserCalculationData toCalculationData(
+            User user,
+            Set<LocalDate> previousMonthAssignedDates
+    ) {
         ShiftRequest request = user.getShiftRequest();
 
-        Set<LocalDate> unavailableDates = request == null || request.getDatesNo() == null ? Set.of() : Set.copyOf(request.getDatesNo());
+        Set<Integer> allowedShiftTypes =
+                user.getAllowedShiftTypes() == null
+                        ? Set.of()
+                        : Set.copyOf(user.getAllowedShiftTypes());
 
-        List<ShiftPreferenceCalculationData> preferences = request == null || request.getPreferences() == null ? List.of() : request.getPreferences().stream().map(this::toPreferenceData).toList();
+        Set<LocalDate> unavailableDates =
+                request == null || request.getDatesNo() == null
+                        ? Set.of()
+                        : Set.copyOf(request.getDatesNo());
 
-        Map<Integer, ShiftPreferenceCalculationData> preferencesByShiftType = UserCalculationData.indexPreferences(preferences);
+        List<ShiftPreferenceCalculationData> preferences =
+                request == null
+                        ? List.of()
+                        : request.getPreferences()
+                        .stream()
+                        .map(this::toPreferenceData)
+                        .toList();
+
+        Map<Integer, ShiftPreferenceCalculationData> preferencesByShiftType =
+                UserCalculationData.indexPreferences(preferences);
 
         return new UserCalculationData(
                 user.getId(),
                 user.getName(),
                 user.getUsername(),
                 user.getTitle(),
-                user.getAllowedShiftTypes(),
+                allowedShiftTypes,
                 unavailableDates,
                 preferencesByShiftType,
-                previousMonthAssignedDates
+                previousMonthAssignedDates == null
+                        ? Set.of()
+                        : Set.copyOf(previousMonthAssignedDates),
+                user.hasShiftRequest()
         );
     }
 
     private ShiftPreferenceCalculationData toPreferenceData(ShiftPreference preference) {
+        Set<LocalDate> datesYes =
+                preference.getDatesYes() == null
+                        ? Set.of()
+                        : Set.copyOf(preference.getDatesYes());
+
         return new ShiftPreferenceCalculationData(
                 preference.getShiftType(),
                 preference.getPriority(),
@@ -44,6 +70,7 @@ public class UserCalculationDataMapper {
                 preference.getWeekendCount(),
                 preference.isNoShiftRequested(),
                 preference.isAnyDateSelected(),
-                preference.getDatesYes() == null ? Set.of() : Set.copyOf(preference.getDatesYes()));
+                datesYes
+        );
     }
 }

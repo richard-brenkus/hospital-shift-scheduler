@@ -69,9 +69,9 @@ class CalculatedScheduleConverterTest {
 
         assertThat(result.getDays().get(0).getAssignments().getFirst().getShiftType())
                 .isEqualTo(1);
-        assertThat(result.getDays().get(0).getAssignments().getFirst().getUser())
+        assertThat(result.getDays().get(0).getAssignments().getFirst().getUserCalculationData())
                 .isSameAs(userOne);
-        assertThat(result.getDays().get(1).getAssignments().getFirst().getUser())
+        assertThat(result.getDays().get(1).getAssignments().getFirst().getUserCalculationData())
                 .isSameAs(userTwo);
 
         assertThat(result.isOverrideUserShiftRequestExceptNoDates()).isFalse();

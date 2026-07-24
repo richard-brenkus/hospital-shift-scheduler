@@ -1,6 +1,6 @@
 package com.richardbrenkus.shiftschedulermodernized.algorithm;
 
-import com.richardbrenkus.shiftschedulermodernized.entity.User;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.record.UserCalculationData;
 import lombok.*;
 
 @Getter
@@ -11,5 +11,5 @@ import lombok.*;
 public class ShiftAssignment {
 
     private int shiftType;
-    private User user;
+    private UserCalculationData userCalculationData;
 }

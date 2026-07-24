@@ -3,13 +3,13 @@ package com.richardbrenkus.shiftschedulermodernized.service;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleMonth;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ShiftAssignment;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.record.UserCalculationData;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.MonthOption;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.SavedScheduleDayView;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.SavedScheduleShiftAssignmentView;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.SavedScheduleView;
 import com.richardbrenkus.shiftschedulermodernized.entity.StoredScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.entity.StoredUserSnapshot;
-import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.repository.StoredScheduleDayRepository;
 import com.richardbrenkus.shiftschedulermodernized.util.CalendarDateIdUtils;
 import lombok.RequiredArgsConstructor;
@@ -188,22 +188,22 @@ public class StoredScheduleService {
         }
 
         for (ShiftAssignment assignment : day.getAssignments()) {
-            if (assignment == null || assignment.getUser() == null) {
+            if (assignment == null || assignment.getUserCalculationData() == null) {
                 continue;
             }
 
-            User user = assignment.getUser();
+            UserCalculationData userCalculationData = assignment.getUserCalculationData();
 
-            if (user.getId() == null) {
+            if (userCalculationData.userId() == null) {
                 continue;
             }
 
             storedDay.putAssignment(
                     assignment.getShiftType(),
-                    user.getId(),
-                    user.getUsername(),
-                    user.getName(),
-                    user.getTitle()
+                    userCalculationData.userId(),
+                    userCalculationData.username(),
+                    userCalculationData.name(),
+                    userCalculationData.title()
             );
         }
 

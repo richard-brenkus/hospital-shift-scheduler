@@ -5,7 +5,6 @@ import com.richardbrenkus.shiftschedulermodernized.algorithm.record.CalculatedSc
 import com.richardbrenkus.shiftschedulermodernized.algorithm.record.CalculatedScheduleMonth;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.record.ShiftPreferenceCalculationData;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.record.UserCalculationData;
-import com.richardbrenkus.shiftschedulermodernized.entity.ShiftPreference;
 import com.richardbrenkus.shiftschedulermodernized.entity.StoredScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.repository.StoredScheduleDayRepository;
@@ -59,63 +58,58 @@ public class ScheduleRuleService {
         return weekdayTotal + weekendTotal;
     }
 
-    boolean isWithinRequestedWeekdayLimit(User user, int shiftType, CalculationCounters counters) {
+    boolean isWithinRequestedWeekdayLimit(UserCalculationData userCalculationData, int shiftType, CalculationCounters counters) {
 
-        ShiftPreference preference = getPreference(user, shiftType);
+        ShiftPreferenceCalculationData preference = getPreference(userCalculationData, shiftType);
 
         if (preference == null) {
             return false;
         }
 
-        int requestedWeekdayCount = preference.getWeekdayCount();
-        int currentWeekdayCount = getShiftCounter(user, shiftType, counters);
+        int requestedWeekdayCount = preference.weekdayCount();
+        int currentWeekdayCount = getShiftCounter(userCalculationData, shiftType, counters);
 
         return requestedWeekdayCount != 0
                 && currentWeekdayCount < requestedWeekdayCount;
     }
 
-    boolean isWithinRequestedWeekendLimit(User user, int shiftType, CalculationCounters counters) {
+    boolean isWithinRequestedWeekendLimit(UserCalculationData userCalculationData, int shiftType, CalculationCounters counters) {
 
-        ShiftPreference preference = getPreference(user, shiftType);
+        ShiftPreferenceCalculationData preference = getPreference(userCalculationData, shiftType);
 
         if (preference == null) {
             return false;
         }
 
-        int requestedWeekendCount = preference.getWeekendCount();
-        int currentWeekendCount = getWeekendCounter(user, shiftType, counters);
+        int requestedWeekendCount = preference.weekendCount();
+        int currentWeekendCount = getWeekendCounter(userCalculationData, shiftType, counters);
 
         return requestedWeekendCount != 0
                 && currentWeekendCount < requestedWeekendCount;
     }
 
-    private ShiftPreference getPreference(User user, int shiftType) {
-        if (user.getShiftRequest() == null) {
+    private ShiftPreferenceCalculationData getPreference(UserCalculationData userCalculationData, int shiftType) {
+        if (!userCalculationData.hasShiftRequest()) {
             return null;
         }
 
-        return user.getShiftRequest()
-                .getPreferences()
-                .stream()
-                .filter(preference -> preference.getShiftType() == shiftType)
-                .findFirst()
-                .orElse(null);
+        return userCalculationData.preferenceFor(shiftType).orElse(null);
     }
 
-    private int getShiftCounter(User user, int shiftType, CalculationCounters counters) {
+    private int getShiftCounter(UserCalculationData user, int shiftType, CalculationCounters counters) {
         return counters.getWeekdayCounters()
-                .getOrDefault(user.getId(), Map.of())
+                .getOrDefault(user.userId(), Map.of())
                 .getOrDefault(shiftType, 0);
     }
 
-    private int getWeekendCounter(User user, int shiftType, CalculationCounters counters) {
+    private int getWeekendCounter(UserCalculationData user, int shiftType, CalculationCounters counters) {
         return counters.getWeekendCounters()
-                .getOrDefault(user.getId(), Map.of())
+                .getOrDefault(user.userId(), Map.of())
                 .getOrDefault(shiftType, 0);
     }
 
-    boolean respectsMinimalGap(LocalDate date, int minimalGap, User user, ScheduleMonth scheduleMonth, int currentShiftType) {
-        if (date == null || user == null || user.getId() == null || scheduleMonth == null) {
+    boolean respectsMinimalGap(LocalDate date, int minimalGap, UserCalculationData userCalculationData, ScheduleMonth scheduleMonth, int currentShiftType) {
+        if (date == null || userCalculationData == null || userCalculationData.userId() == null || scheduleMonth == null) {
             return true;
         }
 
@@ -136,7 +130,7 @@ public class ScheduleRuleService {
 
             for (ShiftAssignment assignment : day.getAssignments()) {
 
-                if (assignment == null || assignment.getUser() == null) {
+                if (assignment == null || assignment.getUserCalculationData() == null) {
                     continue;
                 }
 
@@ -148,9 +142,9 @@ public class ScheduleRuleService {
                     continue;
                 }
 
-                User assignedUser = assignment.getUser();
+                UserCalculationData assignedUserCalculationData = assignment.getUserCalculationData();
 
-                if (Objects.equals(assignedUser.getId(), user.getId())) {
+                if (Objects.equals(assignedUserCalculationData.userId(), userCalculationData.userId())) {
                     return false;
                 }
             }
@@ -163,13 +157,13 @@ public class ScheduleRuleService {
             Map<Integer, StoredScheduleDay> previousMonthStoredScheduleDays,
             Integer minimalGap,
             LocalDate date,
-            User user
+            UserCalculationData userCalculationData
     ) {
         if (previousMonthStoredScheduleDays == null
                 || minimalGap == null
                 || date == null
-                || user == null
-                || user.getUsername() == null) {
+                || userCalculationData == null
+                || userCalculationData.username() == null) {
             return true;
         }
 
@@ -191,7 +185,7 @@ public class ScheduleRuleService {
                             .stream()
                             .anyMatch(snapshot ->
                                     snapshot != null
-                                            && user.getUsername().equals(snapshot.getUsername())
+                                            && userCalculationData.username().equals(snapshot.getUsername())
                             );
 
             if (userWorkedPreviousMonthDay) {
@@ -203,7 +197,7 @@ public class ScheduleRuleService {
     }
 
 
-    boolean isNotRejectedByUser(LocalDate date, List<LocalDate> datesNo) {
+    boolean isNotRejectedByUser(LocalDate date, Set<LocalDate> datesNo) {
         if (datesNo == null || date == null) {
             return true;
         }
@@ -211,7 +205,7 @@ public class ScheduleRuleService {
         return !datesNo.contains(date);
     }
 
-    boolean isValidWithinTotalShiftLimit(Integer shiftCountCap, User user, CalculationCounters counters) {
+    boolean isValidWithinTotalShiftLimit(Integer shiftCountCap, UserCalculationData user, CalculationCounters counters) {
         if (user == null || !user.hasShiftRequest()) {
             return false;
         }
@@ -220,33 +214,33 @@ public class ScheduleRuleService {
             return true;
         }
 
-        return counters.getTotalCount(user.getId()) <= shiftCountCap;
+        return counters.getTotalCount(user.userId()) <= shiftCountCap;
     }
 
-    boolean isValidWithinRequestedWeekendLimit(User user, int shiftType, CalculationCounters counters) {
-        if (user == null || !user.hasShiftRequest()) {
+    boolean isValidWithinRequestedWeekendLimit(UserCalculationData userCalculationData, int shiftType, CalculationCounters counters) {
+        if (userCalculationData == null || !userCalculationData.hasShiftRequest()) {
             return false;
         }
 
-        ShiftPreference preference = getPreference(user, shiftType);
+        ShiftPreferenceCalculationData preference = getPreference(userCalculationData, shiftType);
 
-        int requestedWeekendCount = preference == null ? 0 : preference.getWeekendCount();
+        int requestedWeekendCount = preference == null ? 0 : preference.weekendCount();
 
-        int assignedWeekendCount = counters.getWeekendCount(user.getId(), shiftType);
+        int assignedWeekendCount = counters.getWeekendCount(userCalculationData.userId(), shiftType);
 
         return assignedWeekendCount <= requestedWeekendCount;
     }
 
-    boolean isValidWithinRequestedWeekdayLimit(User user, int shiftType, CalculationCounters counters) {
-        if (user == null || !user.hasShiftRequest()) {
+    boolean isValidWithinRequestedWeekdayLimit(UserCalculationData userCalculationData, int shiftType, CalculationCounters counters) {
+        if (userCalculationData == null || !userCalculationData.hasShiftRequest()) {
             return false;
         }
 
-        ShiftPreference preference = getPreference(user, shiftType);
+        ShiftPreferenceCalculationData preference = getPreference(userCalculationData, shiftType);
 
-        int requestedWeekdayCount = preference == null ? 0 : preference.getWeekdayCount();
+        int requestedWeekdayCount = preference == null ? 0 : preference.weekdayCount();
 
-        int assignedWeekdayCount = counters.getWeekdayCount(user.getId(), shiftType);
+        int assignedWeekdayCount = counters.getWeekdayCount(userCalculationData.userId(), shiftType);
 
         return assignedWeekdayCount <= requestedWeekdayCount;
     }
@@ -297,7 +291,7 @@ public class ScheduleRuleService {
         return counters.getTotalCount(user.userId()) < shiftCountCap;
     }
 
-    boolean isWithinRequestedWeekdayLimit(
+    /*boolean isWithinRequestedWeekdayLimit(
             UserCalculationData user,
             int shiftType,
             CalculationCounters counters
@@ -306,9 +300,9 @@ public class ScheduleRuleService {
         if (preference == null) return false;
         return preference.weekdayCount() != 0
                 && counters.getWeekdayCount(user.userId(), shiftType) < preference.weekdayCount();
-    }
+    }*/
 
-    boolean isWithinRequestedWeekendLimit(
+    /*boolean isWithinRequestedWeekendLimit(
             UserCalculationData user,
             int shiftType,
             CalculationCounters counters
@@ -317,7 +311,7 @@ public class ScheduleRuleService {
         if (preference == null) return false;
         return preference.weekendCount() != 0
                 && counters.getWeekendCount(user.userId(), shiftType) < preference.weekendCount();
-    }
+    }*/
 
     boolean respectsMinimalGap(
             LocalDate date,

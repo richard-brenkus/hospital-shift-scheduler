@@ -1,10 +1,13 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
 import com.richardbrenkus.shiftschedulermodernized.algorithm.*;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.record.ShiftPreferenceCalculationData;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.record.UserCalculationData;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ScheduleEditForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.*;
 import com.richardbrenkus.shiftschedulermodernized.entity.*;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ScheduleMapper;
+import com.richardbrenkus.shiftschedulermodernized.mapper.UserCalculationDataMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 
 import com.richardbrenkus.shiftschedulermodernized.repository.UserStatRepository;
@@ -32,6 +35,7 @@ public class UserStatisticService {
     private final ShiftTypeService shiftTypeService;
     private final ScheduleMapper scheduleMapper;
     private final UserStatRepository userStatRepository;
+    private final UserCalculationDataMapper userCalculationDataMapper;
 
     public void storeFullStatisticsInSession(HttpSession session, ScheduleValidationResult validationResult, ScheduleEditForm scheduleEditForm) {
         if (session == null) {
@@ -100,58 +104,58 @@ public class UserStatisticService {
             }
 
             for (ShiftAssignment assignment : day.getAssignments()) {
-                User user = assignment.getUser();
+                UserCalculationData userCalculationData = assignment.getUserCalculationData();
 
-                if (user == null || user.getId() == null) {
+                if (userCalculationData == null || userCalculationData.userId() == null) {
                     continue;
                 }
 
                 int shiftType = assignment.getShiftType();
-                ShiftPreference preference = getPreference(user, shiftType);
+                ShiftPreferenceCalculationData preference = getPreference(userCalculationData, shiftType);
 
                 if (!preferenceAppliesToMonth(preference, scheduleMonth.getMonth())) {
                     continue;
                 }
 
-                int totalAssignedForUser = counters.getTotalCount(user.getId());
+                int totalAssignedForUser = counters.getTotalCount(userCalculationData.userId());
 
                 if (totalAssignedForUser >= shiftCountCap) {
                     continue;
                 }
 
-                int calculatedWeekdays = counters.getWeekdayCount(user.getId(), shiftType);
-                int calculatedWeekends = counters.getWeekendCount(user.getId(), shiftType);
+                int calculatedWeekdays = counters.getWeekdayCount(userCalculationData.userId(), shiftType);
+                int calculatedWeekends = counters.getWeekendCount(userCalculationData.userId(), shiftType);
 
-                int remainingWeekdays = preference.getWeekdayCount() - calculatedWeekdays;
-                int remainingWeekends = preference.getWeekendCount() - calculatedWeekends;
+                int remainingWeekdays = preference.weekdayCount() - calculatedWeekdays;
+                int remainingWeekends = preference.weekendCount() - calculatedWeekends;
 
                 if (remainingWeekdays <= 0 && remainingWeekends <= 0) {
                     continue;
                 }
 
-                boolean alreadyAdded = alreadyAddedUserIdsByShiftType.computeIfAbsent(shiftType, key -> new HashSet<>()).contains(user.getId());
+                boolean alreadyAdded = alreadyAddedUserIdsByShiftType.computeIfAbsent(shiftType, key -> new HashSet<>()).contains(userCalculationData.userId());
 
                 if (alreadyAdded) {
                     continue;
                 }
 
                 UserStatViewRecord userStatViewRecord = UserStatViewRecord.builder()
-                        .user(user)
-                        .name(user.getName())
+                        .userCalculationData(userCalculationData)
+                        .name(userCalculationData.name())
                         .shiftType(shiftType)
-                        .requestedWeekdays(preference.getWeekdayCount())
-                        .requestedWeekends(preference.getWeekendCount())
+                        .requestedWeekdays(preference.weekdayCount())
+                        .requestedWeekends(preference.weekendCount())
                         .calculatedWeekdays(calculatedWeekdays)
                         .calculatedWeekends(calculatedWeekends)
                         .remainingWeekdays(Math.max(remainingWeekdays, 0))
                         .remainingWeekends(Math.max(remainingWeekends, 0))
-                        .anyDateSelected(preference.isAnyDateSelected())
-                        .requestedDateDays(toCurrentMonthDayOfMonthSet(preference.getDatesYes(), scheduleMonth.getMonth()))
+                        .anyDateSelected(preference.anyDateSelected())
+                        .requestedDateDays(toCurrentMonthDayOfMonthSet(preference.requestedDates(), scheduleMonth.getMonth()))
                         .assignedWeekdays(calculatedWeekdays)
                         .assignedWeekends(calculatedWeekends)
                         .assignedTotal(calculatedWeekdays + calculatedWeekends)
                         .month(scheduleMonth.getMonth())
-                        .allowedShiftTypesAsCommaSeparatedString(this.allowedShiftTypesToCommaSeparatedString(user))
+                        .allowedShiftTypesAsCommaSeparatedString(this.allowedShiftTypesToCommaSeparatedString(userCalculationData))
                         .build();
 
                 userStatMap
@@ -160,29 +164,29 @@ public class UserStatisticService {
 
                 alreadyAddedUserIdsByShiftType
                         .get(shiftType)
-                        .add(user.getId());
+                        .add(userCalculationData.userId());
             }
         }
 
         return userStatMap;
     }
 
-    private boolean preferenceAppliesToMonth(ShiftPreference preference, YearMonth month) {
+    private boolean preferenceAppliesToMonth(ShiftPreferenceCalculationData preference, YearMonth month) {
         if (preference == null || month == null) {
             return false;
         }
 
-        if (preference.isAnyDateSelected()) {
+        if (preference.anyDateSelected()) {
             return true;
         }
 
-        return preference.getDatesYes() != null
-                && preference.getDatesYes()
+        return preference.requestedDates() != null
+                && preference.requestedDates()
                 .stream()
                 .anyMatch(date -> date != null && YearMonth.from(date).equals(month));
     }
 
-    Set<Integer> toCurrentMonthDayOfMonthSet(List<LocalDate> dates, YearMonth month) {
+    Set<Integer> toCurrentMonthDayOfMonthSet(Set<LocalDate> dates, YearMonth month) {
         if (dates == null || month == null) {
             return Set.of();
         }
@@ -200,7 +204,7 @@ public class UserStatisticService {
             return result;
         }
 
-        List<User> usersWithRequest = findUsersWithRequest();
+        List<UserCalculationData> usersWithRequest = findUsersWithRequest().stream().map(user -> userCalculationDataMapper.toCalculationData(user, null)).toList();
         List<Integer> shiftTypes = shiftTypeService.getShiftTypes();
 
         Map<Integer, Set<Long>> assignedUserIdsByShiftType = collectAssignedUserIdsByShiftType(scheduleMonth);
@@ -210,43 +214,43 @@ public class UserStatisticService {
             Set<Long> assignedUserIds =
                     assignedUserIdsByShiftType.getOrDefault(shiftType, Set.of());
 
-            for (User user : usersWithRequest) {
-                if (user.getId() == null) {
+            for (UserCalculationData userCalculationData : usersWithRequest) {
+                if (userCalculationData.userId() == null) {
                     continue;
                 }
 
-                if (!user.getAllowedShiftTypes().contains(shiftType)) {
+                if (!userCalculationData.allowedShiftTypes().contains(shiftType)) {
                     continue;
                 }
 
-                ShiftPreference preference = getPreference(user, shiftType);
+                ShiftPreferenceCalculationData preference = getPreference(userCalculationData, shiftType);
 
-                if (preference == null || preference.isNoShiftRequested()) {
+                if (preference == null || preference.noShiftRequested()) {
                     continue;
                 }
 
                 boolean assignedForThisShiftType =
-                        assignedUserIds.contains(user.getId());
+                        assignedUserIds.contains(userCalculationData.userId());
 
                 if (assignedForThisShiftType) {
                     continue;
                 }
 
                 boolean notAssignedAnywhere =
-                        counters.getTotalCount(user.getId()) == 0;
+                        counters.getTotalCount(userCalculationData.userId()) == 0;
 
                 if (!notAssignedAnywhere) {
                     continue;
                 }
 
                 UserStatViewRecord stat = UserStatViewRecord.builder()
-                        .user(user)
-                        .name(user.getName())
+                        .userCalculationData(userCalculationData)
+                        .name(userCalculationData.name())
                         .shiftType(shiftType)
-                        .requestedWeekdays(preference.getWeekdayCount())
-                        .requestedWeekends(preference.getWeekendCount())
-                        .anyDateSelected(preference.isAnyDateSelected())
-                        .requestedDateDays(toCurrentMonthDayOfMonthSet(preference.getDatesYes(), scheduleMonth.getMonth()))
+                        .requestedWeekdays(preference.weekdayCount())
+                        .requestedWeekends(preference.weekendCount())
+                        .anyDateSelected(preference.anyDateSelected())
+                        .requestedDateDays(toCurrentMonthDayOfMonthSet(preference.requestedDates(), scheduleMonth.getMonth()))
                         .assignedWeekdays(0)
                         .assignedWeekends(0)
                         .assignedTotal(0)
@@ -278,30 +282,30 @@ public class UserStatisticService {
             int dayOfMonth = day.getDate().getDayOfMonth();
 
             for (ShiftAssignment assignment : day.getAssignments()) {
-                User user = assignment.getUser();
+                UserCalculationData userCalculationData = assignment.getUserCalculationData();
 
-                if (user == null || user.getId() == null) {
+                if (userCalculationData == null || userCalculationData.userId() == null) {
                     continue;
                 }
 
                 int shiftType = assignment.getShiftType();
 
-                ShiftPreference preference = getPreference(user, shiftType);
+                ShiftPreferenceCalculationData preference = getPreference(userCalculationData, shiftType);
 
-                int requestedWeekdays = preference == null ? 0 : preference.getWeekdayCount();
-                int requestedWeekends = preference == null ? 0 : preference.getWeekendCount();
-                boolean anyDateSelected = preference == null || preference.isAnyDateSelected();
+                int requestedWeekdays = preference == null ? 0 : preference.weekdayCount();
+                int requestedWeekends = preference == null ? 0 : preference.weekendCount();
+                boolean anyDateSelected = preference == null || preference.anyDateSelected();
 
-                int assignedWeekdays = counters.getWeekdayCount(user.getId(), shiftType);
-                int assignedWeekends = counters.getWeekendCount(user.getId(), shiftType);
+                int assignedWeekdays = counters.getWeekdayCount(userCalculationData.userId(), shiftType);
+                int assignedWeekends = counters.getWeekendCount(userCalculationData.userId(), shiftType);
 
                 UserStatBuilderData builderData =
                         statsByShiftTypeAndUser
                                 .computeIfAbsent(shiftType, key -> new HashMap<>())
-                                .computeIfAbsent(user.getId(), key ->
+                                .computeIfAbsent(userCalculationData.userId(), key ->
                                         UserStatBuilderData.builder()
-                                                .user(user)
-                                                .name(user.getName())
+                                                .userCalculationData(userCalculationData)
+                                                .name(userCalculationData.name())
                                                 .shiftType(shiftType)
                                                 .requestedWeekdays(requestedWeekdays)
                                                 .requestedWeekends(requestedWeekends)
@@ -315,7 +319,7 @@ public class UserStatisticService {
                                                 .anyDateSelected(anyDateSelected)
                                                 .requestedDateDays(preference == null
                                                         ? Set.of()
-                                                        : toCurrentMonthDayOfMonthSet(preference.getDatesYes(), scheduleMonth.getMonth()))
+                                                        : toCurrentMonthDayOfMonthSet(preference.requestedDates(), scheduleMonth.getMonth()))
                                                 .assignedDateDays(new TreeSet<>())
                                                 .month(scheduleMonth.getMonth())
                                                 .build()
@@ -445,16 +449,16 @@ public class UserStatisticService {
             }
 
             for (ShiftAssignment assignment : day.getAssignments()) {
-                User user = assignment.getUser();
+                UserCalculationData userCalculationData = assignment.getUserCalculationData();
 
-                if (user == null || user.getId() == null) {
+                if (userCalculationData == null || userCalculationData.userId() == null) {
                     continue;
                 }
 
                 result.computeIfAbsent(
                         assignment.getShiftType(),
                         key -> new HashSet<>()
-                ).add(user.getId());
+                ).add(userCalculationData.userId());
             }
         }
 
@@ -462,9 +466,7 @@ public class UserStatisticService {
     }
 
     private List<User> findUsersWithRequest() {
-        return userRepository.findAll().stream()
-                .filter(User::hasShiftRequest)
-                .toList();
+        return userRepository.findUsersWithShiftRequest();
     }
 
     String returnScheduleScoreAsString(ScheduleMonth scheduleMonth, int shiftTypeCount) {
@@ -480,9 +482,9 @@ public class UserStatisticService {
             }
 
             for (ShiftAssignment assignment : day.getAssignments()) {
-                User user = assignment.getUser();
+                UserCalculationData userCalculationData = assignment.getUserCalculationData();
 
-                if (user != null && user.getId() != null) {
+                if (userCalculationData != null && userCalculationData.userId() != null) {
                     assignedCount++;
                 }
             }
@@ -499,7 +501,7 @@ public class UserStatisticService {
 
     @Builder
     private record UserStatBuilderData(
-            User user,
+            UserCalculationData userCalculationData,
             String name,
             int shiftType,
             int requestedWeekdays,
@@ -518,7 +520,7 @@ public class UserStatisticService {
     ) {
         UserStatViewRecord toUserStat() {
             return UserStatViewRecord.builder()
-                    .user(user)
+                    .userCalculationData(userCalculationData)
                     .name(name)
                     .shiftType(shiftType)
                     .requestedWeekdays(requestedWeekdays)
@@ -568,21 +570,16 @@ public class UserStatisticService {
         return null;
     }
 
-    private ShiftPreference getPreference(User user, int shiftType) {
-        if (user == null || user.getShiftRequest() == null) {
+    private ShiftPreferenceCalculationData getPreference(UserCalculationData userCalculationData, int shiftType) {
+        if (userCalculationData == null || !userCalculationData.hasShiftRequest()) {
             return null;
         }
 
-        return user.getShiftRequest()
-                .getPreferences()
-                .stream()
-                .filter(preference -> preference.getShiftType() == shiftType)
-                .findFirst()
-                .orElse(null);
+        return userCalculationData.preferenceFor(shiftType).orElse(null);
     }
 
-    private String allowedShiftTypesToCommaSeparatedString(User user) {
-        return user.getAllowedShiftTypes().stream()
+    private String allowedShiftTypesToCommaSeparatedString(UserCalculationData userCalculationData) {
+        return userCalculationData.allowedShiftTypes().stream()
                 .map(shiftType -> Integer.toString(shiftType))
                 .collect(Collectors.joining(", "));
     }

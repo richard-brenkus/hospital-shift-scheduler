@@ -3,8 +3,10 @@ package com.richardbrenkus.shiftschedulermodernized.algorithm;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.record.CalculatedScheduleMonth;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.record.CalculatedShiftAssignment;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.record.ScheduleCandidate;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.record.UserCalculationData;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileForm;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
+import com.richardbrenkus.shiftschedulermodernized.mapper.UserCalculationDataMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,6 +22,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CalculatedScheduleConverter {
     private final UserRepository userRepository;
+    private final UserCalculationDataMapper userCalculationDataMapper;
 
     @Transactional(readOnly = true)
     public ScheduleMonth toLegacyScheduleMonth(
@@ -46,7 +49,7 @@ public class CalculatedScheduleConverter {
                                 .assignments(day.getAssignments().stream()
                                         .map(assignment -> ShiftAssignment.builder()
                                                 .shiftType(assignment.shiftType())
-                                                .user(requireUser(usersById, assignment.userId()))
+                                                .userCalculationData(requireUser(usersById, assignment.userId()))
                                                 .build())
                                         .collect(Collectors.toCollection(ArrayList::new)))
                                 .build())
@@ -61,11 +64,11 @@ public class CalculatedScheduleConverter {
                 .build();
     }
 
-    private User requireUser(Map<Long, User> usersById, Long userId) {
-        User user = usersById.get(userId);
-        if (user == null) {
+    private UserCalculationData requireUser(Map<Long, User> usersById, Long userId) {
+        UserCalculationData userCalculationData = userCalculationDataMapper.toCalculationData(usersById.get(userId), null);
+        if (userCalculationData == null) {
             throw new IllegalStateException("Calculated schedule references missing user ID: " + userId);
         }
-        return user;
+        return userCalculationData;
     }
 }

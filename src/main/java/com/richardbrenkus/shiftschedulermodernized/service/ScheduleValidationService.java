@@ -5,13 +5,12 @@ import com.richardbrenkus.shiftschedulermodernized.algorithm.CalculationCounters
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleMonth;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ShiftAssignment;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.record.UserCalculationData;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserStatViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.config.ShiftTypeProperties;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ScheduleEditForm;
-import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
 import com.richardbrenkus.shiftschedulermodernized.entity.StoredScheduleDay;
-import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ScheduleMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -96,44 +95,44 @@ public class ScheduleValidationService {
                     continue;
                 }
 
-                User user = assignment.getUser();
+                UserCalculationData userCalculationData = assignment.getUserCalculationData();
 
-                if (user == null || user.getId() == null) {
+                if (userCalculationData == null || userCalculationData.userId() == null) {
                     continue;
                 }
 
                 int shiftType = assignment.getShiftType();
-                String userName = user.getName();
+                String userName = userCalculationData.username();
 
-                if (!editedScheduleMonth.isOverrideHasShiftRequest() && !user.hasShiftRequest()) {
+                if (!editedScheduleMonth.isOverrideHasShiftRequest() && !userCalculationData.hasShiftRequest()) {
                     markError(result, shiftType, day);
                     result.setUserNoRequest(true);
                     result.addUserNoRequest(shiftType, userName);
                     continue;
                 }
 
-                if (!user.hasShiftRequest()) {
+                if (!userCalculationData.hasShiftRequest()) {
                     continue;
                 }
 
-                ShiftRequest shiftRequest = user.getShiftRequest();
+                //ShiftRequest shiftRequest = user..getShiftRequest();
 
-                boolean withinTotalShiftLimit = scheduleRuleService.isValidWithinTotalShiftLimit(shiftCountCap, user, counters);
+                boolean withinTotalShiftLimit = scheduleRuleService.isValidWithinTotalShiftLimit(shiftCountCap, userCalculationData, counters);
 
                 boolean withinRequestedWeekdayLimit = true;
                 boolean withinRequestedWeekendLimit = true;
 
                 if (day.isWeekendOrHoliday()) {
-                    withinRequestedWeekendLimit = scheduleRuleService.isValidWithinRequestedWeekendLimit(user, shiftType, counters);
+                    withinRequestedWeekendLimit = scheduleRuleService.isValidWithinRequestedWeekendLimit(userCalculationData, shiftType, counters);
                 } else {
-                    withinRequestedWeekdayLimit = scheduleRuleService.isValidWithinRequestedWeekdayLimit(user, shiftType, counters);
+                    withinRequestedWeekdayLimit = scheduleRuleService.isValidWithinRequestedWeekdayLimit(userCalculationData, shiftType, counters);
                 }
 
-                boolean respectsMinimalGap = scheduleRuleService.respectsMinimalGap(day.getDate(), minimalGap, user, editedScheduleMonth, shiftType);
+                boolean respectsMinimalGap = scheduleRuleService.respectsMinimalGap(day.getDate(), minimalGap, userCalculationData, editedScheduleMonth, shiftType);
 
-                boolean isNotRejectedByUser = scheduleRuleService.isNotRejectedByUser(day.getDate(), shiftRequest.getDatesNo());
+                boolean isNotRejectedByUser = scheduleRuleService.isNotRejectedByUser(day.getDate(), userCalculationData.unavailableDates());
 
-                boolean respectsPreviousMonthGap = scheduleRuleService.respectsPreviousMonthGap(previousMonthStoredScheduleDays, minimalGap, day.getDate(), user);
+                boolean respectsPreviousMonthGap = scheduleRuleService.respectsPreviousMonthGap(previousMonthStoredScheduleDays, minimalGap, day.getDate(), userCalculationData);
 
                 if (!withinTotalShiftLimit && !editedScheduleMonth.isOverrideShiftCountCap()) {
                     markError(result, shiftType, day);
@@ -237,18 +236,18 @@ public class ScheduleValidationService {
             }
 
             for (ShiftAssignment assignment : day.getAssignments()) {
-                User user = assignment.getUser();
+                UserCalculationData userCalculationData = assignment.getUserCalculationData();
 
-                if (user == null || user.getId() == null) {
+                if (userCalculationData == null || userCalculationData.userId() == null) {
                     continue;
                 }
 
                 int shiftType = assignment.getShiftType();
 
                 if (day.isWeekendOrHoliday()) {
-                    counters.incrementWeekend(user.getId(), shiftType);
+                    counters.incrementWeekend(userCalculationData.userId(), shiftType);
                 } else {
-                    counters.incrementWeekday(user.getId(), shiftType);
+                    counters.incrementWeekday(userCalculationData.userId(), shiftType);
                 }
             }
         }

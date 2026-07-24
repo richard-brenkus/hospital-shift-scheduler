@@ -3,6 +3,7 @@ package com.richardbrenkus.shiftschedulermodernized.mapper;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleMonth;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ShiftAssignment;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.record.UserCalculationData;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ScheduleDayForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ScheduleEditForm;
@@ -23,6 +24,8 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class ScheduleMapper {
+
+    private final UserCalculationDataMapper userCalculationDataMapper;
 
     public ScheduleEditForm toEditForm(ScheduleMonth scheduleMonth, CalculationProfileForm calculationProfileForm, List<Integer> shiftTypes) {
         Objects.requireNonNull(scheduleMonth, "scheduleMonth must not be null");
@@ -70,13 +73,13 @@ public class ScheduleMapper {
 
                 ShiftAssignment existingAssignment = assignmentsByType.get(shiftType);
 
-                User assignedUser = existingAssignment == null ? null : existingAssignment.getUser();
+                UserCalculationData assignedUserCalculationData = existingAssignment == null ? null : existingAssignment.getUserCalculationData();
 
                 dayForm.getAssignments().add(ShiftAssignmentForm.builder()
                                 .shiftType(shiftType)
-                                .userId(assignedUser == null ? null : assignedUser.getId())
-                                .name(assignedUser == null ? "" : assignedUser.getName())
-                                .title(assignedUser == null ? "" : assignedUser.getTitle())
+                                .userId(assignedUserCalculationData == null ? null : assignedUserCalculationData.userId())
+                                .name(assignedUserCalculationData == null ? "" : assignedUserCalculationData.name())
+                                .title(assignedUserCalculationData == null ? "" : assignedUserCalculationData.title())
                                 .build());
             }
 
@@ -117,9 +120,9 @@ public class ScheduleMapper {
     public UserStatEntity toUserStatEntity(UserStatViewRecord record) {
         Objects.requireNonNull(record,"UserStatViewRecord must not be null");
 
-        Long userId = record.user() == null ? null : record.user().getId();
+        Long userId = record.userCalculationData() == null ? null : record.userCalculationData().userId();
 
-        String username = record.user() == null ? null : record.user().getUsername();
+        String username = record.userCalculationData() == null ? null : record.userCalculationData().username();
 
         return UserStatEntity.builder()
                 .yearMonth(record.month())
@@ -149,10 +152,10 @@ public class ScheduleMapper {
         Objects.requireNonNull(entity,"UserStatEntity must not be null");
         Objects.requireNonNull(usersById,"usersById must not be null");
 
-        User user = entity.getUserId() == null ? null : usersById.get(entity.getUserId());
+        UserCalculationData userCalculationData = entity.getUserId() == null ? null : userCalculationDataMapper.toCalculationData(usersById.get(entity.getUserId()), null);
 
         return UserStatViewRecord.builder()
-                .user(user)
+                .userCalculationData(userCalculationData)
                 .name(entity.getName())
                 .shiftType(entity.getShiftType())
                 .requestedWeekdays(entity.getRequestedWeekdays())
@@ -192,18 +195,19 @@ public class ScheduleMapper {
         Objects.requireNonNull(form,"ShiftAssignmentForm must not be null");
         Objects.requireNonNull(usersById,"usersById must not be null");
 
-        User user = null;
+        UserCalculationData userCalculationData = null;
+
 
         if (form.getUserId() != null) {
-            user = usersById.get(form.getUserId());
-            if (user == null) {
+            userCalculationData = userCalculationDataMapper.toCalculationData(usersById.get(form.getUserId()), null);
+            if (userCalculationData == null) {
                 throw new IllegalArgumentException("No user exists for submitted assignment user ID " + form.getUserId());
             }
         }
 
         return ShiftAssignment.builder()
                 .shiftType(form.getShiftType())
-                .user(user)
+                .userCalculationData(userCalculationData)
                 .build();
     }
 }

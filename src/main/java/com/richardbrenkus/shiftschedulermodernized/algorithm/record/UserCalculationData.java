@@ -22,7 +22,8 @@ public record UserCalculationData(
         Set<Integer> allowedShiftTypes,
         Set<LocalDate> unavailableDates,
         Map<Integer, ShiftPreferenceCalculationData> preferencesByShiftType,
-        Set<LocalDate> previousMonthAssignedDates
+        Set<LocalDate> previousMonthAssignedDates,
+        boolean hasShiftRequest
 ) {
 
     public UserCalculationData {

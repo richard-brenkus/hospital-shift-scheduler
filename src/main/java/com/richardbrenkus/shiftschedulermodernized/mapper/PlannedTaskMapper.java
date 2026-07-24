@@ -32,33 +32,27 @@ public class PlannedTaskMapper {
         );
     }
 
-    public SendReminderTaskRecord entityToSendReminderTaskRecord(
-            SendReminderTask entity
-    ) {
-        Objects.requireNonNull(
-                entity,
-                "entity must not be null"
-        );
+    public SendReminderTaskRecord entityToSendReminderTaskRecord(SendReminderTask entity) {
+        Objects.requireNonNull(entity,"entity must not be null");
 
         if(entity.isActive()) {
-            Objects.requireNonNull(
-                    entity.getStartSendingTime(),
-                    "entity.startSendingTime must not be null"
-            );
+            Objects.requireNonNull(entity.getStartSendingTime(),"entity.startSendingTime must not be null");
+            Objects.requireNonNull(entity.getFinalRequestSubmissionDate(),"entity.finalRequestSubmissionDate must not be null");
 
-            Objects.requireNonNull(
-                    entity.getFinalRequestSubmissionDate(),
-                    "entity.finalRequestSubmissionDate must not be null"
-            );
+            return new SendReminderTaskRecord(
+                    true,
+                    entity.getRepetitions(),
+                    entity.getFrequencyInDays(),
+                    entity.getStartSendingTime(),
+                    entity.getFinalRequestSubmissionDate().getDayOfMonth());
         }
 
         return new SendReminderTaskRecord(
-                entity.isActive(),
+                false,
                 entity.getRepetitions(),
                 entity.getFrequencyInDays(),
-                entity.getStartSendingTime(),
-                entity.getFinalRequestSubmissionDate()
-                        .getDayOfMonth()
+                null,
+                0
         );
     }
 }

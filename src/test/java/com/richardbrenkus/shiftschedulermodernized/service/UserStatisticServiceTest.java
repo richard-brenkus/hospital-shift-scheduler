@@ -242,7 +242,7 @@ class UserStatisticServiceTest {
     @Test
     void shouldConvertDatesToDayOfMonthSet_ignoringForeignMonthDates() {
         Set<Integer> days = service.toCurrentMonthDayOfMonthSet(
-                java.util.Arrays.asList(
+                Set.of(
                         LocalDate.of(2026, 8, 5),
                         LocalDate.of(2026, 8, 10),
                         LocalDate.of(2026, 9, 1),

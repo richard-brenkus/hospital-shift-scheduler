@@ -318,6 +318,8 @@ public class AdminController {
 
     @PostMapping("/admin/new_calculation")
     public String calculateSchedule(Model model, HttpSession session, @ModelAttribute("calculationProfileForm") CalculationProfileForm calculationProfileForm, @RequestParam(name = "confirmed", defaultValue = "false") boolean confirmed) {
+        Objects.requireNonNull(calculationProfileForm, "calculationProfile must not be null");
+        Objects.requireNonNull(calculationProfileForm.getCalculationMonth(), "calculation month must not be null");
         String monthYearId = calculationProfileForm.getCalculationMonth().format(MONTH_YEAR_FORMATTER);
 
         boolean storedScheduleExists = storedScheduleService.existsByMonthYearId(monthYearId);

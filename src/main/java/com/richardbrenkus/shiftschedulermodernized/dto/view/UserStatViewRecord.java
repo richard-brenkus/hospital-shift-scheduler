@@ -1,6 +1,6 @@
 package com.richardbrenkus.shiftschedulermodernized.dto.view;
 
-import com.richardbrenkus.shiftschedulermodernized.entity.User;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.record.UserCalculationData;
 import lombok.Builder;
 
 import java.time.YearMonth;
@@ -8,7 +8,7 @@ import java.util.Set;
 
 @Builder
 public record UserStatViewRecord(
-        User user,
+        UserCalculationData userCalculationData,
         String name,
         int shiftType,
 
@@ -39,7 +39,7 @@ public record UserStatViewRecord(
 
     public UserStatViewRecord withAssignedTotalAllShiftTypes(int assignedTotalAllShiftTypes) {
         return UserStatViewRecord.builder()
-                .user(user)
+                .userCalculationData(userCalculationData)
                 .name(name)
                 .shiftType(shiftType)
                 .requestedWeekdays(requestedWeekdays)

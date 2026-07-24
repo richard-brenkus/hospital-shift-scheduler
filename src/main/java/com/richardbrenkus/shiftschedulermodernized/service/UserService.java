@@ -172,6 +172,7 @@ public class UserService {
         return userRepository.findAllByOrderByNameAsc();
     }
 
+    @Transactional(readOnly = true)
     public List<UserViewRecord> getAllUserSummaryViewRecordsByNameAsc() {
         return userRepository.findAllByOrderByNameAsc()
                 .stream()
@@ -245,6 +246,7 @@ public class UserService {
         return userMapper.entityToUserUpdateFormByUserId(user);
     }
 
+    @Transactional(readOnly = true)
     public ScheduleMonth getScheduleMonth(ScheduleEditForm scheduleEditForm) {
 
         Set<Long> ids = scheduleEditForm.getDays()

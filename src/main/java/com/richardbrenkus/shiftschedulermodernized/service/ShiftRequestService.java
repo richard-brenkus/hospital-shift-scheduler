@@ -382,14 +382,12 @@ public class ShiftRequestService {
      * ACTIVITY LOG REVIEW: intentionally not logged.
      * Read-only lookup used to prepare a form.
      */
+    @Transactional(readOnly = true)
     public ShiftRequestForm getShiftRequestFormByUserId(long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid user Id: " + id));
 
-        User user = userService.getUserById(id);
-        if (user != null) {
-            return getShiftRequestForm(user.getUsername());
-        }
-
-        throw new IllegalArgumentException("Invalid user Id: " + id);
+        return createShiftRequestForm(user);
     }
 
     /*
@@ -398,18 +396,24 @@ public class ShiftRequestService {
      */
     @Transactional(readOnly = true)
     public ShiftRequestForm getShiftRequestForm(String username) {
-        ShiftRequestForm shiftRequestForm = new ShiftRequestForm();
-        User currentUser = userRepository.getUserByUsername(username);
+        User user = userRepository.getUserByUsername(username);
 
-        if (currentUser.getShiftRequest() != null) {
-            shiftRequestForm = shiftRequestMapper.entityToForm(
-                    currentUser.getShiftRequest()
-            );
-        } else {
-            fillAllowedShiftTypes(currentUser, shiftRequestForm);
+        if (user == null) {
+            throw new IllegalArgumentException("Invalid username: " + username);
         }
 
-        return shiftRequestForm;
+        return createShiftRequestForm(user);
+    }
+
+    private ShiftRequestForm createShiftRequestForm(User user) {
+        ShiftRequestForm form = new ShiftRequestForm();
+
+        if (user.getShiftRequest() != null) {
+            return shiftRequestMapper.entityToForm(user.getShiftRequest());
+        }
+
+        fillAllowedShiftTypes(user, form);
+        return form;
     }
 
     /*
