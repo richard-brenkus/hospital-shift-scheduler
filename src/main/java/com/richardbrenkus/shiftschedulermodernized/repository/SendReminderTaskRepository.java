@@ -14,11 +14,6 @@ import java.util.Optional;
 public interface SendReminderTaskRepository extends JpaRepository<SendReminderTask, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<SendReminderTask> findFirstByIsActiveTrueOrderByStartSendingTimeAsc();
-
-    Optional<SendReminderTask> findById(Long id);
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
        select task
        from SendReminderTask task

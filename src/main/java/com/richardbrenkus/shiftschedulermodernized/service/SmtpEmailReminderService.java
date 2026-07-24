@@ -1,10 +1,15 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
+import com.richardbrenkus.shiftschedulermodernized.exception.PermanentEmailDeliveryException;
+import com.richardbrenkus.shiftschedulermodernized.exception.TransientEmailDeliveryException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.mail.MailAuthenticationException;
+import org.springframework.mail.MailException;
+import org.springframework.mail.MailParseException;
 import org.springframework.mail.MailPreparationException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -15,8 +20,7 @@ import java.time.LocalDate;
 @Service
 @Profile("prod")
 @RequiredArgsConstructor
-public class SmtpEmailReminderService
-        implements EmailReminderService {
+public class SmtpEmailReminderService implements EmailReminderService {
 
     private static final int MAXIMUM_EMAIL_LENGTH = 320;
 
@@ -42,9 +46,8 @@ public class SmtpEmailReminderService
         );
         validateSenderConfiguration();
 
-        MimeMessage message = mailSender.createMimeMessage();
-
         try {
+            MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper =
                     new MimeMessageHelper(message, false, "UTF-8");
 
@@ -71,9 +74,33 @@ public class SmtpEmailReminderService
 
             mailSender.send(message);
 
+        } catch (MailAuthenticationException exception) {
+            throw new PermanentEmailDeliveryException(
+                    "SMTP authentication failed",
+                    exception
+            );
+        } catch (MailParseException | MailPreparationException exception) {
+            throw new PermanentEmailDeliveryException(
+                    "Reminder email could not be prepared",
+                    exception
+            );
         } catch (MessagingException exception) {
-            throw new MailPreparationException(
-                    "Could not prepare reminder email",
+            /*
+             * Exceptions raised while constructing addresses, headers or the
+             * MIME message are deterministic for the same input.
+             */
+            throw new PermanentEmailDeliveryException(
+                    "Reminder email message is invalid",
+                    exception
+            );
+        } catch (MailException exception) {
+            /*
+             * Transport/provider failures are retried. A provider can still
+             * report a permanent recipient rejection as MailException; the
+             * configured maximum-attempt limit guarantees termination.
+             */
+            throw new TransientEmailDeliveryException(
+                    "SMTP transport failed",
                     exception
             );
         }
@@ -126,25 +153,25 @@ public class SmtpEmailReminderService
             String idempotencyKey
     ) {
         if (recipientEmail == null || recipientEmail.isBlank()) {
-            throw new IllegalArgumentException(
+            throw new PermanentEmailDeliveryException(
                     "recipientEmail must not be blank"
             );
         }
 
         if (recipientEmail.trim().length() > MAXIMUM_EMAIL_LENGTH) {
-            throw new IllegalArgumentException(
+            throw new PermanentEmailDeliveryException(
                     "recipientEmail must not exceed 320 characters"
             );
         }
 
         if (finalSubmissionDate == null) {
-            throw new IllegalArgumentException(
+            throw new PermanentEmailDeliveryException(
                     "finalSubmissionDate must not be null"
             );
         }
 
         if (idempotencyKey == null || idempotencyKey.isBlank()) {
-            throw new IllegalArgumentException(
+            throw new PermanentEmailDeliveryException(
                     "idempotencyKey must not be blank"
             );
         }
@@ -152,19 +179,19 @@ public class SmtpEmailReminderService
 
     private void validateSenderConfiguration() {
         if (fromAddress == null || fromAddress.isBlank()) {
-            throw new IllegalStateException(
+            throw new PermanentEmailDeliveryException(
                     "spring.mail.username must be configured"
             );
         }
 
         if (fromAddress.trim().length() > MAXIMUM_EMAIL_LENGTH) {
-            throw new IllegalStateException(
+            throw new PermanentEmailDeliveryException(
                     "spring.mail.username must not exceed 320 characters"
             );
         }
 
         if (messageIdDomain == null || messageIdDomain.isBlank()) {
-            throw new IllegalStateException(
+            throw new PermanentEmailDeliveryException(
                     "app.mail.message-id-domain must not be blank"
             );
         }

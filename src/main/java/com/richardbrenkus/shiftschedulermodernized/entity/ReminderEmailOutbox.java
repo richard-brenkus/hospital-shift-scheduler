@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Check;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -42,11 +43,16 @@ import java.util.UUID;
                 )
         }
 )
+@Check(constraints = "attempt_count >= 0")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ReminderEmailOutbox {
 
     private static final int MAXIMUM_EMAIL_LENGTH = 320;
+    private static final int MAXIMUM_DISPLAY_NAME_LENGTH = 255;
+    private static final int MAXIMUM_WORKER_ID_LENGTH = 100;
+    private static final int MAXIMUM_CLAIM_TOKEN_LENGTH = 36;
+    private static final int MAXIMUM_FAILURE_REASON_LENGTH = 255;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -101,6 +107,9 @@ public class ReminderEmailOutbox {
     @Column(name = "sent_at")
     private LocalDateTime sentAt;
 
+    @Column(name = "dead_at")
+    private LocalDateTime deadAt;
+
     @Column(name = "last_failure_reason")
     private String lastFailureReason;
 
@@ -123,7 +132,11 @@ public class ReminderEmailOutbox {
         requireNonNull(recipientUserId, "recipientUserId");
         requireNonNull(now, "now");
 
-        String normalizedEmail = normalizeRequiredEmail(recipientEmail);
+        if (scheduledExecutionTime.toLocalDate().isAfter(finalSubmissionDay)) {
+            throw new IllegalArgumentException(
+                    "scheduledExecutionTime must not be after finalSubmissionDay"
+            );
+        }
 
         ReminderEmailOutbox outbox = new ReminderEmailOutbox();
         String eventId = UUID.randomUUID().toString();
@@ -135,8 +148,9 @@ public class ReminderEmailOutbox {
         outbox.scheduledExecutionTime = scheduledExecutionTime;
         outbox.finalSubmissionDay = finalSubmissionDay;
         outbox.recipientUserId = recipientUserId;
-        outbox.recipientEmail = normalizedEmail;
-        outbox.recipientDisplayName = normalizeNullable(recipientDisplayName, 255);
+        outbox.recipientEmail = normalizeRequiredEmail(recipientEmail);
+        outbox.recipientDisplayName =
+                normalizeNullableText(recipientDisplayName, MAXIMUM_DISPLAY_NAME_LENGTH);
         outbox.status = ReminderEmailOutboxStatus.PENDING;
         outbox.attemptCount = 0;
         outbox.nextAttemptAt = now;
@@ -147,15 +161,10 @@ public class ReminderEmailOutbox {
 
     public void claim(
             String workerId,
-            String claimToken,
+            String newClaimToken,
             LocalDateTime now
     ) {
-        if (workerId == null || workerId.isBlank()) {
-            throw new IllegalArgumentException("workerId must not be blank");
-        }
-        if (claimToken == null || claimToken.isBlank()) {
-            throw new IllegalArgumentException("claimToken must not be blank");
-        }
+        requireNonNegativeAttemptCount();
         requireNonNull(now, "now");
 
         if (status != ReminderEmailOutboxStatus.PENDING
@@ -165,11 +174,33 @@ public class ReminderEmailOutbox {
             );
         }
 
+        if (nextAttemptAt == null) {
+            throw new IllegalStateException(
+                    "A dispatchable outbox job must have nextAttemptAt"
+            );
+        }
+
+        if (now.isBefore(nextAttemptAt)) {
+            throw new IllegalArgumentException(
+                    "claim time must not precede nextAttemptAt"
+            );
+        }
+
         status = ReminderEmailOutboxStatus.PROCESSING;
-        claimedBy = truncate(workerId, 100);
-        this.claimToken = truncate(claimToken, 36);
+        claimedBy = truncateRequiredIdentifier(
+                workerId,
+                MAXIMUM_WORKER_ID_LENGTH,
+                "workerId"
+        );
+        claimToken = truncateRequiredIdentifier(
+                newClaimToken,
+                MAXIMUM_CLAIM_TOKEN_LENGTH,
+                "claimToken"
+        );
         claimedAt = now;
         attemptCount++;
+        sentAt = null;
+        deadAt = null;
         lastFailureReason = null;
     }
 
@@ -184,11 +215,14 @@ public class ReminderEmailOutbox {
             String expectedClaimToken,
             LocalDateTime now
     ) {
+        requireNonNegativeAttemptCount();
         requireNonNull(now, "now");
         requireCurrentClaim(expectedClaimToken);
+        requireNotBeforeClaim(now, "sent time");
 
         status = ReminderEmailOutboxStatus.SENT;
         sentAt = now;
+        deadAt = null;
         clearClaim();
         lastFailureReason = null;
     }
@@ -196,51 +230,110 @@ public class ReminderEmailOutbox {
     public void markFailed(
             String expectedClaimToken,
             String safeFailureReason,
-            LocalDateTime nextAttemptAt
+            LocalDateTime retryAt
     ) {
-        requireNonNull(nextAttemptAt, "nextAttemptAt");
+        requireNonNegativeAttemptCount();
+        requireNonNull(retryAt, "retryAt");
         requireCurrentClaim(expectedClaimToken);
+        requireNotBeforeClaim(retryAt, "next attempt time");
 
         status = ReminderEmailOutboxStatus.FAILED;
-        clearClaim();
         sentAt = null;
-        lastFailureReason = truncate(safeFailureReason, 255);
-        this.nextAttemptAt = nextAttemptAt;
+        deadAt = null;
+        lastFailureReason = normalizeFailureReason(safeFailureReason);
+        nextAttemptAt = retryAt;
+        clearClaim();
     }
 
     public void markDead(
             String expectedClaimToken,
+            String safeFailureReason,
             LocalDateTime now
     ) {
+        requireNonNegativeAttemptCount();
         requireNonNull(now, "now");
         requireCurrentClaim(expectedClaimToken);
+        requireNotBeforeClaim(now, "dead time");
+
         status = ReminderEmailOutboxStatus.DEAD;
+        sentAt = null;
+        deadAt = now;
+        lastFailureReason = normalizeFailureReason(safeFailureReason);
+        nextAttemptAt = now;
         clearClaim();
     }
 
+    /**
+     * Terminates a PENDING or FAILED row before a new claim is created.
+     * This closes the stale-claim recovery edge case in which a row has
+     * already reached the configured maximum number of attempts.
+     */
+    public void markDeadFromDispatchableState(
+            String safeFailureReason,
+            LocalDateTime now
+    ) {
+        requireNonNegativeAttemptCount();
+        requireNonNull(now, "now");
 
+        if (status != ReminderEmailOutboxStatus.PENDING
+                && status != ReminderEmailOutboxStatus.FAILED) {
+            throw new IllegalStateException(
+                    "Only PENDING or FAILED jobs can be terminated without a claim"
+            );
+        }
+
+        status = ReminderEmailOutboxStatus.DEAD;
+        sentAt = null;
+        deadAt = now;
+        lastFailureReason = normalizeFailureReason(safeFailureReason);
+        nextAttemptAt = now;
+        clearClaim();
+    }
 
     public void releaseStaleClaim(
             String safeFailureReason,
-            LocalDateTime nextAttemptAt
+            LocalDateTime retryAt
     ) {
-        requireNonNull(nextAttemptAt, "nextAttemptAt");
+        requireNonNegativeAttemptCount();
+        requireNonNull(retryAt, "retryAt");
 
         if (status != ReminderEmailOutboxStatus.PROCESSING) {
             return;
         }
 
+        requireNotBeforeClaim(retryAt, "next attempt time");
+
         status = ReminderEmailOutboxStatus.FAILED;
-        clearClaim();
         sentAt = null;
-        lastFailureReason = truncate(safeFailureReason, 255);
-        this.nextAttemptAt = nextAttemptAt;
+        deadAt = null;
+        lastFailureReason = normalizeFailureReason(safeFailureReason);
+        nextAttemptAt = retryAt;
+        clearClaim();
     }
 
     private void requireCurrentClaim(String expectedClaimToken) {
         if (!isOwnedByClaim(expectedClaimToken)) {
             throw new IllegalStateException(
                     "The outbox job is not owned by the supplied claim token"
+            );
+        }
+    }
+
+    private void requireNotBeforeClaim(
+            LocalDateTime value,
+            String valueDescription
+    ) {
+        if (claimedAt != null && value.isBefore(claimedAt)) {
+            throw new IllegalArgumentException(
+                    valueDescription + " must not precede claim time"
+            );
+        }
+    }
+
+    private void requireNonNegativeAttemptCount() {
+        if (attemptCount < 0) {
+            throw new IllegalStateException(
+                    "attemptCount must not be negative"
             );
         }
     }
@@ -269,15 +362,29 @@ public class ReminderEmailOutbox {
         return normalizedEmail;
     }
 
-    private static void requireNonNull(Object value, String fieldName) {
-        if (value == null) {
+    private static String truncateRequiredIdentifier(
+            String value,
+            int maximumLength,
+            String fieldName
+    ) {
+        if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(
-                    fieldName + " must not be null"
+                    fieldName + " must not be blank"
             );
         }
+
+        return truncateTrimmed(value, maximumLength);
     }
 
-    private static String normalizeNullable(
+    private static String normalizeFailureReason(String value) {
+        if (value == null || value.isBlank()) {
+            return "Reminder email delivery failed";
+        }
+
+        return truncateTrimmed(value, MAXIMUM_FAILURE_REASON_LENGTH);
+    }
+
+    private static String normalizeNullableText(
             String value,
             int maximumLength
     ) {
@@ -285,21 +392,25 @@ public class ReminderEmailOutbox {
             return null;
         }
 
-        return truncate(value, maximumLength);
+        return truncateTrimmed(value, maximumLength);
     }
 
-    private static String truncate(
+    private static String truncateTrimmed(
             String value,
             int maximumLength
     ) {
-        if (value == null || value.isBlank()) {
-            return "Unknown failure";
-        }
-
         String trimmed = value.trim();
 
         return trimmed.length() <= maximumLength
                 ? trimmed
                 : trimmed.substring(0, maximumLength);
+    }
+
+    private static void requireNonNull(Object value, String fieldName) {
+        if (value == null) {
+            throw new IllegalArgumentException(
+                    fieldName + " must not be null"
+            );
+        }
     }
 }

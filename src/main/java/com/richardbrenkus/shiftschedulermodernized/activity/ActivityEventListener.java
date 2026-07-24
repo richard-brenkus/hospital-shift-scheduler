@@ -19,7 +19,7 @@ public class ActivityEventListener {
     )
     public void handle(ActivityEvent event) {
         try {
-            activityLogWriter.write(event);
+            activityLogWriter.persist(event);
         } catch (RuntimeException exception) {
             log.error(
                     "Could not persist activity event of type {} for target {}:{}",

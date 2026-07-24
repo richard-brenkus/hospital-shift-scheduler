@@ -4,6 +4,8 @@ import com.richardbrenkus.shiftschedulermodernized.activity.ActivityPublisher;
 import com.richardbrenkus.shiftschedulermodernized.activity.RequestMetadata;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ActivityType;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ReminderEmailOutboxStatus;
+import com.richardbrenkus.shiftschedulermodernized.exception.PermanentEmailDeliveryException;
+import com.richardbrenkus.shiftschedulermodernized.exception.TransientEmailDeliveryException;
 import com.richardbrenkus.shiftschedulermodernized.repository.ReminderEmailOutboxRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,19 +19,25 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Reminder delivery is at least once. A rare duplicate can occur when SMTP accepts a message but the persistence of the SENT state fails.
- * For stricter behavior, use an email provider with an idempotent HTTP API that contractually supports a client-provided idempotency key. Even then, verify the provider’s exact guarantee.
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ReminderEmailOutboxProcessor {
 
     private static final List<ReminderEmailOutboxStatus> DISPATCHABLE_STATUSES =
-            List.of(ReminderEmailOutboxStatus.PENDING, ReminderEmailOutboxStatus.FAILED);
+            List.of(
+                    ReminderEmailOutboxStatus.PENDING,
+                    ReminderEmailOutboxStatus.FAILED
+            );
 
-    private static final String SAFE_DELIVERY_FAILURE_REASON = "Reminder email delivery failed";
+    private static final String TRANSIENT_FAILURE_REASON =
+            "Temporary reminder email delivery failure";
+
+    private static final String PERMANENT_FAILURE_REASON =
+            "Permanent reminder email delivery failure";
+
+    private static final String UNEXPECTED_FAILURE_REASON =
+            "Unexpected reminder email delivery failure";
 
     private final ReminderEmailOutboxRepository repository;
     private final ReminderEmailOutboxClaimService claimService;
@@ -43,11 +51,15 @@ public class ReminderEmailOutboxProcessor {
 
     private final String workerId = UUID.randomUUID().toString();
 
-    @Scheduled(fixedDelayString = "${planned-tasks.outbox.fixed-delay-ms:10000}")
+    @Scheduled(
+            fixedDelayString =
+                    "${planned-tasks.outbox.fixed-delay-ms:10000}"
+    )
     public void processPendingReminderJobs() {
         validateBatchSize();
 
         LocalDateTime now = LocalDateTime.now(applicationClock);
+
         List<Long> candidateIds = repository.findDispatchableIds(
                 DISPATCHABLE_STATUSES,
                 now,
@@ -73,7 +85,8 @@ public class ReminderEmailOutboxProcessor {
             return;
         }
 
-        LocalDateTime claimTime = LocalDateTime.now(applicationClock);
+        LocalDateTime claimTime =
+                LocalDateTime.now(applicationClock);
 
         claimService.claim(outboxId, workerId, claimTime)
                 .ifPresent(this::processClaimedJob);
@@ -89,11 +102,29 @@ public class ReminderEmailOutboxProcessor {
                     job.finalSubmissionDay(),
                     job.idempotencyKey()
             );
-        } catch (RuntimeException deliveryException) {
-            handleDeliveryFailure(job, deliveryException);
+        } catch (TransientEmailDeliveryException exception) {
+            handleTransientDeliveryFailure(job, exception);
+            return;
+        } catch (PermanentEmailDeliveryException exception) {
+            handlePermanentDeliveryFailure(job, exception);
+            return;
+        } catch (RuntimeException exception) {
+            /*
+             * An exception outside the explicit delivery model is treated as
+             * a programming/configuration defect and terminated immediately.
+             * The exception itself is logged, but only a safe generic reason
+             * is persisted.
+             */
+            handleUnexpectedDeliveryFailure(job, exception);
             return;
         }
 
+        markSent(job);
+    }
+
+    private void markSent(
+            ReminderEmailOutboxClaimService.ClaimedReminderEmailJob job
+    ) {
         try {
             boolean changed = completionService.markSent(
                     job.outboxId(),
@@ -102,105 +133,166 @@ public class ReminderEmailOutboxProcessor {
             );
 
             if (changed) {
-                publishSentActivitySafely(job.outboxId());
+                publishSentActivity(job.outboxId());
             } else {
                 log.warn(
-                        "Reminder email for outbox job {} was accepted for delivery, "
-                                + "but its claim token no longer owns the row.",
+                        "Reminder email for outbox job {} was accepted for "
+                                + "delivery, but its claim token no longer "
+                                + "owns the row.",
                         job.outboxId()
                 );
             }
         } catch (RuntimeException completionException) {
             log.error(
-                    "Reminder email for outbox job {} was accepted for delivery, "
-                            + "but the job could not be marked SENT. The row will "
-                            + "remain PROCESSING for stale-claim recovery.",
+                    "Reminder email for outbox job {} was accepted for "
+                            + "delivery, but the job could not be marked "
+                            + "SENT. The row will remain PROCESSING for "
+                            + "stale-claim recovery.",
                     job.outboxId(),
                     completionException
             );
         }
     }
 
-    private void handleDeliveryFailure(
+    private void handleTransientDeliveryFailure(
             ReminderEmailOutboxClaimService.ClaimedReminderEmailJob job,
-            RuntimeException deliveryException
+            TransientEmailDeliveryException deliveryException
     ) {
         log.error(
-                "Reminder email delivery failed for outbox job {}, recipient user {}, attempt {}",
+                "Transient reminder email delivery failure for outbox job "
+                        + "{}, recipient user {}, attempt {}",
                 job.outboxId(),
                 job.recipientUserId(),
                 job.attemptNumber(),
                 deliveryException
         );
 
-        try {
-            boolean changed = completionService.markFailed(
-                    job.outboxId(),
-                    job.claimToken(),
-                    LocalDateTime.now(applicationClock),
-                    SAFE_DELIVERY_FAILURE_REASON
-            );
+        completeFailure(
+                job,
+                TRANSIENT_FAILURE_REASON,
+                false
+        );
+    }
 
-            if (changed) {
-                publishFailedActivitySafely(
+    private void handlePermanentDeliveryFailure(
+            ReminderEmailOutboxClaimService.ClaimedReminderEmailJob job,
+            PermanentEmailDeliveryException deliveryException
+    ) {
+        log.error(
+                "Permanent reminder email delivery failure for outbox job "
+                        + "{}, recipient user {}, attempt {}",
+                job.outboxId(),
+                job.recipientUserId(),
+                job.attemptNumber(),
+                deliveryException
+        );
+
+        completeFailure(
+                job,
+                PERMANENT_FAILURE_REASON,
+                true
+        );
+    }
+
+    private void handleUnexpectedDeliveryFailure(
+            ReminderEmailOutboxClaimService.ClaimedReminderEmailJob job,
+            RuntimeException deliveryException
+    ) {
+        log.error(
+                "Unexpected reminder email delivery failure for outbox job "
+                        + "{}, recipient user {}, attempt {}",
+                job.outboxId(),
+                job.recipientUserId(),
+                job.attemptNumber(),
+                deliveryException
+        );
+
+        completeFailure(
+                job,
+                UNEXPECTED_FAILURE_REASON,
+                true
+        );
+    }
+
+    private void completeFailure(
+            ReminderEmailOutboxClaimService.ClaimedReminderEmailJob job,
+            String safeFailureReason,
+            boolean permanent
+    ) {
+        try {
+            ReminderEmailOutboxCompletionService.FailureCompletionResult result =
+                    permanent
+                            ? completionService.markPermanentFailure(
+                            job.outboxId(),
+                            job.claimToken(),
+                            LocalDateTime.now(applicationClock),
+                            safeFailureReason
+                    )
+                            : completionService.markTransientFailure(
+                            job.outboxId(),
+                            job.claimToken(),
+                            LocalDateTime.now(applicationClock),
+                            safeFailureReason
+                    );
+
+            switch (result) {
+                case RETRY_SCHEDULED -> publishFailedActivity(
                         job.outboxId(),
-                        SAFE_DELIVERY_FAILURE_REASON
+                        safeFailureReason,
+                        false
                 );
-            } else {
-                log.warn(
-                        "Delivery failed for outbox job {}, but its claim token no "
-                                + "longer owns the row. The failure was not applied "
+
+                case DEAD -> publishFailedActivity(
+                        job.outboxId(),
+                        safeFailureReason,
+                        true
+                );
+
+                case NOT_CHANGED -> log.warn(
+                        "Delivery failed for outbox job {}, but its "
+                                + "claim token no longer owns the "
+                                + "row. The failure was not applied "
                                 + "to a newer claim.",
                         job.outboxId()
                 );
             }
         } catch (RuntimeException completionException) {
             log.error(
-                    "Reminder email delivery failed for outbox job {}, and the job "
-                            + "could not be marked FAILED",
+                    "Reminder email delivery failed for outbox job {}, and "
+                            + "the job could not be completed as FAILED or "
+                            + "DEAD",
                     job.outboxId(),
                     completionException
             );
         }
     }
 
-    private void publishSentActivitySafely(Long outboxId) {
-        try {
-            activityPublisher.publishSuccess(
-                    ActivityType.REMINDER_EMAIL_SENT,
-                    "ReminderEmailOutbox",
-                    outboxId.toString(),
-                    "Shift-request reminder email sent"
-            );
-        } catch (RuntimeException activityException) {
-            log.error(
-                    "Outbox job {} was marked SENT, but its success activity could not be published",
-                    outboxId,
-                    activityException
-            );
-        }
+    private void publishSentActivity(Long outboxId) {
+        activityPublisher.publishSuccess(
+                ActivityType.REMINDER_EMAIL_SENT,
+                "ReminderEmailOutbox",
+                outboxId.toString(),
+                "Shift-request reminder email sent"
+        );
     }
 
-    private void publishFailedActivitySafely(
+    private void publishFailedActivity(
             Long outboxId,
-            String safeFailureReason
+            String safeFailureReason,
+            boolean dead
     ) {
-        try {
-            activityPublisher.publishFailure(
-                    ActivityType.REMINDER_EMAIL_FAILED,
-                    "ReminderEmailOutbox",
-                    outboxId.toString(),
-                    "Sending shift-request reminder email failed",
-                    safeFailureReason,
-                    RequestMetadata.system()
-            );
-        } catch (RuntimeException activityException) {
-            log.error(
-                    "Outbox job {} was marked FAILED, but its failure activity could not be published",
-                    outboxId,
-                    activityException
-            );
-        }
+        String description = dead
+                ? "Shift-request reminder email moved to DEAD"
+                : "Sending shift-request reminder email failed; retry scheduled";
+
+        activityPublisher.publishFailure(
+                ActivityType.REMINDER_EMAIL_FAILED,
+                "ReminderEmailOutbox",
+                outboxId.toString(),
+                description,
+                safeFailureReason,
+                RequestMetadata.system()
+        );
     }
 
     private void validateBatchSize() {

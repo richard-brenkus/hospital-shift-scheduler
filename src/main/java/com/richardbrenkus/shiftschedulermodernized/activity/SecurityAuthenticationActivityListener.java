@@ -1,6 +1,5 @@
 package com.richardbrenkus.shiftschedulermodernized.activity;
 
-
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ActivityType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

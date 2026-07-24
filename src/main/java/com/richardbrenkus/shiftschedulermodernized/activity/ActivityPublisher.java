@@ -5,9 +5,11 @@ import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.authentication.AuthenticationTrustResolver;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -23,6 +25,7 @@ public class ActivityPublisher {
 
     private final ApplicationEventPublisher eventPublisher;
     private final RequestMetadataProvider requestMetadataProvider;
+    private final AuthenticationTrustResolver authenticationTrustResolver;
 
     public void publishSuccess(
             ActivityType activityType,
@@ -30,26 +33,23 @@ public class ActivityPublisher {
             String targetId,
             String description
     ) {
-        Objects.requireNonNull(
-                activityType,
-                "activityType must not be null"
-        );
+        try {
+            ActivityEvent event = createSuccessEvent(
+                    activityType,
+                    targetType,
+                    targetId,
+                    description
+            );
 
-        Actor actor = currentActor();
-        RequestMetadata metadata =
-                requestMetadataProvider.current();
+            publishAfterCommitOrImmediately(event);
 
-        ActivityEvent event = ActivityEvent.success(
-                activityType,
-                actor.username(),
-                actor.role(),
-                targetType,
-                targetId,
-                description,
-                metadata
-        );
-
-        publishAfterCommitOrImmediately(event);
+        } catch (RuntimeException exception) {
+            log.error(
+                    "Could not prepare or publish success activity of type {}",
+                    activityType,
+                    exception
+            );
+        }
     }
 
     public void publishFailure(
@@ -60,30 +60,25 @@ public class ActivityPublisher {
             String failureReason,
             RequestMetadata requestMetadata
     ) {
-        Objects.requireNonNull(
-                activityType,
-                "activityType must not be null"
-        );
+        try {
+            ActivityEvent event = createFailureEvent(
+                    activityType,
+                    targetType,
+                    targetId,
+                    description,
+                    failureReason,
+                    requestMetadata
+            );
 
-        Actor actor = currentActor();
+            publishAfterCommitOrImmediately(event);
 
-        RequestMetadata metadata =
-                requestMetadata == null
-                        ? requestMetadataProvider.current()
-                        : requestMetadata;
-
-        ActivityEvent event = ActivityEvent.failure(
-                activityType,
-                actor.username(),
-                actor.role(),
-                targetType,
-                targetId,
-                description,
-                failureReason,
-                metadata
-        );
-
-        publishAfterCommitOrImmediately(event);
+        } catch (RuntimeException exception) {
+            log.error(
+                    "Could not prepare or publish failure activity of type {}",
+                    activityType,
+                    exception
+            );
+        }
     }
 
     private void publishAfterCommitOrImmediately(
@@ -124,16 +119,17 @@ public class ActivityPublisher {
     }
 
     private Actor currentActor() {
-        Authentication authentication =
-                SecurityContextHolder.getContext()
-                        .getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication == null
-                || !authentication.isAuthenticated()) {
-            return new Actor(
-                    SYSTEM_ACTOR,
-                    Role.SYSTEM
-            );
+        if (!authenticationTrustResolver.isAuthenticated(authentication)) {
+            return new Actor(SYSTEM_ACTOR, Role.SYSTEM);
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        if (!(principal instanceof UserDetails) && !(principal instanceof String)) {
+
+            return new Actor(SYSTEM_ACTOR, Role.UNKNOWN);
         }
 
         Role role = authentication.getAuthorities()
@@ -143,12 +139,9 @@ public class ActivityPublisher {
                 .map(this::toRoleOrNull)
                 .filter(Objects::nonNull)
                 .findFirst()
-                .orElse(Role.SYSTEM);
+                .orElse(Role.UNKNOWN);
 
-        return new Actor(
-                authentication.getName(),
-                role
-        );
+        return new Actor(authentication.getName(), role);
     }
 
     private String removeRolePrefix(
@@ -175,5 +168,62 @@ public class ActivityPublisher {
             String username,
             Role role
     ) {
+    }
+
+    private ActivityEvent createSuccessEvent(
+            ActivityType activityType,
+            String targetType,
+            String targetId,
+            String description
+    ) {
+        Objects.requireNonNull(
+                activityType,
+                "activityType must not be null"
+        );
+
+        Actor actor = currentActor();
+        RequestMetadata metadata = requestMetadataProvider.current();
+
+        return ActivityEvent.success(
+                activityType,
+                actor.username(),
+                actor.role(),
+                targetType,
+                targetId,
+                description,
+                metadata
+        );
+    }
+
+    private ActivityEvent createFailureEvent(
+            ActivityType activityType,
+            String targetType,
+            String targetId,
+            String description,
+            String failureReason,
+            RequestMetadata requestMetadata
+    ) {
+        Objects.requireNonNull(
+                activityType,
+                "activityType must not be null"
+        );
+
+        Actor actor = currentActor();
+
+        RequestMetadata metadata =
+                requestMetadata == null
+                        ? requestMetadataProvider.current()
+                        : requestMetadata;
+
+        return ActivityEvent.failure(
+                activityType,
+                actor.username(),
+                actor.role(),
+                targetType,
+                targetId,
+                description,
+                failureReason,
+                metadata
+        );
     }
 }

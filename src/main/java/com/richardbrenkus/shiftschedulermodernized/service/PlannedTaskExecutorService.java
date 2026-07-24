@@ -3,6 +3,8 @@ package com.richardbrenkus.shiftschedulermodernized.service;
 import com.richardbrenkus.shiftschedulermodernized.activity.ActivityPublisher;
 import com.richardbrenkus.shiftschedulermodernized.activity.RequestMetadata;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ActivityType;
+import com.richardbrenkus.shiftschedulermodernized.entity.CleanupTask;
+import com.richardbrenkus.shiftschedulermodernized.entity.SendReminderTask;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,6 +22,9 @@ public class PlannedTaskExecutorService {
     private final CleanupTaskExecutionService cleanupTaskExecutionService;
     private final ActivityPublisher activityPublisher;
     private final Clock applicationClock;
+
+    private static final String ACTIVITY_TARGET_CLEANUP = "CleanupTask";
+    private static final String ACTIVITY_TARGET_REMINDER_EMAIL = "SendReminderTask";
 
     @Scheduled(
             fixedDelayString =
@@ -44,9 +49,9 @@ public class PlannedTaskExecutorService {
              */
             activityPublisher.publishFailure(
                     ActivityType.PLANNED_CLEANUP_FAILED,
-                    "CleanupTask",
-                    null,
-                    "Scheduled cleanup failed",
+                    ACTIVITY_TARGET_CLEANUP,
+                    String.valueOf(CleanupTask.SINGLETON_ID),
+                    "Scheduled cleanup failed for " + now,
                     "Cleanup task execution failed",
                     RequestMetadata.system()
             );
@@ -68,9 +73,9 @@ public class PlannedTaskExecutorService {
              */
             activityPublisher.publishFailure(
                     ActivityType.REMINDER_EMAIL_JOB_CREATION_FAILED,
-                    "SendReminderTask",
-                    null,
-                    "Reminder email job creation failed",
+                    ACTIVITY_TARGET_REMINDER_EMAIL,
+                    String.valueOf(SendReminderTask.SINGLETON_ID),
+                    "Reminder email job creation failed for " + now,
                     "Unable to create reminder email outbox jobs",
                     RequestMetadata.system()
             );

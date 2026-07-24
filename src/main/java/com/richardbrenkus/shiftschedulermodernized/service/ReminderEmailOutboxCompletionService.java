@@ -3,6 +3,7 @@ package com.richardbrenkus.shiftschedulermodernized.service;
 import com.richardbrenkus.shiftschedulermodernized.entity.ReminderEmailOutbox;
 import com.richardbrenkus.shiftschedulermodernized.repository.ReminderEmailOutboxRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,8 +17,15 @@ public class ReminderEmailOutboxCompletionService {
 
     private final ReminderEmailOutboxRepository repository;
 
+    @Value("${planned-tasks.outbox.maximum-attempts:5}")
+    private int maximumAttempts;
+
     @Transactional
-    public boolean markSent(Long outboxId, String claimToken, LocalDateTime now) {
+    public boolean markSent(
+            Long outboxId,
+            String claimToken,
+            LocalDateTime now
+    ) {
         validateRequiredArguments(outboxId, claimToken, now);
 
         ReminderEmailOutbox outbox = repository
@@ -29,12 +37,55 @@ public class ReminderEmailOutboxCompletionService {
         }
 
         outbox.markSent(claimToken, now);
-        //repository.saveAndFlush(outbox);
+        repository.saveAndFlush(outbox);
         return true;
     }
 
     @Transactional
-    public boolean markFailed(
+    public FailureCompletionResult markTransientFailure(
+            Long outboxId,
+            String claimToken,
+            LocalDateTime now,
+            String safeFailureReason
+    ) {
+        validateRequiredArguments(outboxId, claimToken, now);
+        validateMaximumAttempts();
+
+        ReminderEmailOutbox outbox = repository
+                .findByIdForUpdate(outboxId)
+                .orElse(null);
+
+        if (outbox == null || !outbox.isOwnedByClaim(claimToken)) {
+            return FailureCompletionResult.NOT_CHANGED;
+        }
+
+        String normalizedFailureReason =
+                normalizeFailureReason(safeFailureReason);
+
+        if (outbox.getAttemptCount() >= maximumAttempts) {
+            outbox.markDead(
+                    claimToken,
+                    normalizedFailureReason,
+                    now
+            );
+            repository.saveAndFlush(outbox);
+            return FailureCompletionResult.DEAD;
+        }
+
+        LocalDateTime retryAt =
+                calculateRetryAt(now, outbox.getAttemptCount());
+
+        outbox.markFailed(
+                claimToken,
+                normalizedFailureReason,
+                retryAt
+        );
+        repository.saveAndFlush(outbox);
+        return FailureCompletionResult.RETRY_SCHEDULED;
+    }
+
+    @Transactional
+    public FailureCompletionResult markPermanentFailure(
             Long outboxId,
             String claimToken,
             LocalDateTime now,
@@ -47,20 +98,27 @@ public class ReminderEmailOutboxCompletionService {
                 .orElse(null);
 
         if (outbox == null || !outbox.isOwnedByClaim(claimToken)) {
-            return false;
+            return FailureCompletionResult.NOT_CHANGED;
         }
 
-        String normalizedFailureReason = normalizeFailureReason(safeFailureReason);
-        LocalDateTime retryAt = calculateRetryAt(now, outbox.getAttemptCount());
-
-        outbox.markFailed(claimToken, normalizedFailureReason, retryAt);
-        //repository.saveAndFlush(outbox);
-        return true;
+        outbox.markDead(
+                claimToken,
+                normalizeFailureReason(safeFailureReason),
+                now
+        );
+        repository.saveAndFlush(outbox);
+        return FailureCompletionResult.DEAD;
     }
 
-    private LocalDateTime calculateRetryAt(LocalDateTime now, int attemptCount) {
-        int boundedAttempt = Math.clamp(attemptCount, 1, MAXIMUM_BACKOFF_ATTEMPT);
+    private LocalDateTime calculateRetryAt(
+            LocalDateTime now,
+            int attemptCount
+    ) {
+        int boundedAttempt =
+                Math.clamp(attemptCount, 1, MAXIMUM_BACKOFF_ATTEMPT);
+
         long delayMinutes = 1L << (boundedAttempt - 1);
+
         return now.plusMinutes(delayMinutes);
     }
 
@@ -70,13 +128,30 @@ public class ReminderEmailOutboxCompletionService {
             LocalDateTime now
     ) {
         if (outboxId == null) {
-            throw new IllegalArgumentException("outboxId must not be null");
+            throw new IllegalArgumentException(
+                    "outboxId must not be null"
+            );
         }
+
         if (claimToken == null || claimToken.isBlank()) {
-            throw new IllegalArgumentException("claimToken must not be blank");
+            throw new IllegalArgumentException(
+                    "claimToken must not be blank"
+            );
         }
+
         if (now == null) {
-            throw new IllegalArgumentException("now must not be null");
+            throw new IllegalArgumentException(
+                    "now must not be null"
+            );
+        }
+    }
+
+    private void validateMaximumAttempts() {
+        if (maximumAttempts <= 0) {
+            throw new IllegalStateException(
+                    "planned-tasks.outbox.maximum-attempts "
+                            + "must be greater than zero"
+            );
         }
     }
 
@@ -84,6 +159,13 @@ public class ReminderEmailOutboxCompletionService {
         if (safeFailureReason == null || safeFailureReason.isBlank()) {
             return "Reminder email delivery failed";
         }
+
         return safeFailureReason.trim();
+    }
+
+    public enum FailureCompletionResult {
+        NOT_CHANGED,
+        RETRY_SCHEDULED,
+        DEAD
     }
 }

@@ -127,7 +127,6 @@ public class PlannedTasksService {
         );
     }
 
-    @Transactional(readOnly = true)
     public boolean hasDayError(
             SendReminderTaskForm form
     ) {
@@ -143,7 +142,6 @@ public class PlannedTasksService {
                 >= form.getFinalSubmissionDay();
     }
 
-    @Transactional(readOnly = true)
     public boolean isFirstReminderInFuture(
             SendReminderTaskForm form, LocalDateTime now
     ) {
@@ -164,7 +162,6 @@ public class PlannedTasksService {
         }
     }
 
-    @Transactional(readOnly = true)
     public boolean isSendRemindersSetupValid(
             SendReminderTaskForm form, LocalDateTime now
     ) {
@@ -238,7 +235,6 @@ public class PlannedTasksService {
         }
     }
 
-    @Transactional(readOnly = true)
     public boolean isCleanupTimeInFuture(
             CleanupTaskForm form, LocalDateTime now
     ) {
