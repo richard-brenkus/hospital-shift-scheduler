@@ -396,6 +396,7 @@ public class ShiftRequestService {
      * ACTIVITY LOG REVIEW: intentionally not logged.
      * Read-only lookup used to display or edit a form.
      */
+    @Transactional(readOnly = true)
     public ShiftRequestForm getShiftRequestForm(String username) {
         ShiftRequestForm shiftRequestForm = new ShiftRequestForm();
         User currentUser = userRepository.getUserByUsername(username);
@@ -415,6 +416,7 @@ public class ShiftRequestService {
      * ACTIVITY LOG REVIEW: intentionally not logged.
      * Read-only lookup for displaying a submitted request.
      */
+    @Transactional(readOnly = true)
     public Optional<ShiftRequestViewRecord> getShiftRequestViewRecord(
             String username
     ) {

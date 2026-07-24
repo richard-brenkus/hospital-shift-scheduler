@@ -3,8 +3,8 @@ package com.richardbrenkus.shiftschedulermodernized.repository;
 import java.util.List;
 import java.util.Optional;
 
+import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -36,12 +36,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.shiftRequest IS NULL")
     List<User> findUsersWithoutActiveShiftRequest();
 
-    @Modifying
-    @Transactional
-    @Query("update User u set u.username = :username where u.id = :id")
-    void updateUserSetUsernameForId(@Param("username") String username, @Param("id") Long id);
+    List<User> findAllByRoleNotOrderByNameAsc(Role role);
 
-    @Transactional
-    List<User> findAll(Sort ascending);
+    @Query("""
+    select u
+    from User u
+    where u.shiftRequest is not null
+    order by u.name
+    """)
+    List<User> findUsersWithShiftRequest();
+
+    List<User> findAllByOrderByNameAsc();
 
 }

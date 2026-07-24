@@ -5,6 +5,8 @@ import com.richardbrenkus.shiftschedulermodernized.dto.view.UserViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
+
 @Component
 public class UserMapper {
 
@@ -19,7 +21,7 @@ public class UserMapper {
         userRegisterForm.setEmail(user.getEmail());
         userRegisterForm.setBirthday(user.getBirthday());
         userRegisterForm.setProfession(user.getProfession());
-        userRegisterForm.setAllowedShiftTypes(user.getAllowedShiftTypes());
+        userRegisterForm.setAllowedShiftTypes(new HashSet<>(user.getAllowedShiftTypes()));
         return userRegisterForm;
     }
 

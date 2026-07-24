@@ -36,6 +36,8 @@ public final class ModelAttributeName {
 
     // Validation flags
     public static final String CONFLICTING_DATES = "conflictingDates";
+    public static final String OLD_PASSWORD_NO_MATCH = "oldPasswordNoMatch";
+
     public static final String NO_MATCH = "noMatch";
     public static final String TOO_SHORT = "tooShort";
 

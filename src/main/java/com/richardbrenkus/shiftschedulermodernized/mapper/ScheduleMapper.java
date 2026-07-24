@@ -94,7 +94,7 @@ public class ScheduleMapper {
         Objects.requireNonNull(usersById,"usersById must not be null");
         Objects.requireNonNull(form.getMonth(),"form.month must not be null");
         Objects.requireNonNull(calculationProfile.getCalculationMonth(),"calculationProfile.calculationMonth must not be null");
-        if(Objects.equals(form.getMonth(),calculationProfile.getCalculationMonth()))
+        if(!Objects.equals(form.getMonth(),calculationProfile.getCalculationMonth()))
             throw new IllegalArgumentException("form.month must equal calculationProfile.calculationMonth");
 
         List<ScheduleDay> days = new ArrayList<>();

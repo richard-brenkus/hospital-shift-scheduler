@@ -33,6 +33,10 @@ public class UserController {
     private final ShiftRequestService shiftRequestService;
     private final ShiftRequestMapper shiftRequestMapper;
 
+    private static final String REDIRECT = "redirect:";
+    private static final String USER_INDEX = "/user/userIndex";
+    private static final String ADMIN_INDEX = "/admin/adminIndex";
+
     @GetMapping({"/", "/home", "/index"})
     public String index(Authentication authentication) {
         boolean isAdmin = authentication.getAuthorities().stream()
@@ -136,8 +140,6 @@ public class UserController {
     @GetMapping("/user/change_password")
     public String showChangePassword(Model model) {
 
-        model.addAttribute(ModelAttributeName.NO_MATCH, false);
-        model.addAttribute(ValidationConstants.ERROR_PREFIX + ModelAttributeName.TOO_SHORT, false);
         model.addAttribute(ModelAttributeName.PASSWORD_CHANGE_FORM, new PasswordChangeForm());
 
         return "user/change_password";
@@ -145,23 +147,46 @@ public class UserController {
 
     @PostMapping("/user/change_password")
     public String changeUserPassword(
-            @Valid @ModelAttribute PasswordChangeForm form,
+            @Valid
+            @ModelAttribute("passwordChangeForm")
+            PasswordChangeForm form,
             BindingResult bindingResult,
-            Model model,
-            Authentication authentication) {
-
+            Authentication authentication
+    ) {
         if (bindingResult.hasErrors()) {
-            return "user/change_password";
-        }
-
-        if (!form.passwordsMatch()) {
-            model.addAttribute(ModelAttributeName.NO_MATCH, true);
-            form.setConfirmedPassword("");
+            clearAllPasswords(form);
             return "user/change_password";
         }
 
         String username = authentication.getName();
-        userService.changeUserPassword(username, form.getNewPassword());
+
+        if (!userService.oldPasswordMatches(
+                username,
+                form.getOldPassword()
+        )) {
+            bindingResult.rejectValue(
+                    "oldPassword",
+                    "change.password.currentIncorrect"
+            );
+
+            clearAllPasswords(form);
+            return "user/change_password";
+        }
+
+        if (!form.passwordsMatch()) {
+            bindingResult.rejectValue(
+                    "confirmedPassword",
+                    "change.password.mustMatch"
+            );
+
+            form.setConfirmedPassword("");
+            return "user/change_password";
+        }
+
+        userService.changeUserPassword(
+                username,
+                form.getNewPassword()
+        );
 
         return "user/password_changed";
     }
@@ -171,13 +196,17 @@ public class UserController {
 
         boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(Role.ADMIN.asAuthority()));
 
+        String redirectUrl = isAdmin? ADMIN_INDEX : USER_INDEX;
+
+        if (!isAdmin && !authentication.getName().equals(username)) {
+            return REDIRECT + "/403";
+        }
+
         User currentUser = userService.getUserByUsername(username);
         model.addAttribute(ModelAttributeName.IS_ADMIN, isAdmin);
 
         if (!currentUser.hasShiftRequest()) {
-            if (isAdmin)
-                return "redirect:/admin/adminIndex";
-            else return "redirect:/user/userIndex";
+                return REDIRECT + redirectUrl;
         }
 
         model.addAttribute(ModelAttributeName.DISPLAY_NAME, userService.getDisplayNameByUserName(username));
@@ -194,16 +223,22 @@ public class UserController {
 
         boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(Role.ADMIN.asAuthority()));
 
-        shiftRequestService.deleteShiftRequest(username);
+        String redirectUrl = isAdmin? "/admin/adminIndex" : "/user/userIndex";
 
-        String redirectUrl = isAdmin
-                ? "/admin/adminIndex"
-                : "/user/userIndex";
+        if (isAdmin || authentication.getName().equals(username)) {
+            shiftRequestService.deleteShiftRequest(username);
 
-        model.addAttribute(ModelAttributeName.REDIRECT_URL, redirectUrl);
+            model.addAttribute(ModelAttributeName.REDIRECT_URL, redirectUrl);
 
-        return "user/shift_request_deleted";
+            return "user/shift_request_deleted";
+        }
+
+        return "redirect:/403";
     }
 
-
+    private void clearAllPasswords(PasswordChangeForm form) {
+        form.setOldPassword("");
+        form.setNewPassword("");
+        form.setConfirmedPassword("");
+    }
 }

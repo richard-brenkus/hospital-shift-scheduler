@@ -4,6 +4,7 @@ import com.richardbrenkus.shiftschedulermodernized.activity.ActivityPublisher;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleMonth;
 import com.richardbrenkus.shiftschedulermodernized.config.PasswordEncoderConfig;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ActivityType;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ScheduleEditForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftAssignmentForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserRegisterForm;
@@ -15,11 +16,11 @@ import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ScheduleMapper;
 import com.richardbrenkus.shiftschedulermodernized.mapper.UserMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.function.Function;
@@ -50,6 +51,13 @@ public class UserService {
         return userRepository.getUserByUsername(username);
     }
 
+    @Transactional
+    public boolean oldPasswordMatches(String username, String oldPassword) {
+        User user = userRepository.getUserByUsername(username);
+        return encoder.passwordEncoder().matches(oldPassword, user.getPassword());
+    }
+
+    @Transactional
     public void changeUserPassword(String username, String newPassword) {
         User user = userRepository.getUserByUsername(username);
 
@@ -128,10 +136,8 @@ public class UserService {
     }
 
     public List<User> getAllUsersWithoutAdminByNameAsc() {
-        return userRepository.findAll().stream()
-                .filter(user -> !user.isAdmin())
-                .sorted(Comparator.comparing(User::getName))
-                .toList();
+
+        return userRepository.findAllByRoleNotOrderByNameAsc(Role.ADMIN);
     }
 
     public User getUserById(Long userId) {
@@ -143,6 +149,7 @@ public class UserService {
         return userRepository.getUserById(userId).getUsername();
     }
 
+    @Transactional
     public void deleteUser(User user) {
         Long userId = user.getId();
 
@@ -158,21 +165,16 @@ public class UserService {
     }
 
     public List<User> getAllUsersWithShiftRequestByNameAsc() {
-        return userRepository.findAll().stream()
-                .filter(User::hasShiftRequest)
-                .sorted(Comparator.comparing(User::getName))
-                .toList();
+        return userRepository.findUsersWithShiftRequest();
     }
 
     public List<User> getAllUsersAndAdminsByNameAsc() {
-        return userRepository.findAll().stream()
-                .sorted(Comparator.comparing(User::getName))
-                .toList();
+        return userRepository.findAllByOrderByNameAsc();
     }
 
     public List<UserViewRecord> getAllUserSummaryViewRecordsByNameAsc() {
-        return userRepository.findAll().stream()
-                .sorted(Comparator.comparing(User::getName))
+        return userRepository.findAllByOrderByNameAsc()
+                .stream()
                 .map(userMapper::entityToUserViewRecord)
                 .toList();
     }
@@ -222,11 +224,11 @@ public class UserService {
         return result;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<UserViewRecord> findAllUsersForSelectionByNameAsc() {
 
-        return userRepository.findAll().stream()
-                .sorted(Comparator.comparing(User::getName))
+        return userRepository.findAllByOrderByNameAsc()
+                .stream()
                 .map(userMapper::entityToUserViewRecord)
                 .toList();
     }

@@ -15,6 +15,9 @@ import lombok.Setter;
 @AllArgsConstructor
 public class PasswordChangeForm {
 
+    @NotBlank(message = "{change.password.currentRequired}")
+    private String oldPassword;
+
     @NotBlank
     @Size(
             min = ValidationConstants.PASSWORD_MIN_LENGTH,
