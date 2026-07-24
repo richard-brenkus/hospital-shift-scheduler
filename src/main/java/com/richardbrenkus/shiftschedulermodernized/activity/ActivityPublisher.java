@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.Objects;
 
 @Component
@@ -26,6 +28,7 @@ public class ActivityPublisher {
     private final ApplicationEventPublisher eventPublisher;
     private final RequestMetadataProvider requestMetadataProvider;
     private final AuthenticationTrustResolver authenticationTrustResolver;
+    private final Clock applicationClock;
 
     public void publishSuccess(
             ActivityType activityType,
@@ -183,8 +186,10 @@ public class ActivityPublisher {
 
         Actor actor = currentActor();
         RequestMetadata metadata = requestMetadataProvider.current();
+        Instant occurredAt = Instant.now(applicationClock);
 
         return ActivityEvent.success(
+                occurredAt,
                 activityType,
                 actor.username(),
                 actor.role(),
@@ -215,7 +220,10 @@ public class ActivityPublisher {
                         ? requestMetadataProvider.current()
                         : requestMetadata;
 
+        Instant occurredAt = Instant.now(applicationClock);
+
         return ActivityEvent.failure(
+                occurredAt,
                 activityType,
                 actor.username(),
                 actor.role(),

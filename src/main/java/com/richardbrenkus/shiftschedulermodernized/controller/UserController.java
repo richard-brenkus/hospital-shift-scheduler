@@ -13,6 +13,7 @@ import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
 import com.richardbrenkus.shiftschedulermodernized.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -39,10 +40,8 @@ public class UserController {
 
     @GetMapping({"/", "/home", "/index"})
     public String index(Authentication authentication) {
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(Role.ADMIN.asAuthority()));
 
-        return isAdmin
+        return this.isAdmin(authentication)
                 ? "redirect:/admin/adminIndex"
                 : "redirect:/user/userIndex";
     }
@@ -81,6 +80,7 @@ public class UserController {
         return "user/userIndex";
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/request_submitted")
     public String requestSubmitted(
             @Valid @ModelAttribute(ModelAttributeName.SHIFT_REQUEST_FORM) ShiftRequestForm shiftRequestForm,
@@ -89,7 +89,7 @@ public class UserController {
             Authentication authentication,
             @RequestParam(required = false) String usernamePassed) {
 
-        boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(Role.ADMIN.asAuthority()));
+        boolean isAdmin = this.isAdmin(authentication);
 
         String loggedInUsername = authentication.getName();
         String targetUsername = isAdmin && usernamePassed != null ? usernamePassed : loggedInUsername;
@@ -194,7 +194,7 @@ public class UserController {
     @PostMapping("user/shift_request_summary")
     public String showRequest(Model model, @RequestParam(name = ModelAttributeName.USERNAME_PASSED) String username, Authentication authentication) {
 
-        boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(Role.ADMIN.asAuthority()));
+        boolean isAdmin = this.isAdmin(authentication);
 
         String redirectUrl = isAdmin? ADMIN_INDEX : USER_INDEX;
 
@@ -221,7 +221,7 @@ public class UserController {
                                     Authentication authentication,
                                     Model model) {
 
-        boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(Role.ADMIN.asAuthority()));
+        boolean isAdmin = this.isAdmin(authentication);
 
         String redirectUrl = isAdmin? "/admin/adminIndex" : "/user/userIndex";
 
@@ -240,5 +240,9 @@ public class UserController {
         form.setOldPassword("");
         form.setNewPassword("");
         form.setConfirmedPassword("");
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(Role.ADMIN.asAuthority()));
     }
 }

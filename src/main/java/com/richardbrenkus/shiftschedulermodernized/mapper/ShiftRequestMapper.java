@@ -1,6 +1,5 @@
 package com.richardbrenkus.shiftschedulermodernized.mapper;
 
-import com.richardbrenkus.shiftschedulermodernized.config.constants.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftPreferenceForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ShiftRequestForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ShiftPreferenceViewRecord;
@@ -11,10 +10,8 @@ import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.richardbrenkus.shiftschedulermodernized.config.constants.ApplicationConstants.DATE_FORMATTER;
 
@@ -111,18 +108,6 @@ public class ShiftRequestMapper {
                 .datesYes(new ArrayList<>(entity.getDatesYes()))
                 .build();
 
-    }
-
-    private String formatDates(List<LocalDate> dates) {
-
-        if (dates == null)
-            return "";
-
-        String datesString = dates.stream()
-                .map(d -> d.format(DateTimeFormatter.ofPattern(ApplicationConstants.DATE_FORMATTER.toString())))
-                .collect(Collectors.joining(", "));
-
-        return datesString.substring(1, datesString.length() - 1);
     }
 
     private String getShiftRequestDatesAsString(List<LocalDate> localDatesList) {

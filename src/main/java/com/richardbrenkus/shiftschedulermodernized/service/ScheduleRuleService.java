@@ -291,28 +291,6 @@ public class ScheduleRuleService {
         return counters.getTotalCount(user.userId()) < shiftCountCap;
     }
 
-    /*boolean isWithinRequestedWeekdayLimit(
-            UserCalculationData user,
-            int shiftType,
-            CalculationCounters counters
-    ) {
-        ShiftPreferenceCalculationData preference = user.preferenceFor(shiftType).orElse(null);
-        if (preference == null) return false;
-        return preference.weekdayCount() != 0
-                && counters.getWeekdayCount(user.userId(), shiftType) < preference.weekdayCount();
-    }*/
-
-    /*boolean isWithinRequestedWeekendLimit(
-            UserCalculationData user,
-            int shiftType,
-            CalculationCounters counters
-    ) {
-        ShiftPreferenceCalculationData preference = user.preferenceFor(shiftType).orElse(null);
-        if (preference == null) return false;
-        return preference.weekendCount() != 0
-                && counters.getWeekendCount(user.userId(), shiftType) < preference.weekendCount();
-    }*/
-
     boolean respectsMinimalGap(
             LocalDate date,
             int minimalGap,

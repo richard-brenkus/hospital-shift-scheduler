@@ -40,8 +40,6 @@ public class ReminderEmailOutboxRecoveryTransactionService {
                 retryAt
         );
 
-        //repository.saveAndFlush(outbox);
-
         return true;
     }
 
