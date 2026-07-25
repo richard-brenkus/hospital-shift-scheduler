@@ -466,7 +466,7 @@ public class UserStatisticService {
     }
 
     private List<User> findUsersWithRequest() {
-        return userRepository.findUsersWithShiftRequest();
+        return userRepository.findByShiftRequestIsNotNullOrderByNameAsc();
     }
 
     String returnScheduleScoreAsString(ScheduleMonth scheduleMonth, int shiftTypeCount) {

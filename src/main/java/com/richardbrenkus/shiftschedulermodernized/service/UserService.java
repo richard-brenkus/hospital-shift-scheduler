@@ -38,8 +38,15 @@ public class UserService {
     private final ActivityPublisher activityPublisher;
     private final ScheduleMapper scheduleMapper;
 
-    public String getDisplayNameByUserName(String userName) {
-        User currentUser = userRepository.getUserByUsername(userName);
+    public String getDisplayNameByUserName(String username) {
+
+        Optional<User> userOptional = userRepository.findByUsername(username);
+
+        if (userOptional.isEmpty()) {
+            throw new IllegalArgumentException("Invalid username: " + username);
+        }
+
+        User currentUser = userOptional.get();
         String displayName = currentUser.getName();
         if (currentUser.getTitle() != null)
             displayName = currentUser.getTitle() + " " + displayName;
@@ -48,22 +55,37 @@ public class UserService {
     }
 
     public User getUserByUsername(String username) {
-        return userRepository.getUserByUsername(username);
+        Optional<User> userOptional = userRepository.findByUsername(username);
+
+        if (userOptional.isEmpty()) {
+            throw new IllegalArgumentException("Invalid username: " + username);
+        }
+
+        return userOptional.get();
     }
 
     @Transactional
     public boolean oldPasswordMatches(String username, String oldPassword) {
-        User user = userRepository.getUserByUsername(username);
+        Optional<User> userOptional = userRepository.findByUsername(username);
+
+        if (userOptional.isEmpty()) {
+            throw new IllegalArgumentException("Invalid username: " + username);
+        }
+
+        User user = userOptional.get();
+
         return encoder.passwordEncoder().matches(oldPassword, user.getPassword());
     }
 
     @Transactional
     public void changeUserPassword(String username, String newPassword) {
-        User user = userRepository.getUserByUsername(username);
+        Optional<User> userOptional = userRepository.findByUsername(username);
 
-        if (user == null) {
-            throw new IllegalArgumentException("User not found: " + username);
+        if (userOptional.isEmpty()) {
+            throw new IllegalArgumentException("Invalid username: " + username);
         }
+
+        User user = userOptional.get();
 
         String newEncodedPassword = encoder.passwordEncoder().encode(newPassword);
 
@@ -79,8 +101,16 @@ public class UserService {
     }
 
     public boolean hasShiftRequest(String username) {
-        User user = userRepository.getUserByUsername(username);
-        return user != null && user.hasShiftRequest();
+
+        Optional<User> userOptional = userRepository.findByUsername(username);
+
+        if (userOptional.isEmpty()) {
+            throw new IllegalArgumentException("Invalid username: " + username);
+        }
+
+        User user = userOptional.get();
+
+        return user.hasShiftRequest();
     }
 
     @Transactional
@@ -141,12 +171,14 @@ public class UserService {
     }
 
     public User getUserById(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + userId));
+        return userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + userId));
     }
 
+    @Transactional(readOnly = true)
     public String getUsernameByUserId(long userId) {
-        return userRepository.getUserById(userId).getUsername();
+        return userRepository.findById(userId)
+                .map(User::getUsername)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + userId));
     }
 
     @Transactional
@@ -165,7 +197,7 @@ public class UserService {
     }
 
     public List<User> getAllUsersWithShiftRequestByNameAsc() {
-        return userRepository.findUsersWithShiftRequest();
+        return userRepository.findByShiftRequestIsNotNullOrderByNameAsc();
     }
 
     public List<User> getAllUsersAndAdminsByNameAsc() {
@@ -242,8 +274,13 @@ public class UserService {
     }
 
     public UserUpdateForm getUserUpdateFormByUserId(long userId) {
-        User user = userRepository.getUserById(userId);
-        return userMapper.entityToUserUpdateFormByUserId(user);
+        Optional<User> userOptional = userRepository.findById(userId);
+
+        if (userOptional.isEmpty()) {
+            throw new IllegalArgumentException("Invalid user ID: " + userId);
+        }
+
+        return userMapper.entityToUserUpdateFormByUserId(userOptional.get());
     }
 
     @Transactional(readOnly = true)

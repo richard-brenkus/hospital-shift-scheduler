@@ -146,13 +146,7 @@ public class UserController {
     }
 
     @PostMapping("/user/change_password")
-    public String changeUserPassword(
-            @Valid
-            @ModelAttribute("passwordChangeForm")
-            PasswordChangeForm form,
-            BindingResult bindingResult,
-            Authentication authentication
-    ) {
+    public String changeUserPassword(@Valid @ModelAttribute("passwordChangeForm") PasswordChangeForm form, BindingResult bindingResult, Authentication authentication) {
         if (bindingResult.hasErrors()) {
             clearAllPasswords(form);
             return "user/change_password";
@@ -160,33 +154,21 @@ public class UserController {
 
         String username = authentication.getName();
 
-        if (!userService.oldPasswordMatches(
-                username,
-                form.getOldPassword()
-        )) {
-            bindingResult.rejectValue(
-                    "oldPassword",
-                    "change.password.currentIncorrect"
-            );
+        if (!userService.oldPasswordMatches(username, form.getOldPassword())) {
+            bindingResult.rejectValue("oldPassword", "change.password.currentIncorrect");
 
             clearAllPasswords(form);
             return "user/change_password";
         }
 
         if (!form.passwordsMatch()) {
-            bindingResult.rejectValue(
-                    "confirmedPassword",
-                    "change.password.mustMatch"
-            );
+            bindingResult.rejectValue( "confirmedPassword", "change.password.mustMatch");
 
             form.setConfirmedPassword("");
             return "user/change_password";
         }
 
-        userService.changeUserPassword(
-                username,
-                form.getNewPassword()
-        );
+        userService.changeUserPassword(username, form.getNewPassword());
 
         return "user/password_changed";
     }

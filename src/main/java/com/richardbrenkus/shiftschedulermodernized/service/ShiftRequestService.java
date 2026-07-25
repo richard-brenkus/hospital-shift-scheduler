@@ -75,11 +75,13 @@ public class ShiftRequestService {
 
     @Transactional
     public ShiftRequest submitShiftRequest(String username, ShiftRequestForm form) {
-        User user = userRepository.getUserByUsername(username);
+        Optional<User> userOptional = userRepository.findByUsername(username);
 
-        if (user == null) {
+        if (userOptional.isEmpty()) {
             throw new IllegalArgumentException("Invalid username: " + username);
         }
+
+        User user = userOptional.get();
 
         ShiftRequest existingRequest = user.getShiftRequest();
         boolean requestCreated = existingRequest == null;
@@ -396,11 +398,14 @@ public class ShiftRequestService {
      */
     @Transactional(readOnly = true)
     public ShiftRequestForm getShiftRequestForm(String username) {
-        User user = userRepository.getUserByUsername(username);
 
-        if (user == null) {
+        Optional<User> userOptional = userRepository.findByUsername(username);
+
+        if (userOptional.isEmpty()) {
             throw new IllegalArgumentException("Invalid username: " + username);
         }
+
+        User user = userOptional.get();
 
         return createShiftRequestForm(user);
     }
@@ -421,29 +426,32 @@ public class ShiftRequestService {
      * Read-only lookup for displaying a submitted request.
      */
     @Transactional(readOnly = true)
-    public Optional<ShiftRequestViewRecord> getShiftRequestViewRecord(
-            String username
-    ) {
-        User user = userRepository.getUserByUsername(username);
-        if (user == null || !user.hasShiftRequest()) {
+    public Optional<ShiftRequestViewRecord> getShiftRequestViewRecord(String username) {
+
+        Optional<User> userOptional = userRepository.findByUsername(username);
+
+        if (userOptional.isEmpty()) {
+            throw new IllegalArgumentException("Invalid username: " + username);
+        }
+
+        User user = userOptional.get();
+
+        if (!user.hasShiftRequest()) {
             return Optional.empty();
         }
 
-        return Optional.of(
-                shiftRequestMapper.entityToViewRecord(
-                        user,
-                        user.getShiftRequest()
-                )
-        );
+        return Optional.of(shiftRequestMapper.entityToViewRecord(user,user.getShiftRequest()));
     }
 
     @Transactional
     public void deleteShiftRequest(String username) {
-        User user = userRepository.getUserByUsername(username);
+        Optional<User> userOptional = userRepository.findByUsername(username);
 
-        if (user == null) {
+        if (userOptional.isEmpty()) {
             throw new IllegalArgumentException("Invalid username: " + username);
         }
+
+        User user = userOptional.get();
 
         ShiftRequest existingRequest = user.getShiftRequest();
 

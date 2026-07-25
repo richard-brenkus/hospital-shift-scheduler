@@ -52,8 +52,7 @@ public class PlannedTaskDispatchService {
                 task.getFinalRequestSubmissionDate()
                         .toLocalDate();
 
-        List<User> recipients =
-                userRepository.findUsersWithoutActiveShiftRequest();
+        List<User> recipients = userRepository.findByShiftRequestIsNullOrderByNameAsc();
 
         int createdJobCount = createRecipientOutboxJobs(
                 task,
