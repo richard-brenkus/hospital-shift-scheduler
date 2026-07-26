@@ -24,6 +24,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -49,7 +50,7 @@ public class AdminController {
     private final SpreadsheetService spreadsheetService;
     private final UserExcelExportService userExcelExportService;
     private final Clock applicationClock;
-
+    private final ActivityLogCsvExportService activityLogCsvExportService;
 
     @GetMapping("/admin/adminIndex")
     public String adminIndex(Authentication authentication, Model model) {
@@ -504,6 +505,20 @@ public class AdminController {
         userExcelExportService.exportUsers(response.getOutputStream());
     }
 
+    @GetMapping("/admin/download_activity_log")
+    public void downloadActivityLog(HttpServletResponse response) throws IOException {
+
+        String timestamp = LocalDateTime.now(applicationClock).format(ApplicationConstants.FILE_TIMESTAMP_FORMATTER);
+
+        String filename = "activity_log_" + timestamp + ".csv";
+
+        response.setContentType("text/csv");
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
+        response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
+
+        activityLogCsvExportService.exportMostRecentEntries(response.getOutputStream());
+    }
 
     private void addSavedScheduleSelectionAttributes(Model model, SavedScheduleSelectionForm form, boolean scheduleExists) {
         model.addAttribute("savedScheduleSelectionForm", form);
