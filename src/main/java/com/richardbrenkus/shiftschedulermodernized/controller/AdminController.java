@@ -181,10 +181,10 @@ public class AdminController {
 
         Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = shiftRequestService.getShiftRequestViewRecord(username);
         submittedShiftRequestRecord.ifPresentOrElse(record -> {
-                    model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, userService.hasShiftRequest(username));
+                    model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, true);
                     model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, record);
                 },
-                () -> model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, userService.hasShiftRequest(username))
+                () -> model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, false)
         );
 
         return "user/userIndex";
@@ -444,8 +444,10 @@ public class AdminController {
     @PostMapping("/admin/save_schedule_override_validation")
     public String saveScheduleOverrideValidation(@ModelAttribute("scheduleEditForm") ScheduleEditForm scheduleEditForm) {
         ScheduleMonth scheduleMonth = userService.getScheduleMonth(scheduleEditForm);
+        ScheduleValidationResult validationResult = scheduleValidationService.validateSchedule(scheduleEditForm);
 
         storedScheduleService.saveSchedule(scheduleMonth);
+        userStatisticService.replaceStatsForMonth(scheduleEditForm.getMonth(), validationResult.getFullUserStatsByShiftType());
 
         return "redirect:/admin/show_saved_schedules";
     }

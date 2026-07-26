@@ -70,10 +70,10 @@ public class UserController {
 
         Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = shiftRequestService.getShiftRequestViewRecord(username);
         submittedShiftRequestRecord.ifPresentOrElse(record -> {
-                    model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, userService.hasShiftRequest(username));
+                    model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, true);
                     model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, record);
                 },
-                () -> model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, userService.hasShiftRequest(username))
+                () -> model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, false)
         );
 
         return "user/userIndex";

@@ -20,3 +20,5 @@ DELETE FROM email_log;
 DELETE FROM users;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+DELETE from users where username != 'alajos';

@@ -67,7 +67,7 @@ class UserServiceTest {
         User user = TestFixtures.user(1L, "freddie");
         user.setName("Freddie Mercury");
         user.setTitle(null);
-        when(userRepository.getUserByUsername("freddie")).thenReturn(user);
+        when(userRepository.findByUsername("freddie")).thenReturn(user);
 
         assertThat(service.getDisplayNameByUserName("freddie")).isEqualTo("Freddie Mercury");
     }
@@ -101,30 +101,6 @@ class UserServiceTest {
 
         assertThat(user.getPassword()).isEqualTo("encoded-newpass");
         verify(userRepository).saveAndFlush(user);
-    }
-
-    @Test
-    void shouldReturnTrue_whenUserHasShiftRequest() {
-        User user = TestFixtures.user(1L, "freddie");
-        user.setShiftRequest(new ShiftRequest());
-        when(userRepository.getUserByUsername("freddie")).thenReturn(user);
-
-        assertThat(service.hasShiftRequest("freddie")).isTrue();
-    }
-
-    @Test
-    void shouldReturnFalse_whenUserExistsButHasNoShiftRequest() {
-        User user = TestFixtures.user(1L, "freddie");
-        when(userRepository.getUserByUsername("freddie")).thenReturn(user);
-
-        assertThat(service.hasShiftRequest("freddie")).isFalse();
-    }
-
-    @Test
-    void shouldReturnFalse_whenUserRepositoryReturnsNull() {
-        when(userRepository.getUserByUsername("ghost")).thenReturn(null);
-
-        assertThat(service.hasShiftRequest("ghost")).isFalse();
     }
 
     @Test

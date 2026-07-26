@@ -36,11 +36,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findAllByOrderByNameAsc();
 
     @EntityGraph(attributePaths = {
-            "allowedShiftTypes",
             "shiftRequest",
-            "shiftRequest.preferences",
-            "shiftRequest.preferences.datesYes",
-            "shiftRequest.datesNo"
+            "shiftRequest.preferences"
     })
     List<User> findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc();
 

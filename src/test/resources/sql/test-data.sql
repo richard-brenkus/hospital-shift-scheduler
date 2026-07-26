@@ -1473,9 +1473,6 @@ INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1062, 1);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1062, 2);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1062, 3);
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, version, shift_request_id) VALUES (1063, 'Béla', 'bela@belamail.bel', 'bela@belamail.bel', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-04 10:47:00', '1967-01-24', 'psychiatrist', 'MUDr.', TRUE, 'USER', 0, null);
-INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1063, 3);
-INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1063, 2);
 
 COMMIT;
 SET FOREIGN_KEY_CHECKS = 1;

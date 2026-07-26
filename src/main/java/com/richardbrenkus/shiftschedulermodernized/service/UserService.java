@@ -101,19 +101,6 @@ public class UserService {
         );
     }
 
-    public boolean hasShiftRequest(String username) {
-
-        Optional<User> userOptional = userRepository.findByUsername(username);
-
-        if (userOptional.isEmpty()) {
-            throw new UsernameNotFoundException("Invalid username: " + username);
-        }
-
-        User user = userOptional.get();
-
-        return user.hasShiftRequest();
-    }
-
     @Transactional
     public UserValidationResult validateAndCreateUser(UserRegisterForm form) {
 
@@ -274,6 +261,7 @@ public class UserService {
                 .orElse(null);
     }
 
+    @Transactional(readOnly = true)
     public UserUpdateForm getUserUpdateFormByUserId(long userId) {
         Optional<User> userOptional = userRepository.findById(userId);
 

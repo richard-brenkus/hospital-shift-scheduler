@@ -348,10 +348,7 @@ public class UserStatisticService {
     }
 
     @Transactional
-    public void replaceStatsForMonth(
-            YearMonth yearMonth,
-            Map<Integer, Set<UserStatViewRecord>> statsByShiftType
-    ) {
+    public void replaceStatsForMonth(YearMonth yearMonth, Map<Integer, Set<UserStatViewRecord>> statsByShiftType) {
         if (yearMonth == null) {
             throw new IllegalArgumentException("YearMonth must not be null");
         }
