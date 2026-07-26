@@ -5,7 +5,9 @@ import java.util.Optional;
 
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -32,5 +34,26 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByShiftRequestIsNotNullOrderByNameAsc();
 
     List<User> findAllByOrderByNameAsc();
+
+    @EntityGraph(attributePaths = {
+            "allowedShiftTypes",
+            "shiftRequest",
+            "shiftRequest.preferences",
+            "shiftRequest.preferences.datesYes",
+            "shiftRequest.datesNo"
+    })
+    List<User> findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc();
+
+    @Query("""
+       select distinct u.name
+       from User u
+       where u.shiftRequest is null
+         and u.name is not null
+         and u.enabled = true
+       order by u.name
+       """)
+    List<String> findDistinctNamesWithoutShiftRequest();
+
+
 
 }

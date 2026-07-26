@@ -17,14 +17,14 @@
 <main class="centered delete-shift-request-wrapper">
 
     <header class="page-header">
-        <h1 data-th-text="#{deleteRequest.header}">
+        <h1 data-th-text="#{deleteShiftRequest.header}">
             Delete shift request
         </h1>
     </header>
 
     <section class="page-section">
 
-        <form th:action="@{/admin/delete_request}"
+        <form th:action="@{/admin/delete_shift_request}"
               method="post"
               th:object="${updatedUser}"
               class="delete-shift-request-form">
@@ -36,7 +36,7 @@
                 <tr>
                     <td class="td-no-lines delete-shift-request-cell">
                         <label for="requestSelect"
-                               data-th-text="#{deleteRequest.select}">
+                               data-th-text="#{deleteShiftRequest.select}">
                             Select a shift request
                         </label>
                     </td>
@@ -46,7 +46,7 @@
                     <td class="td-no-lines delete-shift-request-cell">
                         <select id="requestSelect" th:field="*{id}">
                             <option value=""
-                                    data-th-text="#{deleteRequest.select}">
+                                    data-th-text="#{deleteShiftRequest.select}">
                                 Select shift request
                             </option>
 

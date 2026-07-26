@@ -5,6 +5,7 @@ import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleValidationR
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ApplicationConstants;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.ModelAttributeName;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Profession;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.*;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.*;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
@@ -134,12 +135,16 @@ public class AdminController {
 
     }
 
-    @PostMapping(path = "/admin/delete_request")
-    public String deleteRequest(@RequestParam(name = "id") long userId) {
+    @PostMapping(path = "/admin/delete_shift_request")
+    public String deleteRequest(@RequestParam(name = "id") long userId, Authentication authentication) {
 
-        shiftRequestService.deleteShiftRequest(userId);
+        if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(Role.ADMIN.asAuthority()))) {
+            shiftRequestService.deleteShiftRequest(userId);
 
-        return "redirect:/admin/adminIndex";
+            return "redirect:/admin/adminIndex";
+        }
+
+        return "redirect:/403";
     }
 
     @GetMapping(path = "/admin/update_user")
@@ -319,10 +324,6 @@ public class AdminController {
     @PostMapping("/admin/new_calculation")
     public String calculateSchedule(Model model, HttpSession session, @ModelAttribute("calculationProfileForm") CalculationProfileForm calculationProfileForm, @RequestParam(name = "confirmed", defaultValue = "false") boolean confirmed) {
         Objects.requireNonNull(calculationProfileForm, "calculationProfile must not be null");
-        Objects.requireNonNull(calculationProfileForm.getCalculationMonth(), "calculation month must not be null");
-        String monthYearId = calculationProfileForm.getCalculationMonth().format(MONTH_YEAR_FORMATTER);
-
-        boolean storedScheduleExists = storedScheduleService.existsByMonthYearId(monthYearId);
 
         if (calculationProfileForm.getCalculationMonth() == null) {
             prepareModelService.prepareCalculateScheduleModel(model);
@@ -331,6 +332,9 @@ public class AdminController {
 
             return "admin/calculate_schedule_select";
         }
+
+        String monthYearId = calculationProfileForm.getCalculationMonth().format(MONTH_YEAR_FORMATTER);
+        boolean storedScheduleExists = storedScheduleService.existsByMonthYearId(monthYearId);
 
         if (storedScheduleExists && !confirmed) {
             /*
@@ -511,7 +515,7 @@ public class AdminController {
         model.addAttribute("shiftTypes", shiftTypeService.getShiftTypes());
         model.addAttribute("users", userService.findAllUsersForSelectionByNameAsc());
 
-        Set<String> usersWithNoRequest = userStatisticService.returnUsersWithNoRequest();
+        List<String> usersWithNoRequest = userStatisticService.returnUsersWithNoRequest();
 
         model.addAttribute("usersWithNoRequest", usersWithNoRequest);
         model.addAttribute("usersWithNoRequestString", String.join(", ", usersWithNoRequest));

@@ -6,7 +6,6 @@ import com.richardbrenkus.shiftschedulermodernized.algorithm.record.UserCalculat
 import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileForm;
 import com.richardbrenkus.shiftschedulermodernized.entity.StoredScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.entity.StoredUserSnapshot;
-import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.UserCalculationDataMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import com.richardbrenkus.shiftschedulermodernized.service.ScheduleRuleService;
@@ -44,9 +43,8 @@ public class CalculationInputLoader {
         Map<Integer, StoredScheduleDay> previousStoredDays = scheduleRuleService.loadPreviousStoredScheduleDays(month.atDay(1), form.getGapBetweenShifts());
         Map<Long, Set<LocalDate>> previousDatesByUser = mapPreviousAssignmentsByUser(month, previousStoredDays);
 
-        List<UserCalculationData> users = userRepository.findAll().stream()
-                .filter(User::isEnabled)
-                .filter(User::hasShiftRequest)
+        List<UserCalculationData> users = userRepository.findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc()
+                .stream()
                 .map(user -> userCalculationDataMapper.toCalculationData(user, previousDatesByUser.getOrDefault(user.getId(), Set.of())))
                 .toList();
 

@@ -15,10 +15,7 @@ import java.util.Set;
 @Component
 public class UserCalculationDataMapper {
 
-    public UserCalculationData toCalculationData(
-            User user,
-            Set<LocalDate> previousMonthAssignedDates
-    ) {
+    public UserCalculationData toCalculationData(User user, Set<LocalDate> previousMonthAssignedDates) {
         ShiftRequest request = user.getShiftRequest();
 
         Set<Integer> allowedShiftTypes =

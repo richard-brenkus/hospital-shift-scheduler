@@ -12,6 +12,7 @@ import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -78,7 +79,7 @@ public class ShiftRequestService {
         Optional<User> userOptional = userRepository.findByUsername(username);
 
         if (userOptional.isEmpty()) {
-            throw new IllegalArgumentException("Invalid username: " + username);
+            throw new UsernameNotFoundException("Invalid username: " + username);
         }
 
         User user = userOptional.get();
@@ -123,41 +124,29 @@ public class ShiftRequestService {
 
     @Transactional
     public void deleteShiftRequest(long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid user Id: " + userId));
+        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("Invalid user Id: " + userId));
 
-        ShiftRequest existingRequest = user.getShiftRequest();
+        this.deleteShiftRequest(user);
+    }
 
-        /*
-         * ACTIVITY LOG REVIEW: no event is written when there is nothing to delete.
-         * Log a failed/no-op deletion only if that is meaningful for your audit requirements.
-         */
-        if (existingRequest == null) {
-            return;
+    @Transactional
+    public void deleteShiftRequest(String username) {
+        Optional<User> userOptional = userRepository.findByUsername(username);
+
+        if (userOptional.isEmpty()) {
+            throw new UsernameNotFoundException("Invalid username: " + username);
         }
 
-        String shiftRequestId = existingRequest.getShiftRequestId() != null
-                ? existingRequest.getShiftRequestId().toString()
-                : "user:" + userId;
+        User user = userOptional.get();
 
-        user.setShiftRequest(null);
-        userRepository.saveAndFlush(user);
-
-        activityPublisher.publishSuccess(
-                ActivityType.SHIFT_REQUEST_DELETED,
-                "ShiftRequest",
-                shiftRequestId,
-                "Shift request deleted"
-        );
+        this.deleteShiftRequest(user);
     }
 
     @Transactional
     public void deleteAllShiftRequests() {
-        List<User> users = userRepository.findAll();
+        List<User> users = userRepository.findByShiftRequestIsNotNullOrderByNameAsc();
 
-        long deletedRequestCount = users.stream()
-                .filter(User::hasShiftRequest)
-                .count();
+        long deletedRequestCount = users.size();
 
         if (deletedRequestCount == 0) {
             return;
@@ -166,24 +155,14 @@ public class ShiftRequestService {
         users.forEach(user -> user.setShiftRequest(null));
         userRepository.saveAllAndFlush(users);
 
-        /*
-         * ACTIVITY LOG REVIEW: the enum has no bulk-deletion activity type.
-         * This uses SHIFT_REQUEST_DELETED once for the complete administrative action,
-         * rather than producing one audit row per affected user.
-         * Consider adding SHIFT_REQUESTS_DELETED if you want bulk actions distinguished.
-         */
         activityPublisher.publishSuccess(
-                ActivityType.SHIFT_REQUEST_DELETED,
+                ActivityType.ALL_SHIFT_REQUESTS_DELETED,
                 "ShiftRequestBatch",
                 "ALL",
                 "All shift requests deleted; affected requests: " + deletedRequestCount
         );
     }
 
-    /*
-     * ACTIVITY LOG REVIEW: intentionally not logged.
-     * Private validation helper with no persistent state change.
-     */
     private ShiftRequestValidationResult validateNoShiftsOnly(ShiftRequestForm form) {
 
         List<String> rejectedFields = new ArrayList<>();
@@ -210,10 +189,6 @@ public class ShiftRequestService {
         return ShiftRequestValidationResult.valid();
     }
 
-    /*
-     * ACTIVITY LOG REVIEW: intentionally not logged.
-     * Private validation helper with no persistent state change.
-     */
     private ShiftRequestValidationResult validateConflictingDates(ShiftRequestForm form) {
 
         Map<LocalDate, List<String>> dateToFields = new HashMap<>();
@@ -250,10 +225,6 @@ public class ShiftRequestService {
         return ShiftRequestValidationResult.valid();
     }
 
-    /*
-     * ACTIVITY LOG REVIEW: intentionally not logged.
-     * Private validation helper with no persistent state change.
-     */
     private ShiftRequestValidationResult validateAllPreferences(ShiftRequestForm form) {
 
         for (int i = 0; i < form.getPreferences().size(); i++) {
@@ -270,10 +241,6 @@ public class ShiftRequestService {
         return ShiftRequestValidationResult.valid();
     }
 
-    /*
-     * ACTIVITY LOG REVIEW: intentionally not logged.
-     * Private validation helper with no persistent state change.
-     */
     private ShiftRequestValidationResult validateSingleShiftPreference(
             ShiftRequestForm form,
             ShiftPreferenceForm preference,
@@ -336,19 +303,10 @@ public class ShiftRequestService {
         return ShiftRequestValidationResult.valid();
     }
 
-    /*
-     * ACTIVITY LOG REVIEW: intentionally not logged.
-     * Utility method only.
-     */
     private List<LocalDate> emptyIfNull(List<LocalDate> dates) {
         return dates == null ? Collections.emptyList() : dates;
     }
 
-    /*
-     * ACTIVITY LOG REVIEW: intentionally not logged directly.
-     * This helper mutates an entity, but submitShiftRequest() logs the complete
-     * SHIFT_REQUEST_UPDATED business action after persistence succeeds.
-     */
     public ShiftRequest updateEntity(
             ShiftRequest existingRequest,
             @NotNull ShiftRequestForm form
@@ -380,10 +338,6 @@ public class ShiftRequestService {
         return existingRequest;
     }
 
-    /*
-     * ACTIVITY LOG REVIEW: intentionally not logged.
-     * Read-only lookup used to prepare a form.
-     */
     @Transactional(readOnly = true)
     public ShiftRequestForm getShiftRequestFormByUserId(long id) {
         User user = userRepository.findById(id)
@@ -392,17 +346,13 @@ public class ShiftRequestService {
         return createShiftRequestForm(user);
     }
 
-    /*
-     * ACTIVITY LOG REVIEW: intentionally not logged.
-     * Read-only lookup used to display or edit a form.
-     */
     @Transactional(readOnly = true)
     public ShiftRequestForm getShiftRequestForm(String username) {
 
         Optional<User> userOptional = userRepository.findByUsername(username);
 
         if (userOptional.isEmpty()) {
-            throw new IllegalArgumentException("Invalid username: " + username);
+            throw new UsernameNotFoundException("Invalid username: " + username);
         }
 
         User user = userOptional.get();
@@ -421,17 +371,13 @@ public class ShiftRequestService {
         return form;
     }
 
-    /*
-     * ACTIVITY LOG REVIEW: intentionally not logged.
-     * Read-only lookup for displaying a submitted request.
-     */
     @Transactional(readOnly = true)
     public Optional<ShiftRequestViewRecord> getShiftRequestViewRecord(String username) {
 
         Optional<User> userOptional = userRepository.findByUsername(username);
 
         if (userOptional.isEmpty()) {
-            throw new IllegalArgumentException("Invalid username: " + username);
+            throw new UsernameNotFoundException("Invalid username: " + username);
         }
 
         User user = userOptional.get();
@@ -443,45 +389,6 @@ public class ShiftRequestService {
         return Optional.of(shiftRequestMapper.entityToViewRecord(user,user.getShiftRequest()));
     }
 
-    @Transactional
-    public void deleteShiftRequest(String username) {
-        Optional<User> userOptional = userRepository.findByUsername(username);
-
-        if (userOptional.isEmpty()) {
-            throw new IllegalArgumentException("Invalid username: " + username);
-        }
-
-        User user = userOptional.get();
-
-        ShiftRequest existingRequest = user.getShiftRequest();
-
-        /*
-         * ACTIVITY LOG REVIEW: no event is written when there is nothing to delete.
-         * Log a failed/no-op deletion only if your audit requirements need it.
-         */
-        if (existingRequest == null) {
-            return;
-        }
-
-        String shiftRequestId = existingRequest.getShiftRequestId() != null
-                ? existingRequest.getShiftRequestId().toString()
-                : "user:" + user.getId();
-
-        user.setShiftRequest(null);
-        userRepository.saveAndFlush(user);
-
-        activityPublisher.publishSuccess(
-                ActivityType.SHIFT_REQUEST_DELETED,
-                "ShiftRequest",
-                shiftRequestId,
-                "Shift request deleted"
-        );
-    }
-
-    /*
-     * ACTIVITY LOG REVIEW: intentionally not logged directly.
-     * Internal lookup used as part of a request update.
-     */
     private ShiftPreference findPreferenceByShiftType(
             ShiftRequest request,
             int shiftType
@@ -493,11 +400,6 @@ public class ShiftRequestService {
                 .orElse(null);
     }
 
-    /*
-     * ACTIVITY LOG REVIEW: intentionally not logged directly.
-     * Changes to individual preferences are represented by the single
-     * SHIFT_REQUEST_UPDATED event published by submitShiftRequest().
-     */
     private void updatePreferenceIfChanged(
             ShiftPreference existingPreference,
             ShiftPreferenceForm preferenceForm
@@ -549,10 +451,6 @@ public class ShiftRequestService {
         }
     }
 
-    /*
-     * ACTIVITY LOG REVIEW: intentionally not logged.
-     * This only prepares an unsaved form for display.
-     */
     private void fillAllowedShiftTypes(
             User currentUser,
             ShiftRequestForm shiftRequestForm
@@ -566,5 +464,27 @@ public class ShiftRequestService {
             shiftPreferenceForm.setShiftType(shiftType);
             shiftRequestForm.getPreferences().add(shiftPreferenceForm);
         }
+    }
+
+    private void deleteShiftRequest(User user){
+        ShiftRequest existingRequest = user.getShiftRequest();
+
+        if (existingRequest == null) {
+            return;
+        }
+
+        String shiftRequestId = existingRequest.getShiftRequestId() != null
+                ? existingRequest.getShiftRequestId().toString()
+                : "user:" + user.getId();
+
+        user.setShiftRequest(null);
+        userRepository.saveAndFlush(user);
+
+        activityPublisher.publishSuccess(
+                ActivityType.SHIFT_REQUEST_DELETED,
+                "ShiftRequest",
+                shiftRequestId,
+                "Shift request deleted"
+        );
     }
 }

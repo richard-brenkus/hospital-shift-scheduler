@@ -22,7 +22,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         Optional<User> userOptional = userRepository.findByUsername(username);
 
         if (userOptional.isEmpty()) {
-            throw new IllegalArgumentException("Invalid username: " + username);
+            throw new UsernameNotFoundException("Invalid username: " + username);
         }
 
         User user = userOptional.get();

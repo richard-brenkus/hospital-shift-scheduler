@@ -423,13 +423,13 @@
 
             <button type="submit"
                     class="standard-button"
-                    data-th-text="#{button.showCurrentRequest}">
+                    data-th-text="#{button.showCurrentShiftRequest}">
                 Show current shift request
             </button>
 
         </form>
 
-        <form th:action="@{/user/deactivate_request}"
+        <form th:action="@{/user/delete_shift_request}"
               method="post"
               class="inline-action-form">
 
@@ -437,8 +437,8 @@
 
             <button type="submit"
                     class="standard-button"
-                    data-th-text="#{button.deactivateCurrentRequest}">
-                Deactivate current shift request
+                    data-th-text="#{button.deleteCurrentShiftRequest}">
+                Delete current shift request
             </button>
 
         </form>

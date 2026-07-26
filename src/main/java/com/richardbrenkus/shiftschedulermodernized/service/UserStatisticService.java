@@ -155,7 +155,6 @@ public class UserStatisticService {
                         .assignedWeekends(calculatedWeekends)
                         .assignedTotal(calculatedWeekdays + calculatedWeekends)
                         .month(scheduleMonth.getMonth())
-                        .allowedShiftTypesAsCommaSeparatedString(this.allowedShiftTypesToCommaSeparatedString(userCalculationData))
                         .build();
 
                 userStatMap
@@ -211,8 +210,7 @@ public class UserStatisticService {
 
         for (Integer shiftType : shiftTypes) {
             Set<UserStatViewRecord> statsForShiftType = new HashSet<>();
-            Set<Long> assignedUserIds =
-                    assignedUserIdsByShiftType.getOrDefault(shiftType, Set.of());
+            Set<Long> assignedUserIds = assignedUserIdsByShiftType.getOrDefault(shiftType, Set.of());
 
             for (UserCalculationData userCalculationData : usersWithRequest) {
                 if (userCalculationData.userId() == null) {
@@ -267,8 +265,7 @@ public class UserStatisticService {
     }
 
     public Map<Integer, Set<UserStatViewRecord>> returnFullUserStats(ScheduleMonth scheduleMonth, CalculationCounters counters) {
-        Map<Integer, Map<Long, UserStatBuilderData>> statsByShiftTypeAndUser =
-                new HashMap<>();
+        Map<Integer, Map<Long, UserStatBuilderData>> statsByShiftTypeAndUser = new HashMap<>();
 
         if (scheduleMonth == null || scheduleMonth.getDays() == null) {
             return Map.of();
@@ -299,8 +296,7 @@ public class UserStatisticService {
                 int assignedWeekdays = counters.getWeekdayCount(userCalculationData.userId(), shiftType);
                 int assignedWeekends = counters.getWeekendCount(userCalculationData.userId(), shiftType);
 
-                UserStatBuilderData builderData =
-                        statsByShiftTypeAndUser
+                UserStatBuilderData builderData = statsByShiftTypeAndUser
                                 .computeIfAbsent(shiftType, key -> new HashMap<>())
                                 .computeIfAbsent(userCalculationData.userId(), key ->
                                         UserStatBuilderData.builder()
@@ -331,13 +327,11 @@ public class UserStatisticService {
 
         Map<Integer, Set<UserStatViewRecord>> result = new HashMap<>();
 
-        for (Map.Entry<Integer, Map<Long, UserStatBuilderData>> shiftTypeEntry
-                : statsByShiftTypeAndUser.entrySet()) {
+        for (Map.Entry<Integer, Map<Long, UserStatBuilderData>> shiftTypeEntry : statsByShiftTypeAndUser.entrySet()) {
 
             Integer shiftType = shiftTypeEntry.getKey();
 
-            Set<UserStatViewRecord> statsForShiftType =
-                    shiftTypeEntry.getValue()
+            Set<UserStatViewRecord> statsForShiftType = shiftTypeEntry.getValue()
                             .values()
                             .stream()
                             .map(UserStatBuilderData::toUserStat)
@@ -349,12 +343,8 @@ public class UserStatisticService {
         return addAllShiftsUserStat(result);
     }
 
-    public Set<String> returnUsersWithNoRequest() {
-        return userRepository.findAll().stream()
-                .filter(user -> !user.hasShiftRequest())
-                .map(User::getName)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(TreeSet::new));
+    public List<String> returnUsersWithNoRequest() {
+        return userRepository.findDistinctNamesWithoutShiftRequest();
     }
 
     @Transactional
@@ -540,7 +530,6 @@ public class UserStatisticService {
         }
     }
 
-
     @SuppressWarnings("unchecked")
     private Map<Integer, Set<UserStatViewRecord>> getFullUserStatsFromSession(HttpSession session) {
         if (session == null) {
@@ -576,11 +565,5 @@ public class UserStatisticService {
         }
 
         return userCalculationData.preferenceFor(shiftType).orElse(null);
-    }
-
-    private String allowedShiftTypesToCommaSeparatedString(UserCalculationData userCalculationData) {
-        return userCalculationData.allowedShiftTypes().stream()
-                .map(shiftType -> Integer.toString(shiftType))
-                .collect(Collectors.joining(", "));
     }
 }

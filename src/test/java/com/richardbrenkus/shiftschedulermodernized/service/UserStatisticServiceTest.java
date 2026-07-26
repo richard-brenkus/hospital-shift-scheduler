@@ -217,7 +217,7 @@ class UserStatisticServiceTest {
         u2.setShiftRequest(new com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest());
         when(userRepository.findAll()).thenReturn(List.of(admin, u1, u2));
 
-        Set<String> names = service.returnUsersWithNoRequest();
+        List<String> names = service.returnUsersWithNoRequest();
 
         assertThat(names).containsExactly("Amy", "Zoe");
     }

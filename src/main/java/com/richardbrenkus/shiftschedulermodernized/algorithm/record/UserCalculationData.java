@@ -43,8 +43,7 @@ public record UserCalculationData(
                 ? Map.of()
                 : Map.copyOf(preferencesByShiftType);
 
-        previousMonthAssignedDates =
-                previousMonthAssignedDates == null
+        previousMonthAssignedDates = previousMonthAssignedDates == null
                         ? Set.of()
                         : Set.copyOf(previousMonthAssignedDates);
     }

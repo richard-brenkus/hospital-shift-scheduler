@@ -169,9 +169,7 @@ public class ScheduleMapper {
                 .assignedWeekdays(entity.getAssignedWeekdays())
                 .assignedWeekends(entity.getAssignedWeekends())
                 .assignedTotal(entity.getAssignedTotal())
-                .assignedTotalAllShiftTypes(
-                        entity.getAssignedTotalAllShiftTypes()
-                )
+                .assignedTotalAllShiftTypes(entity.getAssignedTotalAllShiftTypes())
                 .assignedDateDays(entity.getAssignedDateDays())
                 .month(entity.getYearMonth())
                 .build();

@@ -13,7 +13,6 @@ import com.richardbrenkus.shiftschedulermodernized.mapper.ShiftRequestMapper;
 import com.richardbrenkus.shiftschedulermodernized.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -80,7 +79,6 @@ public class UserController {
         return "user/userIndex";
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/request_submitted")
     public String requestSubmitted(
             @Valid @ModelAttribute(ModelAttributeName.SHIFT_REQUEST_FORM) ShiftRequestForm shiftRequestForm,
@@ -198,10 +196,8 @@ public class UserController {
         return "user/shift_request_summary";
     }
 
-    @PostMapping("/user/deactivate_request")
-    public String deactivateRequest(@RequestParam(name = ModelAttributeName.USERNAME_PASSED) String username,
-                                    Authentication authentication,
-                                    Model model) {
+    @PostMapping("/user/delete_shift_request")
+    public String deleteShiftRequest(@RequestParam(name = ModelAttributeName.USERNAME_PASSED) String username, Authentication authentication, Model model) {
 
         boolean isAdmin = this.isAdmin(authentication);
 

@@ -19,6 +19,7 @@ import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,7 +44,7 @@ public class UserService {
         Optional<User> userOptional = userRepository.findByUsername(username);
 
         if (userOptional.isEmpty()) {
-            throw new IllegalArgumentException("Invalid username: " + username);
+            throw new UsernameNotFoundException("Invalid username: " + username);
         }
 
         User currentUser = userOptional.get();
@@ -58,7 +59,7 @@ public class UserService {
         Optional<User> userOptional = userRepository.findByUsername(username);
 
         if (userOptional.isEmpty()) {
-            throw new IllegalArgumentException("Invalid username: " + username);
+            throw new UsernameNotFoundException("Invalid username: " + username);
         }
 
         return userOptional.get();
@@ -69,7 +70,7 @@ public class UserService {
         Optional<User> userOptional = userRepository.findByUsername(username);
 
         if (userOptional.isEmpty()) {
-            throw new IllegalArgumentException("Invalid username: " + username);
+            throw new UsernameNotFoundException("Invalid username: " + username);
         }
 
         User user = userOptional.get();
@@ -82,7 +83,7 @@ public class UserService {
         Optional<User> userOptional = userRepository.findByUsername(username);
 
         if (userOptional.isEmpty()) {
-            throw new IllegalArgumentException("Invalid username: " + username);
+            throw new UsernameNotFoundException("Invalid username: " + username);
         }
 
         User user = userOptional.get();
@@ -105,7 +106,7 @@ public class UserService {
         Optional<User> userOptional = userRepository.findByUsername(username);
 
         if (userOptional.isEmpty()) {
-            throw new IllegalArgumentException("Invalid username: " + username);
+            throw new UsernameNotFoundException("Invalid username: " + username);
         }
 
         User user = userOptional.get();

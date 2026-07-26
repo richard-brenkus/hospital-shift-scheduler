@@ -5,6 +5,7 @@ import lombok.Builder;
 
 import java.time.YearMonth;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Builder
 public record UserStatViewRecord(
@@ -56,6 +57,15 @@ public record UserStatViewRecord(
                 .assignedTotalAllShiftTypes(assignedTotalAllShiftTypes)
                 .assignedDateDays(assignedDateDays)
                 .month(month)
+                .allowedShiftTypesAsCommaSeparatedString(allowedShiftTypesToCommaSeparatedString(userCalculationData))
                 .build();
     }
+
+    private String allowedShiftTypesToCommaSeparatedString(UserCalculationData userCalculationData) {
+        return userCalculationData.allowedShiftTypes().stream()
+                .map(shiftType -> Integer.toString(shiftType))
+                .collect(Collectors.joining(", "));
+    }
+
+
 }

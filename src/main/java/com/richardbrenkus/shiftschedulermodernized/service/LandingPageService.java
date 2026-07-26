@@ -20,15 +20,13 @@ public class LandingPageService {
         double shiftRequestCount = 0.0;
         String percentage = "0%";
 
-        Iterable<User> allUsers = userRepository.findAll();
+        Iterable<User> allUsers = userRepository.findAllByRoleNotOrderByNameAsc(Role.ADMIN);
 
         for (User user : allUsers) {
-            if (!user.getRole().equals(Role.ADMIN)) {
-                userCountWithoutAdmin = userCountWithoutAdmin + 1;
+            userCountWithoutAdmin = userCountWithoutAdmin + 1;
 
-                if (user.hasShiftRequest()) {
-                    shiftRequestCount = shiftRequestCount + 1;
-                }
+            if (user.hasShiftRequest()) {
+                shiftRequestCount = shiftRequestCount + 1;
             }
         }
 
