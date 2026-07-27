@@ -13,8 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -26,41 +28,29 @@ public class PlannedTaskDispatchService {
     private final ReminderEmailOutboxRepository reminderEmailOutboxRepository;
     private final UserRepository userRepository;
     private final ActivityPublisher activityPublisher;
+    private final ZoneId applicationZoneId;
 
     @Transactional
-    public void createReminderOutboxJobsIfDue(LocalDateTime now) {
+    public void createReminderOutboxJobsIfDue(Instant now) {
         if (now == null) {
             throw new IllegalArgumentException("now must not be null");
         }
 
         SendReminderTask task = sendReminderTaskRepository
                 .findByIdForUpdate(SendReminderTask.SINGLETON_ID)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Required singleton row with ID "
-                                + SendReminderTask.SINGLETON_ID
-                                + " is missing from send_reminder_task"
-                ));
+                .orElseThrow(() -> new IllegalStateException("Required singleton row with ID " + SendReminderTask.SINGLETON_ID + " is missing from send_reminder_task"));
 
         if (!isDue(task, now)) {
             return;
         }
 
-        LocalDateTime scheduledOccurrence =
-                task.getStartSendingTime();
+        Instant scheduledOccurrence = task.getStartSendingTime();
 
-        LocalDate finalSubmissionDay =
-                task.getFinalRequestSubmissionDate()
-                        .toLocalDate();
+        LocalDate finalSubmissionDay = task.getFinalRequestSubmissionDate();
 
         List<User> recipients = userRepository.findByShiftRequestIsNullOrderByNameAsc();
 
-        int createdJobCount = createRecipientOutboxJobs(
-                task,
-                scheduledOccurrence,
-                finalSubmissionDay,
-                recipients,
-                now
-        );
+        int createdJobCount = createRecipientOutboxJobs(task, scheduledOccurrence, finalSubmissionDay, recipients, now);
 
         advanceReminderTask(task);
 
@@ -75,7 +65,7 @@ public class PlannedTaskDispatchService {
         );
     }
 
-    private boolean isDue(SendReminderTask task, LocalDateTime now) {
+    private boolean isDue(SendReminderTask task, Instant now) {
         return task.isActive()
                 && task.getStartSendingTime() != null
                 && task.getFinalRequestSubmissionDate() != null
@@ -84,10 +74,10 @@ public class PlannedTaskDispatchService {
 
     private int createRecipientOutboxJobs(
             SendReminderTask task,
-            LocalDateTime scheduledOccurrence,
+            Instant scheduledOccurrence,
             LocalDate finalSubmissionDay,
             List<User> recipients,
-            LocalDateTime now
+            Instant now
     ) {
         if (recipients == null || recipients.isEmpty()) {
             return 0;
@@ -112,11 +102,14 @@ public class PlannedTaskDispatchService {
                 continue;
             }
 
+            Instant finalSubmissionDeadline = finalSubmissionDay.atTime(LocalTime.MAX).atZone(applicationZoneId).toInstant();
+
             ReminderEmailOutbox outbox =
                     ReminderEmailOutbox.pending(
                             task.getId(),
                             scheduledOccurrence,
                             finalSubmissionDay,
+                            finalSubmissionDeadline,
                             user.getId(),
                             user.getEmail(),
                             resolveDisplayName(user),
@@ -152,33 +145,24 @@ public class PlannedTaskDispatchService {
             SendReminderTask task
     ) {
         if (task.getRepetitions() <= 0) {
-            throw new IllegalStateException(
-                    "Reminder repetitions must be "
-                            + "greater than zero"
-            );
+            throw new IllegalStateException("Reminder repetitions must be greater than zero");
         }
 
         task.setCounter(task.getCounter() + 1);
 
-        if (task.getCounter()
-                >= task.getRepetitions()) {
+        if (task.getCounter() >= task.getRepetitions()) {
             task.setActive(false);
             return;
         }
 
-        int frequencyInDays =
-                task.getFrequencyInDays();
+        int frequencyInDays = task.getFrequencyInDays();
 
         if (frequencyInDays <= 0) {
-            throw new IllegalStateException(
-                    "Reminder frequency must be "
-                            + "greater than zero"
-            );
+            throw new IllegalStateException("Reminder frequency must be greater than zero");
         }
 
-        task.setStartSendingTime(
-                task.getStartSendingTime()
-                        .plusDays(frequencyInDays)
-        );
+        Instant startSendingTime = task.getStartSendingTime().atZone(applicationZoneId).plusDays(frequencyInDays).toInstant();
+
+        task.setStartSendingTime(startSendingTime);
     }
 }

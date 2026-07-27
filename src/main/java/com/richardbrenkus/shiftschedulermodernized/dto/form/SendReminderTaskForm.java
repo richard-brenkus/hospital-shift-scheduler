@@ -25,7 +25,7 @@ public class SendReminderTaskForm {
     @Max(59)
     private int startSendingRemindersMinute;
 
-    @Min(1)
+    @Min(0)
     @Max(10)
     private int reminderSendingFrequencyInDays;
 

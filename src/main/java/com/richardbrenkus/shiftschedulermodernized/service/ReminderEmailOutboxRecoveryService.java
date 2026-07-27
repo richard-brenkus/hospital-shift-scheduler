@@ -8,8 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.List;
 
 @Service
@@ -20,6 +19,7 @@ public class ReminderEmailOutboxRecoveryService {
     private final ReminderEmailOutboxRepository repository;
     private final ReminderEmailOutboxRecoveryTransactionService recoveryTransactionService;
     private final Clock applicationClock;
+    private final ZoneId zoneId;
 
     @Value("${planned-tasks.outbox.claim-timeout-minutes:10}")
     private long claimTimeoutMinutes;
@@ -34,13 +34,11 @@ public class ReminderEmailOutboxRecoveryService {
     public void releaseStaleClaims() {
         validateConfiguration();
 
-        LocalDateTime now = LocalDateTime.now(applicationClock);
-        LocalDateTime staleBefore = now.minusMinutes(claimTimeoutMinutes);
+        Instant now = Instant.now(applicationClock);
+        ZonedDateTime staleBefore = now.atZone(zoneId).minusMinutes(claimTimeoutMinutes);
+        Instant staleBeforeInstant = staleBefore.toInstant();
 
-        List<Long> staleIds = repository.findStaleProcessingIds(
-                staleBefore,
-                PageRequest.of(0, recoveryBatchSize)
-        );
+        List<Long> staleIds = repository.findStaleProcessingIds(staleBeforeInstant, PageRequest.of(0, recoveryBatchSize));
 
         int releasedCount = 0;
 
@@ -51,44 +49,29 @@ public class ReminderEmailOutboxRecoveryService {
             }
 
             try {
-                boolean released = recoveryTransactionService.releaseStaleClaim(
-                        staleId,
-                        staleBefore,
-                        now
-                );
+                boolean released = recoveryTransactionService.releaseStaleClaim(staleId, staleBeforeInstant, now);
 
                 if (released) {
                     releasedCount++;
                 }
 
             } catch (RuntimeException exception) {
-                log.error(
-                        "Could not release stale reminder outbox claim {}",
-                        staleId,
-                        exception
-                );
+                log.error("Could not release stale reminder outbox claim {}", staleId, exception);
             }
         }
 
         if (releasedCount > 0) {
-            log.warn(
-                    "Released {} stale reminder email outbox claim(s)",
-                    releasedCount
-            );
+            log.warn("Released {} stale reminder email outbox claim(s)", releasedCount);
         }
     }
 
     private void validateConfiguration() {
         if (claimTimeoutMinutes <= 0) {
-            throw new IllegalStateException(
-                    "planned-tasks.outbox.claim-timeout-minutes must be greater than zero"
-            );
+            throw new IllegalStateException("planned-tasks.outbox.claim-timeout-minutes must be greater than zero");
         }
 
         if (recoveryBatchSize <= 0) {
-            throw new IllegalStateException(
-                    "planned-tasks.outbox.recovery-batch-size must be greater than zero"
-            );
+            throw new IllegalStateException("planned-tasks.outbox.recovery-batch-size must be greater than zero");
         }
     }
 }

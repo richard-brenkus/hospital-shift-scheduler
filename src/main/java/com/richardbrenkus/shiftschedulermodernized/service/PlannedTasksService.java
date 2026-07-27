@@ -15,11 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Clock;
-import java.time.DateTimeException;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.YearMonth;
+import java.time.*;
 import java.util.Objects;
 
 @Service
@@ -31,15 +27,11 @@ public class PlannedTasksService {
     private final ActivityPublisher activityPublisher;
     private final PlannedTaskMapper plannedTaskMapper;
     private final Clock applicationClock;
+    private final ZoneId applicationZoneId;
 
     @Transactional
-    public void saveCleanupTask(
-            CleanupTaskForm form, LocalDateTime now
-    ) {
-        Objects.requireNonNull(
-                form,
-                "form must not be null"
-        );
+    public void saveCleanupTask(CleanupTaskForm form, Instant now) {
+        Objects.requireNonNull(form, "form must not be null");
 
         CleanupTask task = getCleanupTaskForUpdate();
 
@@ -57,13 +49,10 @@ public class PlannedTasksService {
             return;
         }
 
-        LocalDateTime executionTime =
-                createCleanupDateTime(form, now);
+        Instant executionTime = createCleanupInstant(form);
 
         if (!executionTime.isAfter(now)) {
-            throw new IllegalArgumentException(
-                    "Cleanup time must be in the future"
-            );
+            throw new IllegalArgumentException("Cleanup time must be in the future");
         }
 
         task.setActive(true);
@@ -82,7 +71,7 @@ public class PlannedTasksService {
     }
 
     @Transactional
-    public void saveSendReminderTask(SendReminderTaskForm form, LocalDateTime now) {
+    public void saveSendReminderTask(SendReminderTaskForm form, Instant now) {
         Objects.requireNonNull(form, "form must not be null");
         Objects.requireNonNull(now, "now must not be null");
 
@@ -102,9 +91,9 @@ public class PlannedTasksService {
             return;
         }
 
-        LocalDateTime startSendingTime = createReminderStartDateTime(form, now);
+        Instant startSendingTime = createReminderStartInstant(form);
 
-        LocalDateTime finalSubmissionTime = createFinalSubmissionDateTime(form, now);
+        LocalDate finalSubmissionTime = createFinalSubmissionDate(form);
 
         validateReminderConfigurationForPersistence(form, startSendingTime, finalSubmissionTime, now);
 
@@ -142,114 +131,81 @@ public class PlannedTasksService {
                 >= form.getFinalSubmissionDay();
     }
 
-    public boolean isFirstReminderInFuture(
-            SendReminderTaskForm form, LocalDateTime now
-    ) {
-        Objects.requireNonNull(
-                form,
-                "form must not be null"
-        );
+    public boolean isFirstReminderInFuture(SendReminderTaskForm form, Instant now) {
+        Objects.requireNonNull(form, "form must not be null");
 
         if (!form.isSendReminderTaskActive()) {
             return true;
         }
 
         try {
-            return createReminderStartDateTime(form, now)
-                    .isAfter(now);
+            return createReminderStartInstant(form).isAfter(now);
         } catch (DateTimeException exception) {
             return false;
         }
     }
 
-    public boolean isSendRemindersSetupValid(
-            SendReminderTaskForm form, LocalDateTime now
-    ) {
-        Objects.requireNonNull(
-                form,
-                "form must not be null"
-        );
+    public boolean isSendRemindersSetupValid(SendReminderTaskForm form, Instant now) {
+        Objects.requireNonNull(form, "form must not be null");
+        Objects.requireNonNull(now, "now must not be null");
 
         if (!form.isSendReminderTaskActive()) {
             return true;
         }
 
-        int repetitions =
-                form.getReminderRepetitions();
-
-        int frequencyInDays =
-                form.getReminderSendingFrequencyInDays();
+        int frequencyInDays = form.getReminderSendingFrequencyInDays();
+        int repetitions = form.getReminderRepetitions();
 
         if (repetitions <= 0) {
             return false;
         }
 
-        if (repetitions > 1
-                && frequencyInDays <= 0) {
+        if (repetitions > 1 && frequencyInDays <= 0) {
+            return false;
+        }
+
+        if (frequencyInDays > 0 && repetitions <= 1) {
             return false;
         }
 
         try {
-            LocalDateTime startSendingTime =
-                    createReminderStartDateTime(form, now);
+            Instant startSendingTime = createReminderStartInstant(form);
+            LocalDate finalSubmissionDate = createFinalSubmissionDate(form);
+            Instant finalSubmissionDeadline = finalSubmissionDate.atTime(LocalTime.MAX).atZone(applicationZoneId).toInstant();
 
-            LocalDateTime finalSubmissionTime =
-                    createFinalSubmissionDateTime(form, now);
-
-            if (!finalSubmissionTime.isAfter(now)) {
+            if (!finalSubmissionDeadline.isAfter(now)) {
                 return false;
             }
 
-            if (!startSendingTime
-                    .isBefore(finalSubmissionTime)) {
+            if (!startSendingTime.isBefore(finalSubmissionDeadline)) {
                 return false;
             }
 
-            long daysUntilLastReminder =
-                    repetitions == 1
-                            ? 0
-                            : Math.multiplyExact(
-                            repetitions - 1L,
-                            (long) frequencyInDays
-                    );
+            long daysUntilLastReminder = repetitions == 1
+                    ? 0
+                    : Math.multiplyExact(repetitions - 1L, (long) frequencyInDays);
 
-            LocalDateTime lastReminder =
-                    startSendingTime.plusDays(
-                            daysUntilLastReminder
-                    );
+            Instant lastReminder = startSendingTime.atZone(applicationZoneId).plusDays(daysUntilLastReminder).toInstant();
+            YearMonth month = YearMonth.from(now.atZone(applicationZoneId));
+            Instant endOfCurrentMonth = month.atEndOfMonth().atTime(LocalTime.MAX).atZone(applicationZoneId).toInstant();
 
-            LocalDateTime endOfCurrentMonth =
-                    LocalDateTime.of(
-                            YearMonth.from(now).atEndOfMonth(),
-                            LocalTime.MAX
-                    );
+            return !lastReminder.isAfter(endOfCurrentMonth) && lastReminder.isBefore(finalSubmissionDeadline);
 
-            return !lastReminder
-                    .isAfter(endOfCurrentMonth)
-                    && lastReminder
-                    .isBefore(finalSubmissionTime);
-
-        } catch (DateTimeException
-                 | ArithmeticException exception) {
+        } catch (DateTimeException | ArithmeticException exception) {
             return false;
         }
     }
 
-    public boolean isCleanupTimeInFuture(
-            CleanupTaskForm form, LocalDateTime now
-    ) {
-        Objects.requireNonNull(
-                form,
-                "form must not be null"
-        );
+    public boolean isCleanupTimeInFuture(CleanupTaskForm form, Instant now) {
+        Objects.requireNonNull(form, "form must not be null");
+        Objects.requireNonNull(now, "now must not be null");
 
         if (!form.isCleanupTaskActive()) {
             return true;
         }
 
         try {
-            return createCleanupDateTime(form, now)
-                    .isAfter(now);
+            return createCleanupInstant(form).isAfter(now);
         } catch (DateTimeException exception) {
             return false;
         }
@@ -259,22 +215,17 @@ public class PlannedTasksService {
     public CleanupTaskForm getCleanupTaskForm() {
         CleanupTask task = getCleanupTask();
 
-        CleanupTaskForm form =
-                new CleanupTaskForm();
+        CleanupTaskForm form = new CleanupTaskForm();
 
-        if (task.isActive()
-                && task.getExecutionTime() != null) {
+        if (task.isActive() && task.getExecutionTime() != null) {
+            Instant cleanupTime = task.getExecutionTime();
+
+            ZonedDateTime zonedDateTime = cleanupTime.atZone(applicationZoneId);
+
             form.setCleanupTaskActive(true);
-            form.setCleanupDay(
-                    task.getExecutionTime()
-                            .getDayOfMonth()
-            );
-            form.setCleanupHour(
-                    task.getExecutionTime().getHour()
-            );
-            form.setCleanupMinute(
-                    task.getExecutionTime().getMinute()
-            );
+            form.setCleanupDay(zonedDateTime.getDayOfMonth());
+            form.setCleanupHour(zonedDateTime.getHour());
+            form.setCleanupMinute(zonedDateTime.getMinute());
         }
 
         return form;
@@ -294,28 +245,18 @@ public class PlannedTasksService {
                 != null) {
 
             form.setSendReminderTaskActive(true);
-            form.setStartSendingRemindersDay(
-                    task.getStartSendingTime()
-                            .getDayOfMonth()
-            );
-            form.setStartSendingRemindersHour(
-                    task.getStartSendingTime()
-                            .getHour()
-            );
-            form.setStartSendingRemindersMinute(
-                    task.getStartSendingTime()
-                            .getMinute()
-            );
-            form.setReminderSendingFrequencyInDays(
-                    task.getFrequencyInDays()
-            );
-            form.setReminderRepetitions(
-                    task.getRepetitions()
-            );
-            form.setFinalSubmissionDay(
-                    task.getFinalRequestSubmissionDate()
-                            .getDayOfMonth()
-            );
+
+            Instant startSendingTime = task.getStartSendingTime();
+            int startSendingDay = startSendingTime.atZone(applicationZoneId).getDayOfMonth();
+            int startSendingHour = startSendingTime.atZone(applicationZoneId).getHour();
+            int startSendingMinute = startSendingTime.atZone(applicationZoneId).getMinute();
+
+            form.setStartSendingRemindersDay(startSendingDay);
+            form.setStartSendingRemindersHour(startSendingHour);
+            form.setStartSendingRemindersMinute(startSendingMinute);
+            form.setReminderSendingFrequencyInDays(task.getFrequencyInDays());
+            form.setReminderRepetitions(task.getRepetitions());
+            form.setFinalSubmissionDay(task.getFinalRequestSubmissionDate().getDayOfMonth());
         }
 
         return form;
@@ -325,27 +266,18 @@ public class PlannedTasksService {
     public CleanupTaskRecord getCleanupTaskRecord() {
         CleanupTask task = getCleanupTask();
 
-        if (!task.isActive()
-                || task.getExecutionTime() == null) {
-            return new CleanupTaskRecord(
-                    false,
-                    null
-            );
+        if (!task.isActive() || task.getExecutionTime() == null) {
+            return new CleanupTaskRecord(false, null);
         }
 
-        return plannedTaskMapper
-                .entityToCleanupTaskRecord(task);
+        return plannedTaskMapper.entityToCleanupTaskRecord(task);
     }
 
     @Transactional(readOnly = true)
     public SendReminderTaskRecord getSendReminderTaskRecord() {
-        SendReminderTask task =
-                getSendReminderTask();
+        SendReminderTask task = getSendReminderTask();
 
-        if (!task.isActive()
-                || task.getStartSendingTime() == null
-                || task.getFinalRequestSubmissionDate()
-                == null) {
+        if (!task.isActive() || task.getStartSendingTime() == null || task.getFinalRequestSubmissionDate() == null) {
             return new SendReminderTaskRecord(
                     false,
                     0,
@@ -358,83 +290,57 @@ public class PlannedTasksService {
         return plannedTaskMapper.entityToSendReminderTaskRecord(task);
     }
 
-    private void validateReminderConfigurationForPersistence(
-            SendReminderTaskForm form,
-            LocalDateTime startSendingTime,
-            LocalDateTime finalSubmissionTime,
-            LocalDateTime now
-    ) {
+    private void validateReminderConfigurationForPersistence(SendReminderTaskForm form, Instant startSendingTime, LocalDate finalSubmissionTime, Instant now) {
         if (!startSendingTime.isAfter(now)) {
-            throw new IllegalArgumentException(
-                    "The first reminder must be in the future"
-            );
+            throw new IllegalArgumentException("The first reminder must be in the future");
         }
 
-        if (!finalSubmissionTime.isAfter(now)) {
-            throw new IllegalArgumentException(
-                    "The final submission deadline must be "
-                            + "in the future"
-            );
+        Instant finalSubmissionTimeInstant = finalSubmissionTime.atTime(LocalTime.MAX).atZone(applicationZoneId).toInstant();
+
+        if (!finalSubmissionTimeInstant.isAfter(now)) {
+            throw new IllegalArgumentException("The final submission deadline must be in the future");
         }
 
-        if (!startSendingTime
-                .isBefore(finalSubmissionTime)) {
-            throw new IllegalArgumentException(
-                    "The reminder start time must be before "
-                            + "the final submission deadline"
-            );
+        if (!startSendingTime.isBefore(finalSubmissionTimeInstant)) {
+            throw new IllegalArgumentException("The reminder start time must be before the final submission deadline");
         }
 
         if (!isSendRemindersSetupValid(form, now)) {
-            throw new IllegalArgumentException(
-                    "Reminder occurrences must remain in "
-                            + "the current month and before "
-                            + "the deadline"
-            );
+            throw new IllegalArgumentException("Reminder occurrences must remain in the current month and before the deadline");
         }
     }
 
-    private LocalDateTime createCleanupDateTime(
-            CleanupTaskForm form, LocalDateTime now
-    ) {
-        YearMonth month = YearMonth.from(now);
+    private Instant createCleanupInstant(CleanupTaskForm form) {
+        YearMonth month = YearMonth.now(applicationClock);
 
-        return LocalDateTime.of(
+        LocalDateTime localDateTime = LocalDateTime.of(
                 month.getYear(),
                 month.getMonth(),
                 form.getCleanupDay(),
                 form.getCleanupHour(),
                 form.getCleanupMinute()
         );
+
+        return localDateTime.atZone(applicationZoneId).toInstant();
     }
 
-    private LocalDateTime createReminderStartDateTime(
-            SendReminderTaskForm form, LocalDateTime now
-    ) {
-        YearMonth month = YearMonth.from(now);
+    private Instant createReminderStartInstant(SendReminderTaskForm form) {
+        YearMonth month = YearMonth.now(applicationClock);
 
-        return LocalDateTime.of(
+        LocalDateTime localDateTime = LocalDateTime.of(
                 month.getYear(),
                 month.getMonth(),
                 form.getStartSendingRemindersDay(),
                 form.getStartSendingRemindersHour(),
-                form.getStartSendingRemindersMinute()
-        );
+                form.getStartSendingRemindersMinute());
+
+        return localDateTime.atZone(applicationZoneId).toInstant();
     }
 
-    private LocalDateTime createFinalSubmissionDateTime(
-            SendReminderTaskForm form, LocalDateTime now
-    ) {
-        YearMonth month = YearMonth.from(now);
+    private LocalDate createFinalSubmissionDate(SendReminderTaskForm form) {
+        YearMonth month = YearMonth.now(applicationClock);
 
-        return LocalDateTime.of(
-                month.getYear(),
-                month.getMonth(),
-                form.getFinalSubmissionDay(),
-                23,
-                59,
-                59
-        );
+        return month.atDay(form.getFinalSubmissionDay());
     }
 
     /**
@@ -445,12 +351,7 @@ public class PlannedTasksService {
     private CleanupTask getCleanupTaskForUpdate() {
         return cleanupTaskRepository
                 .findByIdForUpdate(CleanupTask.SINGLETON_ID)
-                .orElseThrow(() ->
-                        missingSingleton(
-                                "cleanup_task",
-                                CleanupTask.SINGLETON_ID
-                        )
-                );
+                .orElseThrow(() -> missingSingleton("cleanup_task", CleanupTask.SINGLETON_ID));
     }
 
     /**
@@ -461,50 +362,23 @@ public class PlannedTasksService {
     private SendReminderTask
     getSendReminderTaskForUpdate() {
         return sendReminderTaskRepository
-                .findByIdForUpdate(
-                        SendReminderTask.SINGLETON_ID
-                )
-                .orElseThrow(() ->
-                        missingSingleton(
-                                "send_reminder_task",
-                                SendReminderTask.SINGLETON_ID
-                        )
-                );
+                .findByIdForUpdate(SendReminderTask.SINGLETON_ID)
+                .orElseThrow(() -> missingSingleton("send_reminder_task", SendReminderTask.SINGLETON_ID));
     }
 
     private CleanupTask getCleanupTask() {
         return cleanupTaskRepository
                 .findById(CleanupTask.SINGLETON_ID)
-                .orElseThrow(() ->
-                        missingSingleton(
-                                "cleanup_task",
-                                CleanupTask.SINGLETON_ID
-                        )
-                );
+                .orElseThrow(() -> missingSingleton("cleanup_task", CleanupTask.SINGLETON_ID));
     }
 
     private SendReminderTask getSendReminderTask() {
         return sendReminderTaskRepository
-                .findById(
-                        SendReminderTask.SINGLETON_ID
-                )
-                .orElseThrow(() ->
-                        missingSingleton(
-                                "send_reminder_task",
-                                SendReminderTask.SINGLETON_ID
-                        )
-                );
+                .findById(SendReminderTask.SINGLETON_ID)
+                .orElseThrow(() -> missingSingleton("send_reminder_task", SendReminderTask.SINGLETON_ID));
     }
 
-    private IllegalStateException missingSingleton(
-            String tableName,
-            Long id
-    ) {
-        return new IllegalStateException(
-                "Required singleton row with ID "
-                        + id
-                        + " is missing from "
-                        + tableName
-        );
+    private IllegalStateException missingSingleton(String tableName, Long id) {
+        return new IllegalStateException("Required singleton row with ID " + id + " is missing from " + tableName);
     }
 }

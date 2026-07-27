@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -21,13 +22,12 @@ public class ActivityLogCsvExportService {
 
     private final ActivityLogRepository activityLogRepository;
     private final ActivityLogCsvExporter activityLogCsvExporter;
+    private final ZoneId applicationZoneId;
 
     @Transactional(readOnly = true)
     public void exportMostRecentEntries(OutputStream outputStream) throws IOException {
         List<ActivityLogExportRecord> records = activityLogRepository
-                .findAllByOrderByOccurredAtDescIdDesc(
-                        PageRequest.of(0, EXPORT_ROW_LIMIT)
-                )
+                .findAllByOrderByOccurredAtDescIdDesc(PageRequest.of(0, EXPORT_ROW_LIMIT))
                 .stream()
                 .map(this::toExportRecord)
                 .toList();
@@ -38,7 +38,7 @@ public class ActivityLogCsvExportService {
     private ActivityLogExportRecord toExportRecord(ActivityLog activityLog) {
         return new ActivityLogExportRecord(
                 activityLog.getId(),
-                activityLog.getOccurredAt(),
+                activityLog.getOccurredAt().atZone(applicationZoneId).toInstant(),
                 activityLog.getEventId(),
                 enumName(activityLog.getActivityType()),
                 nullToEmpty(activityLog.getActorUsername()),

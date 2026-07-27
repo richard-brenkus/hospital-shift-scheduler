@@ -4,32 +4,26 @@ import com.richardbrenkus.shiftschedulermodernized.dto.view.CleanupTaskRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.SendReminderTaskRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.CleanupTask;
 import com.richardbrenkus.shiftschedulermodernized.entity.SendReminderTask;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.ZoneId;
 import java.util.Objects;
 
 @Component
+@RequiredArgsConstructor
 public class PlannedTaskMapper {
 
-    public CleanupTaskRecord entityToCleanupTaskRecord(
-            CleanupTask entity
-    ) {
-        Objects.requireNonNull(
-                entity,
-                "entity must not be null"
-        );
+    private final ZoneId applicationZoneId;
+
+    public CleanupTaskRecord entityToCleanupTaskRecord(CleanupTask entity) {
+        Objects.requireNonNull(entity, "entity must not be null");
 
         if(entity.isActive()) {
-            Objects.requireNonNull(
-                    entity.getExecutionTime(),
-                    "executionTime must not be null"
-            );
+            Objects.requireNonNull(entity.getExecutionTime(), "executionTime must not be null");
         }
 
-        return new CleanupTaskRecord(
-                entity.isActive(),
-                entity.getExecutionTime()
-        );
+        return new CleanupTaskRecord(entity.isActive(), entity.getExecutionTime().atZone(applicationZoneId).toInstant());
     }
 
     public SendReminderTaskRecord entityToSendReminderTaskRecord(SendReminderTask entity) {
@@ -43,7 +37,7 @@ public class PlannedTaskMapper {
                     true,
                     entity.getRepetitions(),
                     entity.getFrequencyInDays(),
-                    entity.getStartSendingTime(),
+                    entity.getStartSendingTime().atZone(applicationZoneId).toInstant(),
                     entity.getFinalRequestSubmissionDate().getDayOfMonth());
         }
 

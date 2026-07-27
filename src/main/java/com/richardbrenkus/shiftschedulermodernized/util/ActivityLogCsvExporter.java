@@ -1,6 +1,7 @@
 package com.richardbrenkus.shiftschedulermodernized.util;
 
 import com.richardbrenkus.shiftschedulermodernized.dto.export.ActivityLogExportRecord;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedWriter;
@@ -8,24 +9,21 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.time.format.DateTimeFormatter;
+import java.time.ZoneId;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class ActivityLogCsvExporter {
 
     private static final String COLUMN_SEPARATOR = ",";
     private static final String LINE_SEPARATOR = "\r\n";
     private static final char UTF_8_BOM = '\uFEFF';
+    private final ZoneId applicationZoneId;
 
-    public void export(
-            List<ActivityLogExportRecord> entries,
-            OutputStream outputStream
-    ) throws IOException {
+    public void export(List<ActivityLogExportRecord> entries, OutputStream outputStream) throws IOException {
 
-        BufferedWriter writer = new BufferedWriter(
-                new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
-        );
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
 
         writer.write(UTF_8_BOM);
         writeHeader(writer);
@@ -57,17 +55,14 @@ public class ActivityLogCsvExporter {
         );
     }
 
-    private void writeRow(
-            BufferedWriter writer,
-            ActivityLogExportRecord entry
-    ) throws IOException {
+    private void writeRow(BufferedWriter writer, ActivityLogExportRecord entry) throws IOException {
+
+        CalendarDateIdUtils.CSV_DATE_TIME.format(entry.occurredAt().atZone(applicationZoneId));
 
         writeValues(
                 writer,
                 value(entry.id()),
-                entry.occurredAt() == null
-                        ? ""
-                        : DateTimeFormatter.ISO_INSTANT.format(entry.occurredAt()),
+                CalendarDateIdUtils.CSV_DATE_TIME.format(entry.occurredAt().atZone(applicationZoneId)),
                 value(entry.eventId()),
                 entry.activityType(),
                 entry.actorUsername(),
@@ -83,10 +78,7 @@ public class ActivityLogCsvExporter {
         );
     }
 
-    private void writeValues(
-            BufferedWriter writer,
-            String... values
-    ) throws IOException {
+    private void writeValues(BufferedWriter writer,String... values) throws IOException {
 
         for (int index = 0; index < values.length; index++) {
             if (index > 0) {

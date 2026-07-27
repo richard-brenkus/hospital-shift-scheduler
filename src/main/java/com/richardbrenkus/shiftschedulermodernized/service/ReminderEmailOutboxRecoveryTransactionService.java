@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -20,11 +20,7 @@ public class ReminderEmailOutboxRecoveryTransactionService {
     private final ReminderEmailOutboxRepository repository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public boolean releaseStaleClaim(
-            Long outboxId,
-            LocalDateTime staleBefore,
-            LocalDateTime retryAt
-    ) {
+    public boolean releaseStaleClaim(Long outboxId, Instant staleBefore, Instant retryAt) {
         validateArguments(outboxId, staleBefore, retryAt);
 
         ReminderEmailOutbox outbox = repository
@@ -35,29 +31,19 @@ public class ReminderEmailOutboxRecoveryTransactionService {
             return false;
         }
 
-        outbox.releaseStaleClaim(
-                STALE_CLAIM_REASON,
-                retryAt
-        );
+        outbox.releaseStaleClaim(STALE_CLAIM_REASON, retryAt);
 
         return true;
     }
 
-    private boolean isStillStale(
-            ReminderEmailOutbox outbox,
-            LocalDateTime staleBefore
-    ) {
+    private boolean isStillStale(ReminderEmailOutbox outbox, Instant staleBefore) {
         return outbox != null
                 && outbox.getStatus() == ReminderEmailOutboxStatus.PROCESSING
                 && outbox.getClaimedAt() != null
                 && !outbox.getClaimedAt().isAfter(staleBefore);
     }
 
-    private void validateArguments(
-            Long outboxId,
-            LocalDateTime staleBefore,
-            LocalDateTime retryAt
-    ) {
+    private void validateArguments(Long outboxId, Instant staleBefore, Instant retryAt) {
         if (outboxId == null) {
             throw new IllegalArgumentException("outboxId must not be null");
         }

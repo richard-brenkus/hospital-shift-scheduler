@@ -15,7 +15,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,20 +24,11 @@ import java.util.UUID;
 @Slf4j
 public class ReminderEmailOutboxProcessor {
 
-    private static final List<ReminderEmailOutboxStatus> DISPATCHABLE_STATUSES =
-            List.of(
-                    ReminderEmailOutboxStatus.PENDING,
-                    ReminderEmailOutboxStatus.FAILED
-            );
+    private static final List<ReminderEmailOutboxStatus> DISPATCHABLE_STATUSES = List.of(ReminderEmailOutboxStatus.PENDING, ReminderEmailOutboxStatus.FAILED);
 
-    private static final String TRANSIENT_FAILURE_REASON =
-            "Temporary reminder email delivery failure";
-
-    private static final String PERMANENT_FAILURE_REASON =
-            "Permanent reminder email delivery failure";
-
-    private static final String UNEXPECTED_FAILURE_REASON =
-            "Unexpected reminder email delivery failure";
+    private static final String TRANSIENT_FAILURE_REASON = "Temporary reminder email delivery failure";
+    private static final String PERMANENT_FAILURE_REASON = "Permanent reminder email delivery failure";
+    private static final String UNEXPECTED_FAILURE_REASON = "Unexpected reminder email delivery failure";
 
     private final ReminderEmailOutboxRepository repository;
     private final ReminderEmailOutboxClaimService claimService;
@@ -51,30 +42,19 @@ public class ReminderEmailOutboxProcessor {
 
     private final String workerId = UUID.randomUUID().toString();
 
-    @Scheduled(
-            fixedDelayString =
-                    "${planned-tasks.outbox.fixed-delay-ms:10000}"
-    )
+    @Scheduled(fixedDelayString = "${planned-tasks.outbox.fixed-delay-ms:10000}")
     public void processPendingReminderJobs() {
         validateBatchSize();
 
-        LocalDateTime now = LocalDateTime.now(applicationClock);
+        Instant now = Instant.now(applicationClock);
 
-        List<Long> candidateIds = repository.findDispatchableIds(
-                DISPATCHABLE_STATUSES,
-                now,
-                PageRequest.of(0, batchSize)
-        );
+        List<Long> candidateIds = repository.findDispatchableIds(DISPATCHABLE_STATUSES, now, PageRequest.of(0, batchSize));
 
         for (Long candidateId : candidateIds) {
             try {
                 processOne(candidateId);
             } catch (RuntimeException exception) {
-                log.error(
-                        "Unexpected failure while processing outbox job {}",
-                        candidateId,
-                        exception
-                );
+                log.error("Unexpected failure while processing outbox job {}", candidateId, exception);
             }
         }
     }
@@ -85,23 +65,16 @@ public class ReminderEmailOutboxProcessor {
             return;
         }
 
-        LocalDateTime claimTime =
-                LocalDateTime.now(applicationClock);
+        Instant claimTime = Instant.now(applicationClock);
 
-        claimService.claim(outboxId, workerId, claimTime)
-                .ifPresent(this::processClaimedJob);
+        claimService.claim(outboxId, workerId, claimTime).ifPresent(this::processClaimedJob);
     }
 
     private void processClaimedJob(
             ReminderEmailOutboxClaimService.ClaimedReminderEmailJob job
     ) {
         try {
-            emailReminderService.sendShiftRequestReminderEmail(
-                    job.recipientEmail(),
-                    job.recipientDisplayName(),
-                    job.finalSubmissionDay(),
-                    job.idempotencyKey()
-            );
+            emailReminderService.sendShiftRequestReminderEmail(job.recipientEmail(), job.recipientDisplayName(), job.finalSubmissionDay(), job.idempotencyKey());
         } catch (TransientEmailDeliveryException exception) {
             handleTransientDeliveryFailure(job, exception);
             return;
@@ -126,161 +99,71 @@ public class ReminderEmailOutboxProcessor {
             ReminderEmailOutboxClaimService.ClaimedReminderEmailJob job
     ) {
         try {
-            boolean changed = completionService.markSent(
-                    job.outboxId(),
-                    job.claimToken(),
-                    LocalDateTime.now(applicationClock)
-            );
+            boolean changed = completionService.markSent(job.outboxId(), job.claimToken(), Instant.now(applicationClock));
 
             if (changed) {
                 publishSentActivity(job.outboxId());
             } else {
-                log.warn(
-                        "Reminder email for outbox job {} was accepted for "
-                                + "delivery, but its claim token no longer "
-                                + "owns the row.",
-                        job.outboxId()
-                );
+                log.warn("Reminder email for outbox job {} was accepted for delivery, but its claim token no longer owns the row.", job.outboxId());
             }
         } catch (RuntimeException completionException) {
-            log.error(
-                    "Reminder email for outbox job {} was accepted for "
-                            + "delivery, but the job could not be marked "
-                            + "SENT. The row will remain PROCESSING for "
-                            + "stale-claim recovery.",
-                    job.outboxId(),
-                    completionException
-            );
+            log.error("Reminder email for outbox job {} was accepted for delivery, but the job could not be marked SENT. The row will remain PROCESSING for stale-claim recovery.", job.outboxId(), completionException);
         }
     }
 
-    private void handleTransientDeliveryFailure(
-            ReminderEmailOutboxClaimService.ClaimedReminderEmailJob job,
-            TransientEmailDeliveryException deliveryException
-    ) {
-        log.error(
-                "Transient reminder email delivery failure for outbox job "
-                        + "{}, recipient user {}, attempt {}",
-                job.outboxId(),
-                job.recipientUserId(),
-                job.attemptNumber(),
-                deliveryException
-        );
+    private void handleTransientDeliveryFailure(ReminderEmailOutboxClaimService.ClaimedReminderEmailJob job, TransientEmailDeliveryException deliveryException) {
+        log.error("Transient reminder email delivery failure for outbox job {}, recipient user {}, attempt {}", job.outboxId(), job.recipientUserId(), job.attemptNumber(),deliveryException);
 
-        completeFailure(
-                job,
-                TRANSIENT_FAILURE_REASON,
-                false
-        );
+        completeFailure(job, TRANSIENT_FAILURE_REASON,false);
     }
 
-    private void handlePermanentDeliveryFailure(
-            ReminderEmailOutboxClaimService.ClaimedReminderEmailJob job,
-            PermanentEmailDeliveryException deliveryException
+    private void handlePermanentDeliveryFailure(ReminderEmailOutboxClaimService.ClaimedReminderEmailJob job, PermanentEmailDeliveryException deliveryException
     ) {
-        log.error(
-                "Permanent reminder email delivery failure for outbox job "
-                        + "{}, recipient user {}, attempt {}",
-                job.outboxId(),
-                job.recipientUserId(),
-                job.attemptNumber(),
-                deliveryException
-        );
+        log.error("Permanent reminder email delivery failure for outbox job {}, recipient user {}, attempt {}", job.outboxId(), job.recipientUserId(), job.attemptNumber(), deliveryException);
 
-        completeFailure(
-                job,
-                PERMANENT_FAILURE_REASON,
-                true
-        );
+        completeFailure(job, PERMANENT_FAILURE_REASON,true);
     }
 
-    private void handleUnexpectedDeliveryFailure(
-            ReminderEmailOutboxClaimService.ClaimedReminderEmailJob job,
-            RuntimeException deliveryException
-    ) {
-        log.error(
-                "Unexpected reminder email delivery failure for outbox job "
-                        + "{}, recipient user {}, attempt {}",
-                job.outboxId(),
-                job.recipientUserId(),
-                job.attemptNumber(),
-                deliveryException
-        );
+    private void handleUnexpectedDeliveryFailure( ReminderEmailOutboxClaimService.ClaimedReminderEmailJob job, RuntimeException deliveryException) {
+        log.error("Unexpected reminder email delivery failure for outbox job {}, recipient user {}, attempt {}", job.outboxId(), job.recipientUserId(), job.attemptNumber(), deliveryException);
 
-        completeFailure(
-                job,
-                UNEXPECTED_FAILURE_REASON,
-                true
-        );
+        completeFailure(job, UNEXPECTED_FAILURE_REASON, true);
     }
 
-    private void completeFailure(
-            ReminderEmailOutboxClaimService.ClaimedReminderEmailJob job,
-            String safeFailureReason,
-            boolean permanent
-    ) {
+    private void completeFailure(ReminderEmailOutboxClaimService.ClaimedReminderEmailJob job, String safeFailureReason, boolean permanent) {
         try {
             ReminderEmailOutboxCompletionService.FailureCompletionResult result =
                     permanent
                             ? completionService.markPermanentFailure(
                             job.outboxId(),
                             job.claimToken(),
-                            LocalDateTime.now(applicationClock),
+                            Instant.now(applicationClock),
                             safeFailureReason
                     )
                             : completionService.markTransientFailure(
                             job.outboxId(),
                             job.claimToken(),
-                            LocalDateTime.now(applicationClock),
+                            Instant.now(applicationClock),
                             safeFailureReason
                     );
 
             switch (result) {
-                case RETRY_SCHEDULED -> publishFailedActivity(
-                        job.outboxId(),
-                        safeFailureReason,
-                        false
-                );
+                case RETRY_SCHEDULED -> publishFailedActivity(job.outboxId(), safeFailureReason,false);
 
-                case DEAD -> publishFailedActivity(
-                        job.outboxId(),
-                        safeFailureReason,
-                        true
-                );
+                case DEAD -> publishFailedActivity(job.outboxId(), safeFailureReason, true);
 
-                case NOT_CHANGED -> log.warn(
-                        "Delivery failed for outbox job {}, but its "
-                                + "claim token no longer owns the "
-                                + "row. The failure was not applied "
-                                + "to a newer claim.",
-                        job.outboxId()
-                );
+                case NOT_CHANGED -> log.warn("Delivery failed for outbox job {}, but its claim token no longer owns the row. The failure was not applied to a newer claim.", job.outboxId());
             }
         } catch (RuntimeException completionException) {
-            log.error(
-                    "Reminder email delivery failed for outbox job {}, and "
-                            + "the job could not be completed as FAILED or "
-                            + "DEAD",
-                    job.outboxId(),
-                    completionException
-            );
+            log.error("Reminder email delivery failed for outbox job {}, and the job could not be completed as FAILED or DEAD", job.outboxId(), completionException);
         }
     }
 
     private void publishSentActivity(Long outboxId) {
-        activityPublisher.publishSuccess(
-                ActivityType.REMINDER_EMAIL_SENT,
-                "ReminderEmailOutbox",
-                outboxId.toString(),
-                "Shift-request reminder email sent"
-        );
+        activityPublisher.publishSuccess(ActivityType.REMINDER_EMAIL_SENT, "ReminderEmailOutbox", outboxId.toString(), "Shift-request reminder email sent");
     }
 
-    private void publishFailedActivity(
-            Long outboxId,
-            String safeFailureReason,
-            boolean dead
-    ) {
+    private void publishFailedActivity(Long outboxId, String safeFailureReason, boolean dead) {
         String description = dead
                 ? "Shift-request reminder email moved to DEAD"
                 : "Sending shift-request reminder email failed; retry scheduled";
@@ -297,9 +180,7 @@ public class ReminderEmailOutboxProcessor {
 
     private void validateBatchSize() {
         if (batchSize <= 0) {
-            throw new IllegalStateException(
-                    "planned-tasks.outbox.batch-size must be greater than zero"
-            );
+            throw new IllegalStateException("planned-tasks.outbox.batch-size must be greater than zero");
         }
     }
 }

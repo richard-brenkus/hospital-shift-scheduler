@@ -3,7 +3,8 @@ package com.richardbrenkus.shiftschedulermodernized.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "send_reminder_task")
@@ -25,10 +26,10 @@ public class SendReminderTask {
     private Long version;
 
     private boolean isActive;
-    private LocalDateTime startSendingTime;
-    private LocalDateTime creationTime;
+    private Instant startSendingTime;
+    private Instant creationTime;
     private int frequencyInDays;
     private int repetitions;
-    private LocalDateTime finalRequestSubmissionDate;
+    private LocalDate finalRequestSubmissionDate;
     private int counter;
 }

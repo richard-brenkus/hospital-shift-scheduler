@@ -7,8 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Check;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.UUID;
 
 @Entity
@@ -68,7 +67,7 @@ public class ReminderEmailOutbox {
     private Long sourceTaskId;
 
     @Column(name = "scheduled_execution_time", nullable = false, updatable = false)
-    private LocalDateTime scheduledExecutionTime;
+    private Instant scheduledExecutionTime;
 
     @Column(name = "final_submission_day", nullable = false, updatable = false)
     private LocalDate finalSubmissionDay;
@@ -90,10 +89,10 @@ public class ReminderEmailOutbox {
     private int attemptCount;
 
     @Column(name = "next_attempt_at", nullable = false)
-    private LocalDateTime nextAttemptAt;
+    private Instant nextAttemptAt;
 
     @Column(name = "claimed_at")
-    private LocalDateTime claimedAt;
+    private Instant claimedAt;
 
     @Column(name = "claimed_by", length = 100)
     private String claimedBy;
@@ -102,13 +101,13 @@ public class ReminderEmailOutbox {
     private String claimToken;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @Column(name = "sent_at")
-    private LocalDateTime sentAt;
+    private Instant sentAt;
 
     @Column(name = "dead_at")
-    private LocalDateTime deadAt;
+    private Instant deadAt;
 
     @Column(name = "last_failure_reason")
     private String lastFailureReason;
@@ -119,12 +118,13 @@ public class ReminderEmailOutbox {
 
     public static ReminderEmailOutbox pending(
             Long sourceTaskId,
-            LocalDateTime scheduledExecutionTime,
+            Instant scheduledExecutionTime,
             LocalDate finalSubmissionDay,
+            Instant finalSubmissionDeadline,
             Long recipientUserId,
             String recipientEmail,
             String recipientDisplayName,
-            LocalDateTime now
+            Instant now
     ) {
         requireNonNull(sourceTaskId, "sourceTaskId");
         requireNonNull(scheduledExecutionTime, "scheduledExecutionTime");
@@ -132,7 +132,7 @@ public class ReminderEmailOutbox {
         requireNonNull(recipientUserId, "recipientUserId");
         requireNonNull(now, "now");
 
-        if (scheduledExecutionTime.toLocalDate().isAfter(finalSubmissionDay)) {
+        if (scheduledExecutionTime.isAfter(finalSubmissionDeadline)) {
             throw new IllegalArgumentException(
                     "scheduledExecutionTime must not be after finalSubmissionDay"
             );
@@ -142,15 +142,13 @@ public class ReminderEmailOutbox {
         String eventId = UUID.randomUUID().toString();
 
         outbox.eventId = eventId;
-        outbox.idempotencyKey =
-                "shift-reminder:" + sourceTaskId + ":" + recipientUserId + ":" + eventId;
+        outbox.idempotencyKey = "shift-reminder:" + sourceTaskId + ":" + recipientUserId + ":" + eventId;
         outbox.sourceTaskId = sourceTaskId;
         outbox.scheduledExecutionTime = scheduledExecutionTime;
         outbox.finalSubmissionDay = finalSubmissionDay;
         outbox.recipientUserId = recipientUserId;
         outbox.recipientEmail = normalizeRequiredEmail(recipientEmail);
-        outbox.recipientDisplayName =
-                normalizeNullableText(recipientDisplayName, MAXIMUM_DISPLAY_NAME_LENGTH);
+        outbox.recipientDisplayName = normalizeNullableText(recipientDisplayName, MAXIMUM_DISPLAY_NAME_LENGTH);
         outbox.status = ReminderEmailOutboxStatus.PENDING;
         outbox.attemptCount = 0;
         outbox.nextAttemptAt = now;
@@ -162,7 +160,7 @@ public class ReminderEmailOutbox {
     public void claim(
             String workerId,
             String newClaimToken,
-            LocalDateTime now
+            Instant now
     ) {
         requireNonNegativeAttemptCount();
         requireNonNull(now, "now");
@@ -213,7 +211,7 @@ public class ReminderEmailOutbox {
 
     public void markSent(
             String expectedClaimToken,
-            LocalDateTime now
+            Instant now
     ) {
         requireNonNegativeAttemptCount();
         requireNonNull(now, "now");
@@ -230,7 +228,7 @@ public class ReminderEmailOutbox {
     public void markFailed(
             String expectedClaimToken,
             String safeFailureReason,
-            LocalDateTime retryAt
+            Instant retryAt
     ) {
         requireNonNegativeAttemptCount();
         requireNonNull(retryAt, "retryAt");
@@ -248,7 +246,7 @@ public class ReminderEmailOutbox {
     public void markDead(
             String expectedClaimToken,
             String safeFailureReason,
-            LocalDateTime now
+            Instant now
     ) {
         requireNonNegativeAttemptCount();
         requireNonNull(now, "now");
@@ -270,7 +268,7 @@ public class ReminderEmailOutbox {
      */
     public void markDeadFromDispatchableState(
             String safeFailureReason,
-            LocalDateTime now
+            Instant now
     ) {
         requireNonNegativeAttemptCount();
         requireNonNull(now, "now");
@@ -292,7 +290,7 @@ public class ReminderEmailOutbox {
 
     public void releaseStaleClaim(
             String safeFailureReason,
-            LocalDateTime retryAt
+            Instant retryAt
     ) {
         requireNonNegativeAttemptCount();
         requireNonNull(retryAt, "retryAt");
@@ -320,7 +318,7 @@ public class ReminderEmailOutbox {
     }
 
     private void requireNotBeforeClaim(
-            LocalDateTime value,
+            Instant value,
             String valueDescription
     ) {
         if (claimedAt != null && value.isBefore(claimedAt)) {
@@ -384,10 +382,7 @@ public class ReminderEmailOutbox {
         return truncateTrimmed(value, MAXIMUM_FAILURE_REASON_LENGTH);
     }
 
-    private static String normalizeNullableText(
-            String value,
-            int maximumLength
-    ) {
+    private static String normalizeNullableText(String value, int maximumLength) {
         if (value == null || value.isBlank()) {
             return null;
         }
@@ -395,10 +390,7 @@ public class ReminderEmailOutbox {
         return truncateTrimmed(value, maximumLength);
     }
 
-    private static String truncateTrimmed(
-            String value,
-            int maximumLength
-    ) {
+    private static String truncateTrimmed(String value, int maximumLength) {
         String trimmed = value.trim();
 
         return trimmed.length() <= maximumLength

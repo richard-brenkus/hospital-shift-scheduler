@@ -21,13 +21,7 @@ public class ActivityEventListener {
         try {
             activityLogWriter.persist(event);
         } catch (RuntimeException exception) {
-            log.error(
-                    "Could not persist activity event of type {} for target {}:{}",
-                    event.activityType(),
-                    event.targetType(),
-                    event.targetId(),
-                    exception
-            );
+            log.error("Could not persist activity event of type {} for target {}:{}", event.activityType(), event.targetType(), event.targetId(), exception);
         }
     }
 }

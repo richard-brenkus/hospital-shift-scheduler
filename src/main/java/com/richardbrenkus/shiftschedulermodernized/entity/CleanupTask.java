@@ -3,7 +3,7 @@ package com.richardbrenkus.shiftschedulermodernized.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "cleanup_task")
@@ -25,6 +25,6 @@ public class CleanupTask {
     private Long version;
 
     private boolean isActive;
-    private LocalDateTime executionTime;
-    private LocalDateTime creationTime;
+    private Instant executionTime;
+    private Instant creationTime;
 }

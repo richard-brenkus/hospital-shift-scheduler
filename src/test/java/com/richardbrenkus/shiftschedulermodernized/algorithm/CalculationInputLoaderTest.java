@@ -210,10 +210,7 @@ class CalculationInputLoaderTest {
                 .build();
     }
 
-    private UserCalculationData calculationUser(
-            Long id,
-            Set<LocalDate> previousDates
-    ) {
+    private UserCalculationData calculationUser(Long id, Set<LocalDate> previousDates) {
         return new UserCalculationData(
                 id,
                 "User " + id,

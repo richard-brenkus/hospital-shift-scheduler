@@ -19,11 +19,5 @@ public interface EmailReminderService {
      * @param finalSubmissionDate last day for submitting the shift request
      * @param idempotencyKey stable identifier associated with the outbox row
      */
-    void sendShiftRequestReminderEmail(
-            String recipientEmail,
-            String recipientDisplayName,
-            LocalDate finalSubmissionDate,
-            String idempotencyKey
-    );
-
+    void sendShiftRequestReminderEmail(String recipientEmail, String recipientDisplayName, LocalDate finalSubmissionDate, String idempotencyKey);
 }

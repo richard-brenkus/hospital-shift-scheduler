@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -26,18 +26,15 @@ public class PlannedTaskExecutorService {
     private static final String ACTIVITY_TARGET_CLEANUP = "CleanupTask";
     private static final String ACTIVITY_TARGET_REMINDER_EMAIL = "SendReminderTask";
 
-    @Scheduled(
-            fixedDelayString =
-                    "${planned-tasks.executor.fixed-delay-ms:60000}"
-    )
+    @Scheduled(fixedDelayString ="${planned-tasks.executor.fixed-delay-ms:60000}")
     public void executeDueTasks() {
-        LocalDateTime now = LocalDateTime.now(applicationClock);
+        Instant now  = Instant.now(applicationClock);
 
         executeCleanup(now);
         createReminderOutboxJobs(now);
     }
 
-    private void executeCleanup(LocalDateTime now) {
+    private void executeCleanup(Instant now) {
         try {
             cleanupTaskExecutionService.executeCleanupTaskIfDue(now);
 
@@ -58,15 +55,12 @@ public class PlannedTaskExecutorService {
         }
     }
 
-    private void createReminderOutboxJobs(LocalDateTime now) {
+    private void createReminderOutboxJobs(Instant now) {
         try {
             plannedTaskDispatchService.createReminderOutboxJobsIfDue(now);
 
         } catch (RuntimeException exception) {
-            log.error(
-                    "Creation of reminder email outbox jobs failed",
-                    exception
-            );
+            log.error("Creation of reminder email outbox jobs failed", exception);
 
             /*
              * Publish outside the rolled-back transaction.
@@ -75,7 +69,7 @@ public class PlannedTaskExecutorService {
                     ActivityType.REMINDER_EMAIL_JOB_CREATION_FAILED,
                     ACTIVITY_TARGET_REMINDER_EMAIL,
                     String.valueOf(SendReminderTask.SINGLETON_ID),
-                    "Reminder email job creation failed for " + now,
+                    "Reminder email job creation failed for UTC " + now,
                     "Unable to create reminder email outbox jobs",
                     RequestMetadata.system()
             );

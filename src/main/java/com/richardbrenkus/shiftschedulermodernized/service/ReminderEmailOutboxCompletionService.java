@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -21,11 +21,7 @@ public class ReminderEmailOutboxCompletionService {
     private int maximumAttempts;
 
     @Transactional
-    public boolean markSent(
-            Long outboxId,
-            String claimToken,
-            LocalDateTime now
-    ) {
+    public boolean markSent(Long outboxId, String claimToken, Instant now) {
         validateRequiredArguments(outboxId, claimToken, now);
 
         ReminderEmailOutbox outbox = repository
@@ -42,12 +38,7 @@ public class ReminderEmailOutboxCompletionService {
     }
 
     @Transactional
-    public FailureCompletionResult markTransientFailure(
-            Long outboxId,
-            String claimToken,
-            LocalDateTime now,
-            String safeFailureReason
-    ) {
+    public FailureCompletionResult markTransientFailure(Long outboxId, String claimToken, Instant now, String safeFailureReason) {
         validateRequiredArguments(outboxId, claimToken, now);
         validateMaximumAttempts();
 
@@ -59,38 +50,23 @@ public class ReminderEmailOutboxCompletionService {
             return FailureCompletionResult.NOT_CHANGED;
         }
 
-        String normalizedFailureReason =
-                normalizeFailureReason(safeFailureReason);
+        String normalizedFailureReason = normalizeFailureReason(safeFailureReason);
 
         if (outbox.getAttemptCount() >= maximumAttempts) {
-            outbox.markDead(
-                    claimToken,
-                    normalizedFailureReason,
-                    now
-            );
+            outbox.markDead(claimToken, normalizedFailureReason, now);
             repository.saveAndFlush(outbox);
             return FailureCompletionResult.DEAD;
         }
 
-        LocalDateTime retryAt =
-                calculateRetryAt(now, outbox.getAttemptCount());
+        Instant retryAt = calculateRetryAt(now, outbox.getAttemptCount());
 
-        outbox.markFailed(
-                claimToken,
-                normalizedFailureReason,
-                retryAt
-        );
+        outbox.markFailed(claimToken, normalizedFailureReason, retryAt);
         repository.saveAndFlush(outbox);
         return FailureCompletionResult.RETRY_SCHEDULED;
     }
 
     @Transactional
-    public FailureCompletionResult markPermanentFailure(
-            Long outboxId,
-            String claimToken,
-            LocalDateTime now,
-            String safeFailureReason
-    ) {
+    public FailureCompletionResult markPermanentFailure(Long outboxId, String claimToken, Instant now, String safeFailureReason) {
         validateRequiredArguments(outboxId, claimToken, now);
 
         ReminderEmailOutbox outbox = repository
@@ -101,57 +77,35 @@ public class ReminderEmailOutboxCompletionService {
             return FailureCompletionResult.NOT_CHANGED;
         }
 
-        outbox.markDead(
-                claimToken,
-                normalizeFailureReason(safeFailureReason),
-                now
-        );
+        outbox.markDead(claimToken, normalizeFailureReason(safeFailureReason), now);
         repository.saveAndFlush(outbox);
         return FailureCompletionResult.DEAD;
     }
 
-    private LocalDateTime calculateRetryAt(
-            LocalDateTime now,
-            int attemptCount
-    ) {
-        int boundedAttempt =
-                Math.clamp(attemptCount, 1, MAXIMUM_BACKOFF_ATTEMPT);
-
+    private Instant calculateRetryAt(Instant now, int attemptCount) {
+        int boundedAttempt = Math.clamp(attemptCount, 1, MAXIMUM_BACKOFF_ATTEMPT);
         long delayMinutes = 1L << (boundedAttempt - 1);
 
-        return now.plusMinutes(delayMinutes);
+        return now.plusSeconds(Math.multiplyExact(60, delayMinutes));
     }
 
-    private void validateRequiredArguments(
-            Long outboxId,
-            String claimToken,
-            LocalDateTime now
-    ) {
+    private void validateRequiredArguments(Long outboxId, String claimToken, Instant now) {
         if (outboxId == null) {
-            throw new IllegalArgumentException(
-                    "outboxId must not be null"
-            );
+            throw new IllegalArgumentException("outboxId must not be null");
         }
 
         if (claimToken == null || claimToken.isBlank()) {
-            throw new IllegalArgumentException(
-                    "claimToken must not be blank"
-            );
+            throw new IllegalArgumentException("claimToken must not be blank");
         }
 
         if (now == null) {
-            throw new IllegalArgumentException(
-                    "now must not be null"
-            );
+            throw new IllegalArgumentException("now must not be null");
         }
     }
 
     private void validateMaximumAttempts() {
         if (maximumAttempts <= 0) {
-            throw new IllegalStateException(
-                    "planned-tasks.outbox.maximum-attempts "
-                            + "must be greater than zero"
-            );
+            throw new IllegalStateException("planned-tasks.outbox.maximum-attempts must be greater than zero");
         }
     }
 

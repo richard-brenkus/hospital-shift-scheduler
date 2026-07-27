@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import java.time.Clock;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.YearMonth;
 import java.util.stream.IntStream;
 
@@ -32,7 +32,7 @@ public class PlannedTasksController {
 
     @PostMapping("/admin/cleanup_task")
     public String postCleanupTask(Model model, @Valid @ModelAttribute("cleanupTaskForm") CleanupTaskForm cleanupTaskForm, BindingResult bindingResult) {
-        LocalDateTime now = LocalDateTime.now(applicationClock);
+        Instant now = Instant.now(applicationClock);
 
         if (cleanupTaskForm.isCleanupTaskActive() && !plannedTasksService.isCleanupTimeInFuture(cleanupTaskForm, now)) {
             bindingResult.rejectValue("cleanupDay", "error.cleanupDay");
@@ -51,7 +51,7 @@ public class PlannedTasksController {
 
     @PostMapping("/admin/send_reminder_task")
     public String postSendReminderTask(Model model, @Valid @ModelAttribute("sendReminderTaskForm") SendReminderTaskForm sendReminderTaskForm, BindingResult bindingResult) {
-        LocalDateTime now = LocalDateTime.now(applicationClock);
+        Instant now = Instant.now(applicationClock);
 
         if (sendReminderTaskForm.isSendReminderTaskActive()) {
             validateReminderTask(sendReminderTaskForm, bindingResult, now);
@@ -66,7 +66,7 @@ public class PlannedTasksController {
         return "redirect:/admin/planned_tasks";
     }
 
-    private void validateReminderTask(SendReminderTaskForm form, BindingResult bindingResult, LocalDateTime now) {
+    private void validateReminderTask(SendReminderTaskForm form, BindingResult bindingResult, Instant now) {
         if (!plannedTasksService.isFirstReminderInFuture(form, now)) {
             bindingResult.rejectValue("startSendingRemindersDay", "error.reminderStartFuture");
             bindingResult.rejectValue("startSendingRemindersHour", "error.reminderStartFuture");
@@ -113,7 +113,7 @@ public class PlannedTasksController {
         model.addAttribute("hoursList", IntStream.rangeClosed(0, 23).boxed().toList());
         model.addAttribute("minutesList", IntStream.rangeClosed(0, 59).boxed().toList());
         model.addAttribute("repetitionsList", IntStream.rangeClosed(1, 10).boxed().toList());
-        model.addAttribute("frequencyList", IntStream.rangeClosed(1, 10).boxed().toList());
+        model.addAttribute("frequencyList", IntStream.rangeClosed(0, 10).boxed().toList());
         model.addAttribute("finalSubmissionDaysList", IntStream.rangeClosed(1, YearMonth.now(applicationClock).lengthOfMonth()).boxed().toList());
     }
 }

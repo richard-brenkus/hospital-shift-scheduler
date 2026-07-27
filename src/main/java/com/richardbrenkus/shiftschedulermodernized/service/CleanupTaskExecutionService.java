@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +19,7 @@ public class CleanupTaskExecutionService {
     private final ActivityPublisher activityPublisher;
 
     @Transactional
-    public void executeCleanupTaskIfDue(LocalDateTime now) {
+    public void executeCleanupTaskIfDue(Instant now) {
         if (now == null) {
             throw new IllegalArgumentException("now must not be null");
         }
@@ -48,7 +48,7 @@ public class CleanupTaskExecutionService {
         );
     }
 
-    private boolean isDue(CleanupTask task, LocalDateTime now) {
+    private boolean isDue(CleanupTask task, Instant now) {
         return task.isActive() && task.getExecutionTime() != null && !task.getExecutionTime().isAfter(now);
     }
 }
