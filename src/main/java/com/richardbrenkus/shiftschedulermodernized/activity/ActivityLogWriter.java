@@ -7,8 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Objects;
 
 @Service
@@ -21,10 +19,7 @@ public class ActivityLogWriter {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void persist(ActivityEvent event) {
         Objects.requireNonNull(event, "event must not be null");
-        Objects.requireNonNull(
-                event.requestMetadata(),
-                "event.requestMetadata must not be null"
-        );
+        Objects.requireNonNull(event.requestMetadata(), "event.requestMetadata must not be null");
 
         int affectedRows = activityLogRepository.insertIfAbsent(
                 event.eventId(),
@@ -39,10 +34,7 @@ public class ActivityLogWriter {
                 event.requestMetadata().requestMethod(),
                 event.requestMetadata().requestPath(),
                 event.requestMetadata().clientIp(),
-                LocalDateTime.ofInstant(
-                        event.occurredAt(),
-                        ZoneOffset.UTC
-                )
+                event.occurredAt()
         );
 
         if (affectedRows == 0) {

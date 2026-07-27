@@ -2,6 +2,7 @@ package com.richardbrenkus.shiftschedulermodernized.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
@@ -39,7 +40,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "shiftRequest",
             "shiftRequest.preferences"
     })
-    List<User> findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc();
+    Set<User> findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc();
 
     @Query("""
        select distinct u.name

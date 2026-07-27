@@ -272,7 +272,7 @@ public class AdminController {
         return "admin/select_user_password_change";
     }
 
-    @PostMapping("admin/select_user_password_change")
+    @PostMapping("/admin/select_user_password_change")
     public String receiveSelectedUserForPasswordChange(
             @RequestParam Long userId,
             Model model
@@ -435,9 +435,8 @@ public class AdminController {
         }
 
         ScheduleMonth scheduleMonth = userService.getScheduleMonth(scheduleEditForm);
-        storedScheduleService.saveSchedule(scheduleMonth);
 
-        userStatisticService.replaceStatsForMonth(scheduleEditForm.getMonth(), validationResult.getFullUserStatsByShiftType());
+        storedScheduleService.saveScheduleWithStats(scheduleMonth, validationResult);
 
         return "redirect:/admin/show_saved_schedules";
     }
@@ -447,8 +446,7 @@ public class AdminController {
         ScheduleMonth scheduleMonth = userService.getScheduleMonth(scheduleEditForm);
         ScheduleValidationResult validationResult = scheduleValidationService.validateSchedule(scheduleEditForm);
 
-        storedScheduleService.saveSchedule(scheduleMonth);
-        userStatisticService.replaceStatsForMonth(scheduleEditForm.getMonth(), validationResult.getFullUserStatsByShiftType());
+        storedScheduleService.saveScheduleWithStats(scheduleMonth, validationResult);
 
         return "redirect:/admin/show_saved_schedules";
     }

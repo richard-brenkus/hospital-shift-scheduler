@@ -155,6 +155,7 @@ public class UserStatisticService {
                         .assignedWeekends(calculatedWeekends)
                         .assignedTotal(calculatedWeekdays + calculatedWeekends)
                         .month(scheduleMonth.getMonth())
+                        .allowedShiftTypesAsCommaSeparatedString(allowedShiftTypesToCommaSeparatedString(userCalculationData))
                         .build();
 
                 userStatMap
@@ -562,5 +563,11 @@ public class UserStatisticService {
         }
 
         return userCalculationData.preferenceFor(shiftType).orElse(null);
+    }
+
+    private String allowedShiftTypesToCommaSeparatedString(UserCalculationData userCalculationData) {
+        return userCalculationData.allowedShiftTypes().stream()
+                .map(shiftType -> Integer.toString(shiftType))
+                .collect(Collectors.joining(", "));
     }
 }

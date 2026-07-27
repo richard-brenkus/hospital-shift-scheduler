@@ -27,10 +27,7 @@ public record ActivityEvent(
         Objects.requireNonNull(actorUsername, "actorUsername must not be null");
         Objects.requireNonNull(actorRole, "actorRole must not be null");
         Objects.requireNonNull(activityType, "activityType must not be null");
-        Objects.requireNonNull(
-                requestMetadata,
-                "requestMetadata must not be null"
-        );
+        Objects.requireNonNull(requestMetadata, "requestMetadata must not be null");
     }
 
     public static ActivityEvent success(

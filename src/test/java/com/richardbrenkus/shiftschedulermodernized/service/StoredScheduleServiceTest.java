@@ -42,7 +42,7 @@ class StoredScheduleServiceTest {
 
     @Test
     void shouldThrowIllegalArgumentException_whenSavingNullScheduleMonth() {
-        assertThatThrownBy(() -> service.saveSchedule(null))
+        assertThatThrownBy(() -> service.saveScheduleWithStats(null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("schedule");
     }

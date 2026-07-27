@@ -179,10 +179,7 @@ public class ActivityPublisher {
             String targetId,
             String description
     ) {
-        Objects.requireNonNull(
-                activityType,
-                "activityType must not be null"
-        );
+        Objects.requireNonNull(activityType, "activityType must not be null");
 
         Actor actor = currentActor();
         RequestMetadata metadata = requestMetadataProvider.current();
@@ -208,10 +205,7 @@ public class ActivityPublisher {
             String failureReason,
             RequestMetadata requestMetadata
     ) {
-        Objects.requireNonNull(
-                activityType,
-                "activityType must not be null"
-        );
+        Objects.requireNonNull(activityType, "activityType must not be null");
 
         Actor actor = currentActor();
 

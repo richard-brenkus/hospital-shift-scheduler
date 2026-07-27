@@ -152,7 +152,7 @@ public class UserController {
 
         String username = authentication.getName();
 
-        if (!userService.oldPasswordMatches(username, form.getOldPassword())) {
+        if (form.getOldPassword() == null || form.getOldPassword().isBlank() || !userService.oldPasswordMatches(username, form.getOldPassword())) {
             bindingResult.rejectValue("oldPassword", "change.password.currentIncorrect");
 
             clearAllPasswords(form);

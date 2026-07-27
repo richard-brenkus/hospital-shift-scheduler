@@ -2,6 +2,7 @@ package com.richardbrenkus.shiftschedulermodernized.service;
 
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleMonth;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleValidationResult;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ShiftAssignment;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.record.UserCalculationData;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.MonthOption;
@@ -27,9 +28,10 @@ public class StoredScheduleService {
 
     private final StoredScheduleDayRepository storedScheduleDayRepository;
     private final ShiftTypeService shiftTypeService;
+    private final UserStatisticService userStatisticService;
 
     @Transactional
-    public void saveSchedule(ScheduleMonth scheduleMonth) {
+    public void saveScheduleWithStats(ScheduleMonth scheduleMonth, ScheduleValidationResult validationResult) {
         if (scheduleMonth == null || scheduleMonth.getMonth() == null) {
             throw new IllegalArgumentException("Cannot save schedule: schedule or schedule month is missing.");
         }
@@ -49,6 +51,9 @@ public class StoredScheduleService {
                 .toList();
 
         storedScheduleDayRepository.saveAll(storedDays);
+
+        userStatisticService.replaceStatsForMonth(scheduleMonth.getMonth(), validationResult.getFullUserStatsByShiftType());
+
     }
 
     @Transactional(readOnly = true)

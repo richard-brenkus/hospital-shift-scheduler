@@ -44,7 +44,7 @@ class StoredScheduleServiceIT extends AbstractMySqlContainerTest {
         addAssignment(scheduleMonth, LocalDate.of(2026, 8, 5), 1, alice);
         addAssignment(scheduleMonth, LocalDate.of(2026, 8, 6), 2, alice);
 
-        storedScheduleService.saveSchedule(scheduleMonth);
+        storedScheduleService.saveScheduleWithStats(scheduleMonth);
 
         assertThat(storedScheduleDayRepository.findByMonthYearIdOrderByDayIntegerAsc("08/2026"))
                 .hasSize(31);
@@ -59,7 +59,7 @@ class StoredScheduleServiceIT extends AbstractMySqlContainerTest {
 
         ScheduleMonth scheduleMonth = TestFixtures.emptyScheduleMonth(AUGUST_2026);
         addAssignment(scheduleMonth, LocalDate.of(2026, 8, 10), 1, alice);
-        storedScheduleService.saveSchedule(scheduleMonth);
+        storedScheduleService.saveScheduleWithStats(scheduleMonth);
 
         SavedScheduleView view = storedScheduleService.loadSavedScheduleView(AUGUST_2026);
 

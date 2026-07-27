@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -68,6 +68,6 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> 
             @Param("requestMethod") String requestMethod,
             @Param("requestUri") String requestUri,
             @Param("clientIp") String clientIp,
-            @Param("occurredAt") LocalDateTime occurredAt
+            @Param("occurredAt") Instant occurredAt
     );
 }
