@@ -273,10 +273,7 @@ public class AdminController {
     }
 
     @PostMapping("/admin/select_user_password_change")
-    public String receiveSelectedUserForPasswordChange(
-            @RequestParam Long userId,
-            Model model
-    ) {
+    public String receiveSelectedUserForPasswordChange(@RequestParam Long userId, Model model) {
         UserViewRecord user = userService.findUserViewById(userId);
 
         model.addAttribute(ModelAttributeName.SELECTED_USER, user);
@@ -286,20 +283,11 @@ public class AdminController {
     }
 
     @PostMapping("/admin/change_user_password")
-    public String changeUserPasswordByAdmin(
-            @RequestParam("userId") Long userId,
-            @Valid @ModelAttribute("passwordChangeForm") PasswordChangeForm passwordChangeForm,
-            BindingResult bindingResult,
-            Model model
-    ) {
-
+    public String changeUserPasswordByAdmin(@RequestParam("userId") Long userId, @Valid @ModelAttribute("passwordChangeForm") PasswordChangeForm passwordChangeForm, BindingResult bindingResult, Model model) {
         UserViewRecord selectedUser = userService.findUserViewById(userId);
 
         if (!passwordChangeForm.passwordsMatch()) {
-            bindingResult.rejectValue(
-                    "confirmedPassword",
-                    "validation.password.mismatch"
-            );
+            bindingResult.rejectValue("confirmedPassword", "validation.password.mismatch");
         }
 
         if (bindingResult.hasErrors()) {
