@@ -8,8 +8,7 @@ import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftPreference;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
-
-import java.util.Map;
+import com.richardbrenkus.shiftschedulermodernized.mapper.UserCalculationDataMapper;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -125,32 +124,20 @@ public final class TestFixtures {
     }
 
     /**
-     * Minimal adapter that converts a JPA {@link User} into the
-     * calculation-domain {@link UserCalculationData} snapshot used by the
-     * schedule algorithm. Preferences and previous-month dates are left empty
-     * because the tests that call this helper only rely on user identity for
-     * assignment lookups.
+     * Adapter from a JPA {@link User} to the calculation-domain
+     * {@link UserCalculationData} snapshot used by the schedule algorithm.
+     *
+     * Delegates to the production {@link UserCalculationDataMapper} so that the
+     * shift preferences attached via {@link #attachRequest(User, java.util.List, ShiftPreference...)}
+     * survive into the algorithm-facing snapshot (required by any test that
+     * later asks the algorithm to reason about those preferences).
      */
     public static UserCalculationData toUserCalculationData(User user) {
-        Set<Integer> allowed = user.getAllowedShiftTypes() == null
-                ? Set.of()
-                : Set.copyOf(user.getAllowedShiftTypes());
-        Set<java.time.LocalDate> datesNo =
-                user.hasShiftRequest() && user.getShiftRequest().getDatesNo() != null
-                        ? Set.copyOf(user.getShiftRequest().getDatesNo())
-                        : Set.of();
-        return new UserCalculationData(
-                user.getId(),
-                user.getName() == null ? user.getUsername() : user.getName(),
-                user.getUsername(),
-                user.getTitle(),
-                allowed,
-                datesNo,
-                Map.of(),
-                Set.of(),
-                user.hasShiftRequest()
-        );
+        return USER_CALCULATION_DATA_MAPPER.toCalculationData(user, null);
     }
+
+    private static final UserCalculationDataMapper USER_CALCULATION_DATA_MAPPER =
+            new UserCalculationDataMapper();
 
     public static Set<Integer> shiftTypeSet(Integer... shiftTypes) {
         return new HashSet<>(Arrays.asList(shiftTypes));

@@ -61,6 +61,9 @@ class ActivityLogPersistenceIT extends AbstractMySqlContainerTest {
         UUID eventId = UUID.randomUUID();
         Instant now = Instant.now(applicationClock);
 
+        // insertIfAbsent is a @Modifying native query; JPA requires an active
+        // transaction. Production calls it from ActivityLogWriter.persist,
+        // which is @Transactional(REQUIRES_NEW).
         int firstInsert = insertOnce(eventId, now);
         int secondInsert = insertOnce(eventId, now);
 
@@ -110,20 +113,23 @@ class ActivityLogPersistenceIT extends AbstractMySqlContainerTest {
     }
 
     private int insertOnce(UUID eventId, Instant occurredAt) {
-        return activityLogRepository.insertIfAbsent(
-                eventId,
-                ActivityType.USER_CREATED.name(),
-                "alice",
-                Role.ADMIN.name(),
-                "User",
-                "42",
-                "Duplicate protection test",
-                true,
-                null,
-                "POST",
-                "/admin/add",
-                "127.0.0.1",
-                occurredAt
+        Integer affected = transactionTemplate.execute(status ->
+                activityLogRepository.insertIfAbsent(
+                        eventId,
+                        ActivityType.USER_CREATED.name(),
+                        "alice",
+                        Role.ADMIN.name(),
+                        "User",
+                        "42",
+                        "Duplicate protection test",
+                        true,
+                        null,
+                        "POST",
+                        "/admin/add",
+                        "127.0.0.1",
+                        occurredAt
+                )
         );
+        return affected == null ? 0 : affected;
     }
 }

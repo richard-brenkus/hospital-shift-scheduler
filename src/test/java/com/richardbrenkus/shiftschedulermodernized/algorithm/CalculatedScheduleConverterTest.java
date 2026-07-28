@@ -3,6 +3,7 @@ package com.richardbrenkus.shiftschedulermodernized.algorithm;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.record.*;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileForm;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
+import com.richardbrenkus.shiftschedulermodernized.mapper.UserCalculationDataMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,10 +15,12 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,6 +30,9 @@ class CalculatedScheduleConverterTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private UserCalculationDataMapper userCalculationDataMapper;
 
     @InjectMocks
     private CalculatedScheduleConverter converter;
@@ -54,8 +60,15 @@ class CalculatedScheduleConverterTest {
                 .forceFillShiftTypes(List.of(1))
                 .build();
 
+        UserCalculationData ucdOne = calculationData(1L);
+        UserCalculationData ucdTwo = calculationData(2L);
+
         when(userRepository.findAllById(any()))
                 .thenReturn(List.of(userOne, userTwo));
+        when(userCalculationDataMapper.toCalculationData(eq(userOne), any()))
+                .thenReturn(ucdOne);
+        when(userCalculationDataMapper.toCalculationData(eq(userTwo), any()))
+                .thenReturn(ucdTwo);
 
         ScheduleMonth result = converter.toLegacyScheduleMonth(
                 ScheduleCandidate.from(calculated, 1, 7, 123L),
@@ -70,9 +83,9 @@ class CalculatedScheduleConverterTest {
         assertThat(result.getDays().get(0).getAssignments().getFirst().getShiftType())
                 .isEqualTo(1);
         assertThat(result.getDays().get(0).getAssignments().getFirst().getUserCalculationData())
-                .isSameAs(userOne);
+                .isSameAs(ucdOne);
         assertThat(result.getDays().get(1).getAssignments().getFirst().getUserCalculationData())
-                .isSameAs(userTwo);
+                .isSameAs(ucdTwo);
 
         assertThat(result.isOverrideUserShiftRequestExceptNoDates()).isFalse();
         assertThat(result.isOverrideUserShiftRequestAll()).isFalse();
@@ -100,6 +113,9 @@ class CalculatedScheduleConverterTest {
                 .build();
 
         when(userRepository.findAllById(any())).thenReturn(List.of());
+        // The converter passes usersById.get(999L) → null → mapper returns null →
+        // converter throws IllegalStateException.
+        when(userCalculationDataMapper.toCalculationData(eq(null), any())).thenReturn(null);
 
         assertThatThrownBy(() -> converter.toLegacyScheduleMonth(
                 ScheduleCandidate.from(calculated, 0, 0, 1L),
@@ -153,5 +169,19 @@ class CalculatedScheduleConverterTest {
                 .password("encoded")
                 .enabled(true)
                 .build();
+    }
+
+    private UserCalculationData calculationData(long id) {
+        return new UserCalculationData(
+                id,
+                "User " + id,
+                "user-" + id,
+                null,
+                Set.of(1, 2),
+                Set.of(),
+                Map.of(),
+                Set.of(),
+                true
+        );
     }
 }

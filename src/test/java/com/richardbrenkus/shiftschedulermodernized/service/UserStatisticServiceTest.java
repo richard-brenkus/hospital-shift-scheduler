@@ -7,19 +7,22 @@ import com.richardbrenkus.shiftschedulermodernized.dto.form.ScheduleEditForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserStatViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.mapper.ScheduleMapper;
+import com.richardbrenkus.shiftschedulermodernized.mapper.UserCalculationDataMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserStatRepository;
 import com.richardbrenkus.shiftschedulermodernized.support.TestFixtures;
 import jakarta.servlet.http.HttpSession;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ui.Model;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +33,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/*
+ * NOTE: UserStatisticService now uses named repository queries
+ * (findByShiftRequestIsNotNullOrderByNameAsc, findDistinctNamesWithoutShiftRequest)
+ * and delegates snapshotting to {@link UserCalculationDataMapper}. Tests were
+ * updated to stub those queries and use the real mapper (so that preferences
+ * attached in the fixture reach the snapshot the service reasons about).
+ */
 @ExtendWith(MockitoExtension.class)
 class UserStatisticServiceTest {
 
@@ -53,8 +63,20 @@ class UserStatisticServiceTest {
     @Mock
     private Model model;
 
-    @InjectMocks
     private UserStatisticService service;
+
+    @BeforeEach
+    void setUp() {
+        // Real mapper — no external dependencies, and its preference-copying
+        // behaviour is what makes the stat calculations meaningful in tests.
+        service = new UserStatisticService(
+                userRepository,
+                shiftTypeService,
+                scheduleMapper,
+                userStatRepository,
+                new UserCalculationDataMapper()
+        );
+    }
 
     @Test
     void shouldStoreFullStatisticsInSession_whenResultAndFormArePresent() {
@@ -81,7 +103,6 @@ class UserStatisticServiceTest {
     @Test
     void shouldDoNothing_whenSessionIsNull() {
         service.storeFullStatisticsInSession(null, null, null);
-        // No exception, no side effects
     }
 
     @Test
@@ -178,7 +199,8 @@ class UserStatisticServiceTest {
         TestFixtures.attachRequest(user, List.of(),
                 TestFixtures.preference(1, 1, 5, 0, false, List.of(LocalDate.of(2026, 8, 3))));
         ScheduleMonth month = TestFixtures.emptyScheduleMonth(AUGUST_2026);
-        when(userRepository.findAll()).thenReturn(List.of(user));
+        when(userRepository.findByShiftRequestIsNotNullOrderByNameAsc())
+                .thenReturn(List.of(user));
         when(shiftTypeService.getShiftTypes()).thenReturn(List.of(1));
 
         Map<Integer, Set<UserStatViewRecord>> result =
@@ -197,7 +219,8 @@ class UserStatisticServiceTest {
         TestFixtures.assign(month, date, 1, user);
         CalculationCounters counters = new CalculationCounters();
         counters.incrementWeekday(user.getId(), 1);
-        when(userRepository.findAll()).thenReturn(List.of(user));
+        when(userRepository.findByShiftRequestIsNotNullOrderByNameAsc())
+                .thenReturn(List.of(user));
         when(shiftTypeService.getShiftTypes()).thenReturn(List.of(1));
 
         Map<Integer, Set<UserStatViewRecord>> result =
@@ -208,14 +231,10 @@ class UserStatisticServiceTest {
 
     @Test
     void shouldReturnSortedUserNamesWithoutRequest() {
-        User admin = TestFixtures.admin(1L, "root");
-        admin.setName("Zoe");
-        User u1 = TestFixtures.user(2L, "u1");
-        u1.setName("Amy");
-        User u2 = TestFixtures.user(3L, "u2");
-        u2.setName("Bruce");
-        u2.setShiftRequest(new com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest());
-        when(userRepository.findAll()).thenReturn(List.of(admin, u1, u2));
+        // The service delegates entirely to the repository query, which is
+        // expected to sort and de-duplicate. Return the desired list verbatim.
+        when(userRepository.findDistinctNamesWithoutShiftRequest())
+                .thenReturn(List.of("Amy", "Zoe"));
 
         List<String> names = service.returnUsersWithNoRequest();
 
@@ -241,15 +260,16 @@ class UserStatisticServiceTest {
 
     @Test
     void shouldConvertDatesToDayOfMonthSet_ignoringForeignMonthDates() {
-        Set<Integer> days = service.toCurrentMonthDayOfMonthSet(
-                Set.of(
-                        LocalDate.of(2026, 8, 5),
-                        LocalDate.of(2026, 8, 10),
-                        LocalDate.of(2026, 9, 1),
-                        null
-                ),
-                AUGUST_2026
-        );
+        // java.util.Set.of() forbids nulls; use a mutable set so we can pass one
+        // and prove the method itself skips it.
+        Set<LocalDate> input = new HashSet<>(Arrays.asList(
+                LocalDate.of(2026, 8, 5),
+                LocalDate.of(2026, 8, 10),
+                LocalDate.of(2026, 9, 1),
+                null
+        ));
+
+        Set<Integer> days = service.toCurrentMonthDayOfMonthSet(input, AUGUST_2026);
 
         assertThat(days).containsExactly(5, 10);
     }

@@ -18,9 +18,14 @@ import java.time.YearMonth;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+/*
+ * NOTE: {@link CalculationInputLoader} now delegates row-level eligibility
+ * filtering to {@link UserRepository#findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc()},
+ * which returns a {@link Set}. The old {@code findAll()}-plus-in-memory-filter
+ * assumption has been replaced.
+ */
 @ExtendWith(MockitoExtension.class)
 class CalculationInputLoaderTest {
 
@@ -35,22 +40,14 @@ class CalculationInputLoaderTest {
     private CalculationInputLoader loader;
 
     @Test
-    void shouldLoadOnlyEnabledUsersWithRequestsAndPutForceFillTypesFirst() {
+    void shouldLoadEligibleUsersAndPutForceFillTypesFirst() {
         User included = mock(User.class);
-        User disabled = mock(User.class);
-        User withoutRequest = mock(User.class);
-
-        when(included.isEnabled()).thenReturn(true);
-        when(included.hasShiftRequest()).thenReturn(true);
         when(included.getId()).thenReturn(1L);
-        when(disabled.isEnabled()).thenReturn(false);
-        when(withoutRequest.isEnabled()).thenReturn(true);
-        when(withoutRequest.hasShiftRequest()).thenReturn(false);
 
         UserCalculationData mapped = calculationUser(1L, Set.of());
 
-        when(userRepository.findAll())
-                .thenReturn(List.of(included, disabled, withoutRequest));
+        when(userRepository.findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc())
+                .thenReturn(new LinkedHashSet<>(List.of(included)));
         when(shiftTypeService.getShiftTypes())
                 .thenReturn(List.of(1, 2, 3, 4));
         when(scheduleRuleService.loadPreviousStoredScheduleDays(
@@ -72,37 +69,24 @@ class CalculationInputLoaderTest {
         assertThat(result.users()).containsExactly(mapped);
         assertThat(result.shiftTypes()).containsExactly(1, 2, 3, 4);
         assertThat(result.calculationOrder()).containsExactly(3, 1, 2, 4);
-        assertThat(result.priorities())
-                .containsExactly(1,2,3,4,5,6,7,8,9,10);
+        assertThat(result.priorities()).containsExactly(1,2,3,4,5,6,7,8,9,10);
         assertThat(result.profile().shiftCountCap()).isEqualTo(10);
         assertThat(result.profile().gapBetweenShifts()).isEqualTo(5);
         assertThat(result.profile().sortByDatesAmount()).isTrue();
 
-        verify(userCalculationDataMapper)
-                .toCalculationData(included, Set.of());
-        verify(userCalculationDataMapper, never())
-                .toCalculationData(eq(disabled), any());
-        verify(userCalculationDataMapper, never())
-                .toCalculationData(eq(withoutRequest), any());
+        verify(userCalculationDataMapper).toCalculationData(included, Set.of());
     }
 
     @Test
     void shouldMapPreviousStoredAssignmentsToUserDates() {
         User user = mock(User.class);
-        when(user.isEnabled()).thenReturn(true);
-        when(user.hasShiftRequest()).thenReturn(true);
         when(user.getId()).thenReturn(1L);
 
         StoredScheduleDay finalDay = StoredScheduleDay.builder()
-                .assignmentsByShiftType(Map.of(
-                        1, snapshot(1L)
-                ))
+                .assignmentsByShiftType(Map.of(1, snapshot(1L)))
                 .build();
-
         StoredScheduleDay previousDay = StoredScheduleDay.builder()
-                .assignmentsByShiftType(Map.of(
-                        2, snapshot(1L)
-                ))
+                .assignmentsByShiftType(Map.of(2, snapshot(1L)))
                 .build();
 
         Set<LocalDate> expectedDates = Set.of(
@@ -110,17 +94,14 @@ class CalculationInputLoaderTest {
                 LocalDate.of(2026, 7, 30)
         );
 
-        when(userRepository.findAll()).thenReturn(List.of(user));
+        when(userRepository.findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc())
+                .thenReturn(new LinkedHashSet<>(List.of(user)));
         when(shiftTypeService.getShiftTypes()).thenReturn(List.of(1, 2));
         when(scheduleRuleService.loadPreviousStoredScheduleDays(
                 AUGUST_2026.atDay(1), 2
-        )).thenReturn(Map.of(
-                0, finalDay,
-                -1, previousDay
-        ));
-        when(userCalculationDataMapper.toCalculationData(
-                user, expectedDates
-        )).thenReturn(calculationUser(1L, expectedDates));
+        )).thenReturn(Map.of(0, finalDay, -1, previousDay));
+        when(userCalculationDataMapper.toCalculationData(user, expectedDates))
+                .thenReturn(calculationUser(1L, expectedDates));
 
         CalculationInput result = loader.load(
                 CalculationProfileForm.builder()
@@ -138,8 +119,6 @@ class CalculationInputLoaderTest {
     @Test
     void shouldIgnoreNullStoredDaysSnapshotsAndSnapshotIds() {
         User user = mock(User.class);
-        when(user.isEnabled()).thenReturn(true);
-        when(user.hasShiftRequest()).thenReturn(true);
         when(user.getId()).thenReturn(1L);
 
         Map<Integer, StoredUserSnapshot> assignments = new HashMap<>();
@@ -150,7 +129,8 @@ class CalculationInputLoaderTest {
                 .assignmentsByShiftType(assignments)
                 .build();
 
-        when(userRepository.findAll()).thenReturn(List.of(user));
+        when(userRepository.findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc())
+                .thenReturn(new LinkedHashSet<>(List.of(user)));
         when(shiftTypeService.getShiftTypes()).thenReturn(List.of(1));
         when(scheduleRuleService.loadPreviousStoredScheduleDays(
                 AUGUST_2026.atDay(1), 1
@@ -169,15 +149,15 @@ class CalculationInputLoaderTest {
                         .build()
         );
 
-        assertThat(result.users().getFirst().previousMonthAssignedDates())
-                .isEmpty();
+        assertThat(result.users().getFirst().previousMonthAssignedDates()).isEmpty();
     }
 
     @Test
     void shouldCalculateGoodFridayEasterMondayAndChristmas() {
         YearMonth april2026 = YearMonth.of(2026, 4);
 
-        when(userRepository.findAll()).thenReturn(List.of());
+        when(userRepository.findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc())
+                .thenReturn(new LinkedHashSet<>());
         when(shiftTypeService.getShiftTypes()).thenReturn(List.of(1));
         when(scheduleRuleService.loadPreviousStoredScheduleDays(
                 april2026.atDay(1), 0
@@ -224,4 +204,3 @@ class CalculationInputLoaderTest {
         );
     }
 }
-

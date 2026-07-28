@@ -1,5 +1,6 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
+import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.LandingPageRecord;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
@@ -27,7 +28,7 @@ class LandingPageServiceTest {
 
     @Test
     void shouldReturnZeroesWithZeroPercent_whenRepositoryIsEmpty() {
-        when(userRepository.findAll()).thenReturn(List.of());
+        when(userRepository.findAllByRoleNotOrderByNameAsc(Role.ADMIN)).thenReturn(List.of());
 
         LandingPageRecord result = service.getLandingPageRecord();
 
@@ -38,8 +39,8 @@ class LandingPageServiceTest {
 
     @Test
     void shouldReturnZeroPercent_whenOnlyAdminsExist() {
-        when(userRepository.findAll())
-                .thenReturn(List.of(TestFixtures.admin(1L, "root"), TestFixtures.admin(2L, "sysop")));
+        // The repository already filters out admins, so callers see an empty list.
+        when(userRepository.findAllByRoleNotOrderByNameAsc(Role.ADMIN)).thenReturn(List.of());
 
         LandingPageRecord result = service.getLandingPageRecord();
 
@@ -50,13 +51,13 @@ class LandingPageServiceTest {
 
     @Test
     void shouldExcludeAdminsAndComputePercentage_whenFourOfFiveNonAdminsHaveRequest() {
-        User admin = TestFixtures.admin(1L, "root");
         User u1 = userWithRequest(2L, "freddie");
         User u2 = userWithRequest(3L, "mick");
         User u3 = userWithRequest(4L, "david");
         User u4 = userWithRequest(5L, "kurt");
         User u5NoRequest = TestFixtures.user(6L, "jim");
-        when(userRepository.findAll()).thenReturn(List.of(admin, u1, u2, u3, u4, u5NoRequest));
+        when(userRepository.findAllByRoleNotOrderByNameAsc(Role.ADMIN))
+                .thenReturn(List.of(u1, u2, u3, u4, u5NoRequest));
 
         LandingPageRecord result = service.getLandingPageRecord();
 
@@ -77,13 +78,12 @@ class LandingPageServiceTest {
                 userWithRequest(7L, "u7"),
                 TestFixtures.user(8L, "u8-no-request")
         );
-        when(userRepository.findAll()).thenReturn(users);
+        when(userRepository.findAllByRoleNotOrderByNameAsc(Role.ADMIN)).thenReturn(users);
 
         LandingPageRecord result = service.getLandingPageRecord();
 
         assertThat(result.userCountWithoutAdmin()).isEqualTo(8.0);
         assertThat(result.shiftRequestCount()).isEqualTo(7.0);
-        // Math.round(87.5) -> 88 (banker's rounding does not apply for Math.round)
         assertThat(result.percentage()).isEqualTo("88%");
     }
 
