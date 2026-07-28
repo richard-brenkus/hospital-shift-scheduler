@@ -50,12 +50,6 @@ public class UserController {
         return "login";
     }
 
-    @GetMapping("/403")
-    public String accessDenied() {
-        return "403";
-    }
-
-
     @GetMapping("/user/userIndex")
     public String userIndex(Authentication authentication, Model model) {
 

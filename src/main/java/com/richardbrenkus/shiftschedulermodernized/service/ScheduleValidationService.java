@@ -26,10 +26,8 @@ import java.util.Set;
 public class ScheduleValidationService {
 
     private final ShiftTypeProperties shiftTypeProperties;
-    private final ScheduleMapper scheduleMapper;
     private final ScheduleRuleService scheduleRuleService;
     private final UserStatisticService userStatisticService;
-    private final UserRepository userRepository;
     private final UserService userService;
 
     @Transactional(readOnly = true)
@@ -114,8 +112,6 @@ public class ScheduleValidationService {
                 if (!userCalculationData.hasShiftRequest()) {
                     continue;
                 }
-
-                //ShiftRequest shiftRequest = user..getShiftRequest();
 
                 boolean withinTotalShiftLimit = scheduleRuleService.isValidWithinTotalShiftLimit(shiftCountCap, userCalculationData, counters);
 

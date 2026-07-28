@@ -57,8 +57,6 @@ public class ActivityLogCsvExporter {
 
     private void writeRow(BufferedWriter writer, ActivityLogExportRecord entry) throws IOException {
 
-        CalendarDateIdUtils.CSV_DATE_TIME.format(entry.occurredAt().atZone(applicationZoneId));
-
         writeValues(
                 writer,
                 value(entry.id()),

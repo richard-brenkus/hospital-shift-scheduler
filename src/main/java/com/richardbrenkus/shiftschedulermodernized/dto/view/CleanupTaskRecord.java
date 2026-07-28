@@ -1,9 +1,9 @@
 package com.richardbrenkus.shiftschedulermodernized.dto.view;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 
 public record CleanupTaskRecord(
         boolean cleanupIsActive,
-        Instant cleanupDateTime
+        ZonedDateTime cleanupDateTime
 ) {
 }

@@ -23,7 +23,7 @@ public class PlannedTaskMapper {
             Objects.requireNonNull(entity.getExecutionTime(), "executionTime must not be null");
         }
 
-        return new CleanupTaskRecord(entity.isActive(), entity.getExecutionTime().atZone(applicationZoneId).toInstant());
+        return new CleanupTaskRecord(entity.isActive(), entity.getExecutionTime().atZone(applicationZoneId));
     }
 
     public SendReminderTaskRecord entityToSendReminderTaskRecord(SendReminderTask entity) {
@@ -37,7 +37,7 @@ public class PlannedTaskMapper {
                     true,
                     entity.getRepetitions(),
                     entity.getFrequencyInDays(),
-                    entity.getStartSendingTime().atZone(applicationZoneId).toInstant(),
+                    entity.getStartSendingTime().atZone(applicationZoneId),
                     entity.getFinalRequestSubmissionDate().getDayOfMonth());
         }
 
