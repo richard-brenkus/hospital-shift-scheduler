@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -157,17 +158,16 @@ class ShiftRequestServiceTest {
     }
 
     @Test
-    void shouldReturnEmptyOptional_whenGettingViewRecordForNonExistentUser() {
-        when(userRepository.getUserByUsername("ghost")).thenReturn(null);
+    void shouldThrowUsernameNotFound_whenGettingViewRecordForNonExistentUser() {
+        when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
 
-        Optional<ShiftRequestViewRecord> result = service.getShiftRequestViewRecord("ghost");
-
-        assertThat(result).isEmpty();
+        assertThatThrownBy(() -> service.getShiftRequestViewRecord("ghost"))
+                .isInstanceOf(org.springframework.security.core.userdetails.UsernameNotFoundException.class);
     }
 
     @Test
     void shouldReturnEmptyOptional_whenUserHasNoShiftRequest() {
-        when(userRepository.getUserByUsername("mick")).thenReturn(TestFixtures.user(1L, "mick"));
+        when(userRepository.findByUsername("mick")).thenReturn(Optional.of(TestFixtures.user(1L, "mick")));
 
         Optional<ShiftRequestViewRecord> result = service.getShiftRequestViewRecord("mick");
 
@@ -179,8 +179,8 @@ class ShiftRequestServiceTest {
         User user = TestFixtures.user(1L, "mick");
         ShiftRequest request = new ShiftRequest();
         user.setShiftRequest(request);
-        ShiftRequestViewRecord mapped = ShiftRequestViewRecord.builder().username("mick").build();
-        when(userRepository.getUserByUsername("mick")).thenReturn(user);
+        ShiftRequestViewRecord mapped = ShiftRequestViewRecord.builder().stringDatesNo("").build();
+        when(userRepository.findByUsername("mick")).thenReturn(Optional.of(user));
         when(shiftRequestMapper.entityToViewRecord(user, request)).thenReturn(mapped);
 
         assertThat(service.getShiftRequestViewRecord("mick")).contains(mapped);
@@ -192,7 +192,7 @@ class ShiftRequestServiceTest {
         ShiftRequest request = new ShiftRequest();
         user.setShiftRequest(request);
         ShiftRequestForm mappedForm = new ShiftRequestForm();
-        when(userRepository.getUserByUsername("freddie")).thenReturn(user);
+        when(userRepository.findByUsername("freddie")).thenReturn(Optional.of(user));
         when(shiftRequestMapper.entityToForm(request)).thenReturn(mappedForm);
 
         assertThat(service.getShiftRequestForm("freddie")).isSameAs(mappedForm);
@@ -201,7 +201,7 @@ class ShiftRequestServiceTest {
     @Test
     void shouldPreloadAllowedShiftTypesAsEmptyPreferences_whenUserHasNoShiftRequest() {
         User user = TestFixtures.userWithAllowedShiftTypes(1L, "freddie", 1, 3);
-        when(userRepository.getUserByUsername("freddie")).thenReturn(user);
+        when(userRepository.findByUsername("freddie")).thenReturn(Optional.of(user));
 
         ShiftRequestForm form = service.getShiftRequestForm("freddie");
 
@@ -213,8 +213,7 @@ class ShiftRequestServiceTest {
     @Test
     void shouldReturnFormForUserId_whenUserExists() {
         User user = TestFixtures.user(1L, "freddie");
-        when(userService.getUserById(1L)).thenReturn(user);
-        when(userRepository.getUserByUsername("freddie")).thenReturn(user);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
         assertThat(service.getShiftRequestFormByUserId(1L)).isNotNull();
     }
@@ -223,7 +222,7 @@ class ShiftRequestServiceTest {
     void shouldSetShiftRequestToNull_whenDeletingByUsername() {
         User user = TestFixtures.user(1L, "freddie");
         user.setShiftRequest(new ShiftRequest());
-        when(userRepository.getUserByUsername("freddie")).thenReturn(user);
+        when(userRepository.findByUsername("freddie")).thenReturn(Optional.of(user));
 
         service.deleteShiftRequest("freddie");
 

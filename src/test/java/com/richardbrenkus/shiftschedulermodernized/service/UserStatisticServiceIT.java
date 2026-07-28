@@ -6,6 +6,7 @@ import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.entity.UserStatEntity;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserStatRepository;
+import com.richardbrenkus.shiftschedulermodernized.support.TestFixtures;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
@@ -37,10 +38,10 @@ class UserStatisticServiceIT extends AbstractMySqlContainerTest {
     @Test
     @Transactional
     void shouldPersistStatsForMonth_whenReplacingStats() {
-        User alice = userRepository.getUserByUsername("alice.doe");
+        User alice = userRepository.findByUsername("alice.doe").orElseThrow();
 
         UserStatViewRecord record = UserStatViewRecord.builder()
-                .user(alice)
+                .userCalculationData(TestFixtures.toUserCalculationData(alice))
                 .name(alice.getName())
                 .shiftType(1)
                 .requestedWeekdays(3)
@@ -75,7 +76,7 @@ class UserStatisticServiceIT extends AbstractMySqlContainerTest {
     @Test
     @Transactional
     void shouldReplaceExistingStatsForMonth_whenReplacingStats() {
-        User alice = userRepository.getUserByUsername("alice.doe");
+        User alice = userRepository.findByUsername("alice.doe").orElseThrow();
         UserStatViewRecord first = viewRecord(alice, 1, 2);
         userStatisticService.replaceStatsForMonth(AUGUST_2026, Map.of(1, Set.of(first)));
         assertThat(userStatRepository.findByYearMonthOrderByShiftTypeAscNameAsc(AUGUST_2026)).hasSize(1);
@@ -93,7 +94,7 @@ class UserStatisticServiceIT extends AbstractMySqlContainerTest {
     @Test
     @Transactional
     void shouldDeleteExistingRowsWithoutInsertingNew_whenReplacingWithEmptyMap() {
-        User alice = userRepository.getUserByUsername("alice.doe");
+        User alice = userRepository.findByUsername("alice.doe").orElseThrow();
         userStatisticService.replaceStatsForMonth(AUGUST_2026,
                 Map.of(1, Set.of(viewRecord(alice, 1, 1))));
         assertThat(userStatRepository.findByYearMonthOrderByShiftTypeAscNameAsc(AUGUST_2026)).hasSize(1);
@@ -113,7 +114,7 @@ class UserStatisticServiceIT extends AbstractMySqlContainerTest {
     @Test
     @Transactional
     void shouldGroupViewRecordsByShiftType_whenLookingUpViewRecords() {
-        User alice = userRepository.getUserByUsername("alice.doe");
+        User alice = userRepository.findByUsername("alice.doe").orElseThrow();
         UserStatViewRecord a = viewRecord(alice, 1, 2);
         UserStatViewRecord b = viewRecord(alice, 1, 3);
         UserStatViewRecord c = viewRecord(alice, 2, 4);
@@ -129,7 +130,7 @@ class UserStatisticServiceIT extends AbstractMySqlContainerTest {
 
     private UserStatViewRecord viewRecord(User user, int shiftType, int requestedWeekdays) {
         return UserStatViewRecord.builder()
-                .user(user)
+                .userCalculationData(TestFixtures.toUserCalculationData(user))
                 .name(user.getName())
                 .shiftType(shiftType)
                 .requestedWeekdays(requestedWeekdays)

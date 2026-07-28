@@ -316,7 +316,8 @@ class ScheduleGenerationEngineTest {
                 Set.of(preference.shiftType()),
                 unavailableDates,
                 Map.of(preference.shiftType(), preference),
-                Set.of()
+                Set.of(),
+                true
         );
     }
 

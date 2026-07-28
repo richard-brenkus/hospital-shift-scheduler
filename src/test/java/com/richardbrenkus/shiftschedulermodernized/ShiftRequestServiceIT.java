@@ -49,7 +49,7 @@ class ShiftRequestServiceIT extends AbstractMySqlContainerTest {
 
         shiftRequestService.submitShiftRequest("mick.jagger", form);
 
-        User reloaded = userRepository.getUserByUsername("mick.jagger");
+        User reloaded = userRepository.findByUsername("mick.jagger").orElseThrow();
         assertThat(reloaded.getShiftRequest()).isNotNull();
         ShiftRequest saved = reloaded.getShiftRequest();
         assertThat(saved.getDatesNo()).containsExactly(LocalDate.of(2026, 8, 20));
@@ -62,7 +62,7 @@ class ShiftRequestServiceIT extends AbstractMySqlContainerTest {
     @Test
     @Transactional
     void shouldMergeIntoExistingRequestPreserveOrphansViaCascade_whenSubmittingUpdate() {
-        User user = userRepository.getUserByUsername("freddie.mercury");
+        User user = userRepository.findByUsername("freddie.mercury").orElseThrow();
         Long originalRequestId = user.getShiftRequest().getShiftRequestId();
 
         ShiftRequestForm form = new ShiftRequestForm();
@@ -78,7 +78,7 @@ class ShiftRequestServiceIT extends AbstractMySqlContainerTest {
 
         shiftRequestService.submitShiftRequest("freddie.mercury", form);
 
-        User reloaded = userRepository.getUserByUsername("freddie.mercury");
+        User reloaded = userRepository.findByUsername("freddie.mercury").orElseThrow();
         ShiftRequest reloadedRequest = reloaded.getShiftRequest();
         assertThat(reloadedRequest.getShiftRequestId()).isEqualTo(originalRequestId);
         assertThat(reloadedRequest.getDatesNo()).containsExactly(LocalDate.of(2026, 8, 25));
@@ -97,12 +97,12 @@ class ShiftRequestServiceIT extends AbstractMySqlContainerTest {
     @Test
     @Transactional
     void shouldDeleteShiftRequestAndOrphanRemovePreferences_whenDeletingByUserId() {
-        User user = userRepository.getUserByUsername("freddie.mercury");
+        User user = userRepository.findByUsername("freddie.mercury").orElseThrow();
         Long requestId = user.getShiftRequest().getShiftRequestId();
 
         shiftRequestService.deleteShiftRequest(user.getId());
 
-        User reloaded = userRepository.getUserByUsername("freddie.mercury");
+        User reloaded = userRepository.findByUsername("freddie.mercury").orElseThrow();
         assertThat(reloaded.getShiftRequest()).isNull();
         assertThat(shiftRequestRepository.getShiftRequestByID(requestId)).isNull();
     }
@@ -110,12 +110,12 @@ class ShiftRequestServiceIT extends AbstractMySqlContainerTest {
     @Test
     @Transactional
     void shouldDeleteShiftRequestByUsername() {
-        User user = userRepository.getUserByUsername("freddie.mercury");
+        User user = userRepository.findByUsername("freddie.mercury").orElseThrow();
         assertThat(user.getShiftRequest()).isNotNull();
 
         shiftRequestService.deleteShiftRequest("freddie.mercury");
 
-        User reloaded = userRepository.getUserByUsername("freddie.mercury");
+        User reloaded = userRepository.findByUsername("freddie.mercury").orElseThrow();
         assertThat(reloaded.getShiftRequest()).isNull();
     }
 
@@ -124,7 +124,7 @@ class ShiftRequestServiceIT extends AbstractMySqlContainerTest {
     void shouldRemoveAllShiftRequests_whenDeletingAll() {
         shiftRequestService.deleteAllShiftRequests();
 
-        User reloadedFreddie = userRepository.getUserByUsername("freddie.mercury");
+        User reloadedFreddie = userRepository.findByUsername("freddie.mercury").orElseThrow();
         assertThat(reloadedFreddie.getShiftRequest()).isNull();
     }
 

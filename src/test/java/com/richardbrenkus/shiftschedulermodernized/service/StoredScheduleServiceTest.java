@@ -24,6 +24,9 @@ class StoredScheduleServiceTest {
     @Mock
     private ShiftTypeService shiftTypeService;
 
+    @Mock
+    private UserStatisticService userStatisticService;
+
     @InjectMocks
     private StoredScheduleService service;
 
@@ -42,7 +45,7 @@ class StoredScheduleServiceTest {
 
     @Test
     void shouldThrowIllegalArgumentException_whenSavingNullScheduleMonth() {
-        assertThatThrownBy(() -> service.saveScheduleWithStats(null))
+        assertThatThrownBy(() -> service.saveScheduleWithStats(null, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("schedule");
     }

@@ -64,7 +64,7 @@ class UserServiceIT extends AbstractMySqlContainerTest {
     void shouldChangePasswordAndPersistBcryptHash_whenChangingPassword() {
         userService.changeUserPassword("alice.doe", "NewSecret1");
 
-        User reloaded = userRepository.getUserByUsername("alice.doe");
+        User reloaded = userRepository.findByUsername("alice.doe").orElseThrow();
         assertThat(reloaded.getPassword()).startsWith("$2a$");
         assertThat(passwordEncoderConfig.passwordEncoder().matches("NewSecret1", reloaded.getPassword())).isTrue();
     }
@@ -72,7 +72,7 @@ class UserServiceIT extends AbstractMySqlContainerTest {
     @Test
     @Transactional
     void shouldFlushChangesFromUpdateUserThroughDirtyChecking_whenUpdatingUser() {
-        User existing = userRepository.getUserByUsername("alice.doe");
+        User existing = userRepository.findByUsername("alice.doe").orElseThrow();
 
         UserUpdateForm form = new UserUpdateForm();
         form.setId(existing.getId());

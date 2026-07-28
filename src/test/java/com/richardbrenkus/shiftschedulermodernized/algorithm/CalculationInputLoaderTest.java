@@ -219,7 +219,8 @@ class CalculationInputLoaderTest {
                 Set.of(1, 2),
                 Set.of(),
                 Map.of(),
-                previousDates
+                previousDates,
+                true
         );
     }
 }

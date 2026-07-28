@@ -12,6 +12,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
@@ -30,7 +32,7 @@ class UserDetailsServiceImplTest {
         User user = TestFixtures.user(1L, "freddie");
         user.setPassword("encoded");
         user.setRole(Role.ADMIN);
-        when(userRepository.getUserByUsername("freddie")).thenReturn(user);
+        when(userRepository.findByUsername("freddie")).thenReturn(Optional.of(user));
 
         UserDetails result = service.loadUserByUsername("freddie");
 
@@ -45,7 +47,7 @@ class UserDetailsServiceImplTest {
     void shouldMapUserRoleToRoleUserAuthority_whenRoleIsUser() {
         User user = TestFixtures.user(2L, "mick");
         user.setPassword("encoded");
-        when(userRepository.getUserByUsername("mick")).thenReturn(user);
+        when(userRepository.findByUsername("mick")).thenReturn(Optional.of(user));
 
         UserDetails result = service.loadUserByUsername("mick");
 
@@ -56,7 +58,7 @@ class UserDetailsServiceImplTest {
 
     @Test
     void shouldThrowUsernameNotFoundException_whenUserRepositoryReturnsNull() {
-        when(userRepository.getUserByUsername("ghost")).thenReturn(null);
+        when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.loadUserByUsername("ghost"))
                 .isInstanceOf(UsernameNotFoundException.class)

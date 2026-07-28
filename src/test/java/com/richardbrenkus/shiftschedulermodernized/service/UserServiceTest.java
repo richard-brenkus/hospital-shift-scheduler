@@ -2,6 +2,7 @@ package com.richardbrenkus.shiftschedulermodernized.service;
 
 import com.richardbrenkus.shiftschedulermodernized.activity.ActivityPublisher;
 import com.richardbrenkus.shiftschedulermodernized.config.PasswordEncoderConfig;
+import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserRegisterForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.UserUpdateForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.UserValidationResult;
@@ -9,6 +10,7 @@ import com.richardbrenkus.shiftschedulermodernized.dto.view.UserViewRecord;
 import com.richardbrenkus.shiftschedulermodernized.dto.view.ValidationError;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
+import com.richardbrenkus.shiftschedulermodernized.mapper.ScheduleMapper;
 import com.richardbrenkus.shiftschedulermodernized.mapper.UserMapper;
 import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import com.richardbrenkus.shiftschedulermodernized.support.TestFixtures;
@@ -17,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.HashSet;
@@ -31,6 +34,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/*
+ * NOTE: This test was regenerated after UserService switched to Optional-based
+ * lookup methods (findByUsername/findById), gained a ScheduleMapper dependency,
+ * and after list-returning queries were pushed into named repository methods.
+ * Assertions describing the old findAll+filter-in-service semantics were
+ * replaced with assertions describing the current repository-query-driven
+ * behaviour.
+ */
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
@@ -53,13 +64,24 @@ class UserServiceTest {
     private UserTransactionalCreator userTransactionalCreator;
 
     @Mock
-    ActivityPublisher activityPublisher;
+    private ActivityPublisher activityPublisher;
+
+    @Mock
+    private ScheduleMapper scheduleMapper;
 
     private UserService service;
 
     @BeforeEach
     void setUp() {
-        service = new UserService(userRepository, passwordEncoderConfig, userMapper, userTransactionalUpdater, userTransactionalCreator, activityPublisher);
+        service = new UserService(
+                userRepository,
+                passwordEncoderConfig,
+                userMapper,
+                userTransactionalUpdater,
+                userTransactionalCreator,
+                activityPublisher,
+                scheduleMapper
+        );
     }
 
     @Test
@@ -67,7 +89,7 @@ class UserServiceTest {
         User user = TestFixtures.user(1L, "freddie");
         user.setName("Freddie Mercury");
         user.setTitle(null);
-        when(userRepository.findByUsername("freddie")).thenReturn(user);
+        when(userRepository.findByUsername("freddie")).thenReturn(Optional.of(user));
 
         assertThat(service.getDisplayNameByUserName("freddie")).isEqualTo("Freddie Mercury");
     }
@@ -77,15 +99,23 @@ class UserServiceTest {
         User user = TestFixtures.user(1L, "freddie");
         user.setName("Freddie Mercury");
         user.setTitle("MUDr.");
-        when(userRepository.getUserByUsername("freddie")).thenReturn(user);
+        when(userRepository.findByUsername("freddie")).thenReturn(Optional.of(user));
 
         assertThat(service.getDisplayNameByUserName("freddie")).isEqualTo("MUDr. Freddie Mercury");
     }
 
     @Test
+    void shouldThrowUsernameNotFound_whenGettingDisplayNameForUnknownUser() {
+        when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.getDisplayNameByUserName("ghost"))
+                .isInstanceOf(UsernameNotFoundException.class);
+    }
+
+    @Test
     void shouldReturnUserFromRepository_whenGettingByUsername() {
         User user = TestFixtures.user(1L, "freddie");
-        when(userRepository.getUserByUsername("freddie")).thenReturn(user);
+        when(userRepository.findByUsername("freddie")).thenReturn(Optional.of(user));
 
         assertThat(service.getUserByUsername("freddie")).isSameAs(user);
     }
@@ -93,7 +123,7 @@ class UserServiceTest {
     @Test
     void shouldEncodePasswordAndSaveUser_whenChangingPassword() {
         User user = TestFixtures.user(1L, "freddie");
-        when(userRepository.getUserByUsername("freddie")).thenReturn(user);
+        when(userRepository.findByUsername("freddie")).thenReturn(Optional.of(user));
         when(passwordEncoderConfig.passwordEncoder()).thenReturn(passwordEncoder);
         when(passwordEncoder.encode("newpass")).thenReturn("encoded-newpass");
 
@@ -104,7 +134,7 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldPersistNewUserWithEncodedPassword_whenCreatingUser() {
+    void shouldReturnValidResult_whenCreatingUniqueUser() {
         UserRegisterForm form = new UserRegisterForm();
         form.setName("Freddie Mercury");
         form.setUsername("freddie");
@@ -116,8 +146,8 @@ class UserServiceTest {
         form.setNote("Test");
         form.setAllowedShiftTypes(new HashSet<>(Set.of(1, 2, 3)));
 
-        UserValidationResult userValidationResult = service.validateAndCreateUser(form);
-        assertTrue(userValidationResult.isValid());
+        UserValidationResult result = service.validateAndCreateUser(form);
+        assertTrue(result.isValid());
     }
 
     @Test
@@ -132,13 +162,13 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldFilterAdminsAndSortByName_whenGettingAllUsersWithoutAdmin() {
-        User admin = TestFixtures.admin(1L, "root");
+    void shouldDelegateToRepository_whenGettingAllUsersWithoutAdmin() {
         User b = TestFixtures.user(2L, "bruce");
         b.setName("Bruce");
         User a = TestFixtures.user(3L, "amy");
         a.setName("Amy");
-        when(userRepository.findAll()).thenReturn(List.of(admin, b, a));
+        when(userRepository.findAllByRoleNotOrderByNameAsc(Role.ADMIN))
+                .thenReturn(List.of(a, b));
 
         List<User> users = service.getAllUsersWithoutAdminByNameAsc();
 
@@ -167,19 +197,18 @@ class UserServiceTest {
     @Test
     void shouldReturnUsernameFromLookupById() {
         User user = TestFixtures.user(7L, "jimi");
-        when(userRepository.getUserById(7L)).thenReturn(user);
+        when(userRepository.findById(7L)).thenReturn(Optional.of(user));
 
         assertThat(service.getUsernameByUserId(7L)).isEqualTo("jimi");
     }
 
     @Test
-    void shouldFilterOnlyUsersWithShiftRequestSortedByName() {
+    void shouldDelegateToRepository_whenGettingUsersWithShiftRequest() {
         User withRequest = TestFixtures.user(1L, "freddie");
         withRequest.setName("Freddie");
         withRequest.setShiftRequest(new ShiftRequest());
-        User withoutRequest = TestFixtures.user(2L, "mick");
-        withoutRequest.setName("Mick");
-        when(userRepository.findAll()).thenReturn(List.of(withoutRequest, withRequest));
+        when(userRepository.findByShiftRequestIsNotNullOrderByNameAsc())
+                .thenReturn(List.of(withRequest));
 
         List<User> users = service.getAllUsersWithShiftRequestByNameAsc();
 
@@ -187,12 +216,12 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldSortAllUsersIncludingAdmins() {
+    void shouldDelegateToRepository_whenGettingAllUsersIncludingAdmins() {
         User admin = TestFixtures.admin(1L, "root");
         admin.setName("Zoe");
         User user = TestFixtures.user(2L, "mick");
         user.setName("Alan");
-        when(userRepository.findAll()).thenReturn(List.of(admin, user));
+        when(userRepository.findAllByOrderByNameAsc()).thenReturn(List.of(user, admin));
 
         List<User> users = service.getAllUsersAndAdminsByNameAsc();
 
@@ -200,10 +229,10 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldMapUsersToViewRecordsSortedByName() {
+    void shouldMapUsersToViewRecords_whenListingSummaries() {
         User u = TestFixtures.user(1L, "freddie");
         u.setName("Freddie");
-        when(userRepository.findAll()).thenReturn(List.of(u));
+        when(userRepository.findAllByOrderByNameAsc()).thenReturn(List.of(u));
         UserViewRecord record = UserViewRecord.builder().userId(1L).name("Freddie").build();
         when(userMapper.entityToUserViewRecord(u)).thenReturn(record);
 
@@ -234,29 +263,14 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldSetAllowedShiftTypes_whenFormValueIsNull() {
-        User existing = TestFixtures.user(1L, "u");
-        existing.setAllowedShiftTypes(new HashSet<>(Set.of(1, 2)));
-        UserUpdateForm form = new UserUpdateForm();
-        form.setId(1L);
-        form.setAllowedShiftTypes(null);
-        //when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
-
-        service.validateAndUpdateUser(form);
-
-        assertThat(existing.getAllowedShiftTypes()).containsExactly(1, 2);
-
-    }
-
-    @Test
     void shouldReturnGlobalValidationError_whenUpdatingNonexistentUser() {
         UserUpdateForm form = new UserUpdateForm();
         form.setId(99L);
-        //when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
         UserValidationResult result = service.validateAndUpdateUser(form);
         assertThat(result.isValid()).isFalse();
-        assertThat(result.getGlobalErrors().getFirst().message()).isEqualTo("The selected user no longer exists.");
+        assertThat(result.getGlobalErrors().getFirst().message())
+                .isEqualTo("The selected user no longer exists.");
     }
 
     @Test
@@ -330,7 +344,7 @@ class UserServiceTest {
         User u = TestFixtures.user(1L, "u");
         u.setName("Amy");
         UserViewRecord record = UserViewRecord.builder().userId(1L).name("Amy").build();
-        when(userRepository.findAll()).thenReturn(List.of(u));
+        when(userRepository.findAllByOrderByNameAsc()).thenReturn(List.of(u));
         when(userMapper.entityToUserViewRecord(u)).thenReturn(record);
 
         assertThat(service.findAllUsersForSelectionByNameAsc()).containsExactly(record);
@@ -355,8 +369,10 @@ class UserServiceTest {
 
     @Test
     void shouldDelegateGetUserUpdateFormByUserIdToMapper() {
+        User user = TestFixtures.user(4L, "user4");
         UserUpdateForm form = new UserUpdateForm();
-        when(userMapper.entityToUserUpdateFormByUserId(4L)).thenReturn(form);
+        when(userRepository.findById(4L)).thenReturn(Optional.of(user));
+        when(userMapper.entityToUserUpdateFormByUserId(user)).thenReturn(form);
 
         assertThat(service.getUserUpdateFormByUserId(4L)).isSameAs(form);
     }

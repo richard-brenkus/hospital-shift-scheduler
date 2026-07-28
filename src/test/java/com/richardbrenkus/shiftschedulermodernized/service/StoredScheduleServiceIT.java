@@ -38,13 +38,13 @@ class StoredScheduleServiceIT extends AbstractMySqlContainerTest {
     @Test
     @Transactional
     void shouldPersistScheduleDaysAndAssignmentsMap_whenSavingSchedule() {
-        User alice = userRepository.getUserByUsername("alice.doe");
+        User alice = userRepository.findByUsername("alice.doe").orElseThrow();
 
         ScheduleMonth scheduleMonth = TestFixtures.emptyScheduleMonth(AUGUST_2026);
         addAssignment(scheduleMonth, LocalDate.of(2026, 8, 5), 1, alice);
         addAssignment(scheduleMonth, LocalDate.of(2026, 8, 6), 2, alice);
 
-        storedScheduleService.saveScheduleWithStats(scheduleMonth);
+        storedScheduleService.saveScheduleWithStats(scheduleMonth, com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleValidationResult.builder().build());
 
         assertThat(storedScheduleDayRepository.findByMonthYearIdOrderByDayIntegerAsc("08/2026"))
                 .hasSize(31);
@@ -54,12 +54,12 @@ class StoredScheduleServiceIT extends AbstractMySqlContainerTest {
     @Test
     @Transactional
     void shouldReadBackAssignmentsAsSavedScheduleView_whenLoadingSavedSchedule() {
-        User alice = userRepository.getUserByUsername("alice.doe");
+        User alice = userRepository.findByUsername("alice.doe").orElseThrow();
         alice.setTitle("MUDr.");
 
         ScheduleMonth scheduleMonth = TestFixtures.emptyScheduleMonth(AUGUST_2026);
         addAssignment(scheduleMonth, LocalDate.of(2026, 8, 10), 1, alice);
-        storedScheduleService.saveScheduleWithStats(scheduleMonth);
+        storedScheduleService.saveScheduleWithStats(scheduleMonth, com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleValidationResult.builder().build());
 
         SavedScheduleView view = storedScheduleService.loadSavedScheduleView(AUGUST_2026);
 
@@ -87,7 +87,7 @@ class StoredScheduleServiceIT extends AbstractMySqlContainerTest {
         }
         day.getAssignments().add(ShiftAssignment.builder()
                 .shiftType(shiftType)
-                .userCalculationData(user)
+                .userCalculationData(TestFixtures.toUserCalculationData(user))
                 .build());
     }
 }

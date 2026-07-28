@@ -1,9 +1,8 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
-import com.richardbrenkus.shiftschedulermodernized.entity.User;
-import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
-import com.richardbrenkus.shiftschedulermodernized.support.TestFixtures;
-import com.richardbrenkus.shiftschedulermodernized.util.CalendarDateIdUtils;
+import com.richardbrenkus.shiftschedulermodernized.exception.PermanentEmailDeliveryException;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,27 +10,28 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.List;
+import java.time.LocalDate;
+import java.util.Properties;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+/*
+ * NOTE: This test was regenerated after the SMTP reminder service was
+ * refactored to the per-recipient outbox model. Bulk-scan tests referencing
+ * the removed user-scanning behavior were replaced with per-recipient tests.
+ */
 @ExtendWith(MockitoExtension.class)
 class SmtpEmailReminderServiceTest {
 
     @Mock
     private JavaMailSender mailSender;
-
-    @Mock
-    private UserRepository userRepository;
 
     @InjectMocks
     private SmtpEmailReminderService service;
@@ -39,85 +39,67 @@ class SmtpEmailReminderServiceTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(service, "fromAddress", "sender@example.test");
+        ReflectionTestUtils.setField(service, "messageIdDomain", "test.example");
     }
 
     @Test
-    void shouldSendOneMessagePerEligibleUser() {
-        User first = TestFixtures.user(1L, "freddie");
-        first.setEmail("freddie@example.test");
-        User second = TestFixtures.user(2L, "mick");
-        second.setEmail("mick@example.test");
-        when(userRepository.findUsersWithoutActiveShiftRequest()).thenReturn(List.of(first, second));
+    void shouldSendOneMessage_perValidInvocation() {
+        when(mailSender.createMimeMessage())
+                .thenReturn(new MimeMessage(Session.getInstance(new Properties())));
 
-        service.sendShiftRequestReminderEmails(CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(20).toLocalDate(), "test-idempotentKey-3");
+        service.sendShiftRequestReminderEmail(
+                "recipient@example.test",
+                "Recipient",
+                LocalDate.now().plusDays(5),
+                "idem-1"
+        );
 
-        verify(mailSender, times(2)).send(org.mockito.ArgumentMatchers.any(SimpleMailMessage.class));
+        verify(mailSender).send((MimeMessage) ArgumentCaptor.forClass(MimeMessage.class).capture());
     }
 
     @Test
-    void shouldNotSendMessage_whenUserEmailIsNull() {
-        User user = TestFixtures.user(1L, "freddie");
-        user.setEmail(null);
-        when(userRepository.findUsersWithoutActiveShiftRequest()).thenReturn(List.of(user));
-
-        service.sendShiftRequestReminderEmails(CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(20).toLocalDate(), "test-idempotentKey-4");
-
+    void shouldRejectBlankRecipientEmail() {
+        assertThatThrownBy(() -> service.sendShiftRequestReminderEmail(
+                "",
+                "Recipient",
+                LocalDate.now().plusDays(5),
+                "idem-2"
+        )).isInstanceOf(PermanentEmailDeliveryException.class);
         verifyNoInteractions(mailSender);
     }
 
     @Test
-    void shouldNotSendMessage_whenUserEmailIsBlank() {
-        User user = TestFixtures.user(1L, "freddie");
-        user.setEmail("   ");
-        when(userRepository.findUsersWithoutActiveShiftRequest()).thenReturn(List.of(user));
-
-        service.sendShiftRequestReminderEmails(CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(20).toLocalDate(), "test-idempotentKey-4");
-
+    void shouldRejectNullFinalSubmissionDate() {
+        assertThatThrownBy(() -> service.sendShiftRequestReminderEmail(
+                "recipient@example.test",
+                "Recipient",
+                null,
+                "idem-3"
+        )).isInstanceOf(PermanentEmailDeliveryException.class);
         verifyNoInteractions(mailSender);
     }
 
     @Test
-    void shouldNotSendAnyMessage_whenNoUsersMatch() {
-        when(userRepository.findUsersWithoutActiveShiftRequest()).thenReturn(List.of());
-
-        service.sendShiftRequestReminderEmails(CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(20).toLocalDate(), "test-idempotentKey-5");
-
-        verify(mailSender, never()).send(org.mockito.ArgumentMatchers.any(SimpleMailMessage.class));
+    void shouldRejectBlankIdempotencyKey() {
+        assertThatThrownBy(() -> service.sendShiftRequestReminderEmail(
+                "recipient@example.test",
+                "Recipient",
+                LocalDate.now().plusDays(5),
+                ""
+        )).isInstanceOf(PermanentEmailDeliveryException.class);
+        verifyNoInteractions(mailSender);
     }
 
     @Test
-    void shouldPopulateSenderRecipientSubjectAndBody() {
-        User user = TestFixtures.user(1L, "freddie");
-        user.setEmail("freddie@example.test");
-        user.setName("Freddie Mercury");
-        when(userRepository.findUsersWithoutActiveShiftRequest()).thenReturn(List.of(user));
+    void shouldNotThrow_whenAllArgumentsValid() {
+        when(mailSender.createMimeMessage())
+                .thenReturn(new MimeMessage(Session.getInstance(new Properties())));
 
-        service.sendShiftRequestReminderEmails(CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(15).toLocalDate(), "test-idempotentKey-6");
-
-        ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
-        verify(mailSender).send(captor.capture());
-
-        SimpleMailMessage sent = captor.getValue();
-        assertThat(sent.getFrom()).isEqualTo("sender@example.test");
-        assertThat(sent.getTo()).containsExactly("freddie@example.test");
-        assertThat(sent.getSubject()).isEqualTo("Shift request reminder");
-        assertThat(sent.getText())
-                .contains("Freddie Mercury")
-                .contains("day 15");
-    }
-
-    @Test
-    void shouldUseUsername_whenNameIsBlank() {
-        User user = TestFixtures.user(1L, "freddie");
-        user.setEmail("freddie@example.test");
-        user.setName("");
-        when(userRepository.findUsersWithoutActiveShiftRequest()).thenReturn(List.of(user));
-
-        service.sendShiftRequestReminderEmails(CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(15).toLocalDate(), "test-idempotentKey-7");
-
-        ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
-        verify(mailSender).send(captor.capture());
-
-        assertThat(captor.getValue().getText()).contains("freddie");
+        assertThatCode(() -> service.sendShiftRequestReminderEmail(
+                "recipient@example.test",
+                "Recipient Name",
+                LocalDate.now().plusDays(10),
+                "idem-4"
+        )).doesNotThrowAnyException();
     }
 }

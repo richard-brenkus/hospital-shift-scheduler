@@ -4,6 +4,7 @@ import com.richardbrenkus.shiftschedulermodernized.util.CalendarDateIdUtils;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LoggingEmailReminderServiceTest {
 
@@ -11,13 +12,21 @@ class LoggingEmailReminderServiceTest {
 
     @Test
     void shouldNotThrow_whenSendingReminder() {
-        assertThatCode(() -> service.sendShiftRequestReminderEmails(CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(20).toLocalDate(), "test-idempotentKey-1"))
-                .doesNotThrowAnyException();
+        assertThatCode(() -> service.sendShiftRequestReminderEmail(
+                "recipient@example.test",
+                "Recipient Name",
+                CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(20).toLocalDate(),
+                "test-idempotentKey-1"
+        )).doesNotThrowAnyException();
     }
 
     @Test
-    void shouldNotThrow_whenSubmissionDayIsZero() {
-        assertThatCode(() -> service.sendShiftRequestReminderEmails(CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(0).toLocalDate(), "test-idempotentKey-2"))
-                .doesNotThrowAnyException();
+    void shouldRejectBlankRecipientEmail() {
+        assertThatThrownBy(() -> service.sendShiftRequestReminderEmail(
+                "",
+                "Recipient Name",
+                CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(20).toLocalDate(),
+                "test-idempotentKey-2"
+        )).isInstanceOf(IllegalArgumentException.class);
     }
 }

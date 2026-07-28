@@ -3,10 +3,13 @@ package com.richardbrenkus.shiftschedulermodernized.support;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleMonth;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.ShiftAssignment;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.record.UserCalculationData;
 import com.richardbrenkus.shiftschedulermodernized.config.constants.Role;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftPreference;
 import com.richardbrenkus.shiftschedulermodernized.entity.ShiftRequest;
 import com.richardbrenkus.shiftschedulermodernized.entity.User;
+
+import java.util.Map;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -117,8 +120,36 @@ public final class TestFixtures {
 
         day.getAssignments().add(ShiftAssignment.builder()
                 .shiftType(shiftType)
-                .userCalculationData(user)
+                .userCalculationData(toUserCalculationData(user))
                 .build());
+    }
+
+    /**
+     * Minimal adapter that converts a JPA {@link User} into the
+     * calculation-domain {@link UserCalculationData} snapshot used by the
+     * schedule algorithm. Preferences and previous-month dates are left empty
+     * because the tests that call this helper only rely on user identity for
+     * assignment lookups.
+     */
+    public static UserCalculationData toUserCalculationData(User user) {
+        Set<Integer> allowed = user.getAllowedShiftTypes() == null
+                ? Set.of()
+                : Set.copyOf(user.getAllowedShiftTypes());
+        Set<java.time.LocalDate> datesNo =
+                user.hasShiftRequest() && user.getShiftRequest().getDatesNo() != null
+                        ? Set.copyOf(user.getShiftRequest().getDatesNo())
+                        : Set.of();
+        return new UserCalculationData(
+                user.getId(),
+                user.getName() == null ? user.getUsername() : user.getName(),
+                user.getUsername(),
+                user.getTitle(),
+                allowed,
+                datesNo,
+                Map.of(),
+                Set.of(),
+                user.hasShiftRequest()
+        );
     }
 
     public static Set<Integer> shiftTypeSet(Integer... shiftTypes) {
