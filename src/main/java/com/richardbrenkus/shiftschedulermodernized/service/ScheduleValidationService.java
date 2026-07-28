@@ -11,8 +11,6 @@ import com.richardbrenkus.shiftschedulermodernized.config.ShiftTypeProperties;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.CalculationProfileForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.ScheduleEditForm;
 import com.richardbrenkus.shiftschedulermodernized.entity.StoredScheduleDay;
-import com.richardbrenkus.shiftschedulermodernized.mapper.ScheduleMapper;
-import com.richardbrenkus.shiftschedulermodernized.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
