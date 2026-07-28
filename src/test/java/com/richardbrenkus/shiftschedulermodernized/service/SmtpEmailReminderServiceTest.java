@@ -54,7 +54,7 @@ class SmtpEmailReminderServiceTest {
                 "idem-1"
         );
 
-        verify(mailSender).send((MimeMessage) ArgumentCaptor.forClass(MimeMessage.class).capture());
+        verify(mailSender).send(ArgumentCaptor.forClass(MimeMessage.class).capture());
     }
 
     @Test
