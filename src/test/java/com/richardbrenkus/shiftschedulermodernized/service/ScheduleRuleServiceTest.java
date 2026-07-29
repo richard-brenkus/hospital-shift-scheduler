@@ -480,7 +480,6 @@ class ScheduleRuleServiceTest {
         UserCalculationData user = calculationUser(1L, Map.of(), Set.of(), true);
 
         ShiftAssignment nearbyAssignment = mock(ShiftAssignment.class);
-        when(nearbyAssignment.getShiftType()).thenReturn(2);
         when(nearbyAssignment.getUserCalculationData()).thenReturn(user);
 
         ScheduleDay nearbyDay = mock(ScheduleDay.class);
