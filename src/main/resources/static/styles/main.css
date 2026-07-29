@@ -237,11 +237,23 @@ option {
 .sidebar .closebtn {
     position: absolute;
     top: 0;
-    right: 25px;
+    right: 0;
+
+    width: 60px;
+    height: 60px;
+
+    text-align: center;
+    line-height: 60px;
+
     font-size: 36px;
-    margin-left: 50px;
+    padding: 0;
 }
 
+
+.sidebar .closebtn:hover {
+    background-color: #3b4047;
+    color: #cfd4da;
+}
 
 .openbtn {
     font-size: 15px;
