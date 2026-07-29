@@ -28,7 +28,6 @@ class LandingPageServiceIT extends AbstractMySqlContainerTest {
     void shouldReturnLandingPageStatisticsFromRealMySqlData() {
 
         List<User> users = userRepository.findAll().stream().toList();
-        users.forEach(u -> System.out.println(u.getId() + " : " + u.getUsername()));
 
         assertThat(users).hasSize(62);
 

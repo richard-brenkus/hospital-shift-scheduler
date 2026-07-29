@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -31,6 +32,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *   <li>Duplicate {@code eventId} does not create a second row.</li>
  * </ul>
  */
+@Sql(statements = "DELETE FROM activity_log", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(statements = "DELETE FROM activity_log", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 class ActivityLogPersistenceIT extends AbstractMySqlContainerTest {
 
     @Autowired
