@@ -37,23 +37,19 @@ class StoredScheduleServiceTest {
 
     @Test
     void shouldReturnFalse_whenNoStoredDaysFoundForMonth() {
-        when(storedScheduleDayRepository.findByMonthYearIdOrderByDayIntegerAsc("08/2026"))
-                .thenReturn(List.of());
+        when(storedScheduleDayRepository.findByMonthYearIdOrderByDayIntegerAsc("08/2026")).thenReturn(List.of());
 
         assertThat(service.existsByMonth(YearMonth.of(2026, 8))).isFalse();
     }
 
     @Test
     void shouldThrowIllegalArgumentException_whenSavingNullScheduleMonth() {
-        assertThatThrownBy(() -> service.saveScheduleWithStats(null, null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("schedule");
+        assertThatThrownBy(() -> service.saveScheduleWithStats(null, null)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("schedule");
     }
 
     @Test
     void shouldThrowIllegalArgumentException_whenLoadingSavedScheduleViewForNullMonth() {
-        assertThatThrownBy(() -> service.loadSavedScheduleView(null))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.loadSavedScheduleView(null)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

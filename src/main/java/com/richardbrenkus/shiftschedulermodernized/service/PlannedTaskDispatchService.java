@@ -54,15 +54,7 @@ public class PlannedTaskDispatchService {
 
         advanceReminderTask(task);
 
-        activityPublisher.publishSuccess(
-                ActivityType.REMINDER_EMAIL_JOB_CREATED,
-                "SendReminderTask",
-                String.valueOf(task.getId()),
-                "Reminder email jobs created for scheduled execution "
-                        + scheduledOccurrence
-                        + "; jobs created: "
-                        + createdJobCount
-        );
+        activityPublisher.publishSuccess(ActivityType.REMINDER_EMAIL_JOB_CREATED, "SendReminderTask", String.valueOf(task.getId()), "Reminder email jobs created for scheduled execution " + scheduledOccurrence + "; jobs created: " + createdJobCount);
     }
 
     private boolean isDue(SendReminderTask task, Instant now) {
@@ -91,12 +83,7 @@ public class PlannedTaskDispatchService {
             }
 
             boolean alreadyQueued =
-                    reminderEmailOutboxRepository
-                            .existsBySourceTaskIdAndScheduledExecutionTimeAndRecipientUserId(
-                                    task.getId(),
-                                    scheduledOccurrence,
-                                    user.getId()
-                            );
+                    reminderEmailOutboxRepository.existsBySourceTaskIdAndScheduledExecutionTimeAndRecipientUserId(task.getId(), scheduledOccurrence, user.getId());
 
             if (alreadyQueued) {
                 continue;
@@ -128,6 +115,7 @@ public class PlannedTaskDispatchService {
     }
 
     private String resolveDisplayName(User user) {
+
         if (user.getName() != null
                 && !user.getName().isBlank()) {
             return user.getName();
@@ -141,9 +129,8 @@ public class PlannedTaskDispatchService {
         return null;
     }
 
-    private void advanceReminderTask(
-            SendReminderTask task
-    ) {
+    private void advanceReminderTask(SendReminderTask task) {
+
         if (task.getRepetitions() <= 0) {
             throw new IllegalStateException("Reminder repetitions must be greater than zero");
         }

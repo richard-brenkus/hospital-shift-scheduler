@@ -27,10 +27,7 @@ public class ReminderEmailOutboxRecoveryService {
     @Value("${planned-tasks.outbox.recovery-batch-size:100}")
     private int recoveryBatchSize;
 
-    @Scheduled(
-            fixedDelayString =
-                    "${planned-tasks.outbox.recovery-delay-ms:60000}"
-    )
+    @Scheduled(fixedDelayString = "${planned-tasks.outbox.recovery-delay-ms:60000}")
     public void releaseStaleClaims() {
         validateConfiguration();
 

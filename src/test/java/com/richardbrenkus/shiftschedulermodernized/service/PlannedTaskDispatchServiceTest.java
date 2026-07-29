@@ -51,43 +51,28 @@ class PlannedTaskDispatchServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new PlannedTaskDispatchService(
-                sendReminderTaskRepository,
-                reminderEmailOutboxRepository,
-                userRepository,
-                activityPublisher,
-                ZONE
-        );
+        service = new PlannedTaskDispatchService(sendReminderTaskRepository, reminderEmailOutboxRepository, userRepository, activityPublisher, ZONE);
     }
 
     @Test
     void createReminderOutboxJobsIfDue_shouldRejectNullNow() {
-        assertThatThrownBy(() -> service.createReminderOutboxJobsIfDue(null))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.createReminderOutboxJobsIfDue(null)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void createReminderOutboxJobsIfDue_shouldCreateExactlyOneJobPerEligibleUser() {
         SendReminderTask task = dueTask();
-        when(sendReminderTaskRepository.findByIdForUpdate(SendReminderTask.SINGLETON_ID))
-                .thenReturn(Optional.of(task));
+        when(sendReminderTaskRepository.findByIdForUpdate(SendReminderTask.SINGLETON_ID)).thenReturn(Optional.of(task));
 
         User recipient = TestFixtures.user(42L, "alice");
         recipient.setEmail("alice@example.test");
         recipient.setName("Alice");
-        when(userRepository.findByShiftRequestIsNullOrderByNameAsc())
-                .thenReturn(List.of(recipient));
-        when(reminderEmailOutboxRepository
-                .existsBySourceTaskIdAndScheduledExecutionTimeAndRecipientUserId(
-                        eq(task.getId()),
-                        eq(task.getStartSendingTime()),
-                        eq(42L)))
-                .thenReturn(false);
+        when(userRepository.findByShiftRequestIsNullOrderByNameAsc()).thenReturn(List.of(recipient));
+        when(reminderEmailOutboxRepository.existsBySourceTaskIdAndScheduledExecutionTimeAndRecipientUserId(eq(task.getId()), eq(task.getStartSendingTime()), eq(42L))).thenReturn(false);
 
         service.createReminderOutboxJobsIfDue(NOW);
 
-        ArgumentCaptor<ReminderEmailOutbox> saved =
-                ArgumentCaptor.forClass(ReminderEmailOutbox.class);
+        ArgumentCaptor<ReminderEmailOutbox> saved = ArgumentCaptor.forClass(ReminderEmailOutbox.class);
         verify(reminderEmailOutboxRepository).save(saved.capture());
         assertThat(saved.getValue().getRecipientUserId()).isEqualTo(42L);
         assertThat(saved.getValue().getRecipientEmail()).isEqualTo("alice@example.test");
@@ -96,20 +81,13 @@ class PlannedTaskDispatchServiceTest {
     @Test
     void createReminderOutboxJobsIfDue_shouldNotDuplicateExistingJob() {
         SendReminderTask task = dueTask();
-        when(sendReminderTaskRepository.findByIdForUpdate(SendReminderTask.SINGLETON_ID))
-                .thenReturn(Optional.of(task));
+        when(sendReminderTaskRepository.findByIdForUpdate(SendReminderTask.SINGLETON_ID)).thenReturn(Optional.of(task));
 
         User recipient = TestFixtures.user(42L, "alice");
         recipient.setEmail("alice@example.test");
-        when(userRepository.findByShiftRequestIsNullOrderByNameAsc())
-                .thenReturn(List.of(recipient));
+        when(userRepository.findByShiftRequestIsNullOrderByNameAsc()).thenReturn(List.of(recipient));
         // The dedup guard says "already queued".
-        when(reminderEmailOutboxRepository
-                .existsBySourceTaskIdAndScheduledExecutionTimeAndRecipientUserId(
-                        eq(task.getId()),
-                        eq(task.getStartSendingTime()),
-                        eq(42L)))
-                .thenReturn(true);
+        when(reminderEmailOutboxRepository.existsBySourceTaskIdAndScheduledExecutionTimeAndRecipientUserId(eq(task.getId()), eq(task.getStartSendingTime()), eq(42L))).thenReturn(true);
 
         service.createReminderOutboxJobsIfDue(NOW);
 
@@ -119,15 +97,13 @@ class PlannedTaskDispatchServiceTest {
     @Test
     void createReminderOutboxJobsIfDue_shouldSkipIneligibleRecipients() {
         SendReminderTask task = dueTask();
-        when(sendReminderTaskRepository.findByIdForUpdate(SendReminderTask.SINGLETON_ID))
-                .thenReturn(Optional.of(task));
+        when(sendReminderTaskRepository.findByIdForUpdate(SendReminderTask.SINGLETON_ID)).thenReturn(Optional.of(task));
 
         User noEmail = TestFixtures.user(50L, "no-email");
         noEmail.setEmail(null);
         User blankEmail = TestFixtures.user(51L, "blank-email");
         blankEmail.setEmail("   ");
-        when(userRepository.findByShiftRequestIsNullOrderByNameAsc())
-                .thenReturn(List.of(noEmail, blankEmail));
+        when(userRepository.findByShiftRequestIsNullOrderByNameAsc()).thenReturn(List.of(noEmail, blankEmail));
 
         service.createReminderOutboxJobsIfDue(NOW);
 
@@ -136,12 +112,8 @@ class PlannedTaskDispatchServiceTest {
 
     @Test
     void createReminderOutboxJobsIfDue_shouldReturnEarlyWhenTaskInactive() {
-        SendReminderTask task = SendReminderTask.builder()
-                .id(SendReminderTask.SINGLETON_ID)
-                .isActive(false)
-                .build();
-        when(sendReminderTaskRepository.findByIdForUpdate(SendReminderTask.SINGLETON_ID))
-                .thenReturn(Optional.of(task));
+        SendReminderTask task = SendReminderTask.builder().id(SendReminderTask.SINGLETON_ID).isActive(false).build();
+        when(sendReminderTaskRepository.findByIdForUpdate(SendReminderTask.SINGLETON_ID)).thenReturn(Optional.of(task));
 
         service.createReminderOutboxJobsIfDue(NOW);
 
@@ -154,8 +126,7 @@ class PlannedTaskDispatchServiceTest {
     void createReminderOutboxJobsIfDue_shouldReturnEarlyWhenStartTimeIsInFuture() {
         SendReminderTask task = dueTask();
         task.setStartSendingTime(NOW.plusSeconds(3600));
-        when(sendReminderTaskRepository.findByIdForUpdate(SendReminderTask.SINGLETON_ID))
-                .thenReturn(Optional.of(task));
+        when(sendReminderTaskRepository.findByIdForUpdate(SendReminderTask.SINGLETON_ID)).thenReturn(Optional.of(task));
 
         service.createReminderOutboxJobsIfDue(NOW);
 
@@ -165,22 +136,12 @@ class PlannedTaskDispatchServiceTest {
 
     @Test
     void createReminderOutboxJobsIfDue_shouldThrowIllegalStateWhenSingletonMissing() {
-        when(sendReminderTaskRepository.findByIdForUpdate(SendReminderTask.SINGLETON_ID))
-                .thenReturn(Optional.empty());
+        when(sendReminderTaskRepository.findByIdForUpdate(SendReminderTask.SINGLETON_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.createReminderOutboxJobsIfDue(NOW))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> service.createReminderOutboxJobsIfDue(NOW)).isInstanceOf(IllegalStateException.class);
     }
 
     private static SendReminderTask dueTask() {
-        return SendReminderTask.builder()
-                .id(SendReminderTask.SINGLETON_ID)
-                .isActive(true)
-                .startSendingTime(NOW)
-                .finalRequestSubmissionDate(LocalDate.of(2026, 8, 20))
-                .repetitions(3)
-                .frequencyInDays(2)
-                .counter(0)
-                .build();
+        return SendReminderTask.builder().id(SendReminderTask.SINGLETON_ID).isActive(true).startSendingTime(NOW).finalRequestSubmissionDate(LocalDate.of(2026, 8, 20)).repetitions(3).frequencyInDays(2).counter(0).build();
     }
 }

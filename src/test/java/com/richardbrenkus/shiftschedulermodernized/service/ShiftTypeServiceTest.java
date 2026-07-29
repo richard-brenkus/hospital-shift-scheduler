@@ -11,8 +11,7 @@ class ShiftTypeServiceTest {
     void shouldReturnOneToSixList_whenCountIsSix() {
         ShiftTypeService service = new ShiftTypeService(new ShiftTypeProperties(6));
 
-        assertThat(service.getShiftTypes())
-                .containsExactly(1, 2, 3, 4, 5, 6);
+        assertThat(service.getShiftTypes()).containsExactly(1, 2, 3, 4, 5, 6);
     }
 
     @Test

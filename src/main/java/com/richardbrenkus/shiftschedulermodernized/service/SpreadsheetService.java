@@ -71,19 +71,10 @@ public class SpreadsheetService {
     private List<StoredScheduleDay> loadStoredScheduleDays(YearMonth selectedMonth) {
         String monthYearId = selectedMonth.format(MONTH_YEAR_ID_FORMATTER);
 
-        return storedScheduleDayRepository
-                .findByMonthYearIdOrderByDayIntegerAsc(monthYearId)
-                .stream()
-                .sorted(Comparator.comparing(StoredScheduleDay::getDayInteger))
-                .toList();
+        return storedScheduleDayRepository.findByMonthYearIdOrderByDayIntegerAsc(monthYearId).stream().sorted(Comparator.comparing(StoredScheduleDay::getDayInteger)).toList();
     }
 
-    private void writeHeaderLine(
-            XSSFSheet sheet,
-            CellStyle style,
-            List<Integer> shiftTypes,
-            Locale locale
-    ) {
+    private void writeHeaderLine(XSSFSheet sheet, CellStyle style, List<Integer> shiftTypes, Locale locale) {
         Row row = sheet.createRow(0);
 
         ExcelCellUtils.createCell(row, 0, message("spreadsheet.schedule.column.day", locale), style);
@@ -100,11 +91,7 @@ public class SpreadsheetService {
         for (StoredScheduleDay storedDay : storedDays) {
             Row row = sheet.createRow(rowIndex++);
 
-            ExcelCellUtils.createCell(row, 0, storedDay.getDayInteger() == null
-                            || storedDay.getDayInteger() == 0 ? ""
-                            : storedDay.getDayInteger().toString(),
-                    style
-            );
+            ExcelCellUtils.createCell(row, 0, storedDay.getDayInteger() == null || storedDay.getDayInteger() == 0 ? "" : storedDay.getDayInteger().toString(), style);
 
             int columnIndex = 1;
             for (Integer shiftType : shiftTypes) {
@@ -114,9 +101,7 @@ public class SpreadsheetService {
     }
 
     private String displayNameForShiftType(StoredScheduleDay storedDay, int shiftType) {
-        if (storedDay == null
-                || storedDay.getAssignmentsByShiftType() == null
-                || !storedDay.getAssignmentsByShiftType().containsKey(shiftType)) {
+        if (storedDay == null || storedDay.getAssignmentsByShiftType() == null || !storedDay.getAssignmentsByShiftType().containsKey(shiftType)) {
             return "";
         }
 

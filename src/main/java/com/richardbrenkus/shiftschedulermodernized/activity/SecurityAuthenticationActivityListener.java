@@ -21,41 +21,23 @@ public class SecurityAuthenticationActivityListener {
     public void onLoginSucceeded(AuthenticationSuccessEvent event) {
         String username = safeUsername(event.getAuthentication().getName());
 
-        activityPublisher.publishSuccess(
-                ActivityType.USER_LOGIN_SUCCEEDED,
-                "Authentication",
-                username,
-                "User login succeeded"
-        );
+        activityPublisher.publishSuccess(ActivityType.USER_LOGIN_SUCCEEDED, "Authentication", username, "User login succeeded");
     }
 
     @EventListener
     public void onLoginFailed(AbstractAuthenticationFailureEvent event) {
         String username = safeUsername(event.getAuthentication().getName());
 
-        activityPublisher.publishFailure(
-                ActivityType.USER_LOGIN_FAILED,
-                "Authentication",
-                username,
-                "User login failed",
-                this.safeFailureReason(event),
-                requestMetadataProvider.current()
-        );
+        activityPublisher.publishFailure(ActivityType.USER_LOGIN_FAILED, "Authentication", username, "User login failed", this.safeFailureReason(event), requestMetadataProvider.current());
     }
 
     @EventListener
     public void onLogoutSucceeded(LogoutSuccessEvent event) {
-        
-        String username = "UNKNOWN";
-        if(event.getAuthentication() != null)
-            username = safeUsername(event.getAuthentication().getName());
 
-        activityPublisher.publishSuccess(
-                ActivityType.USER_LOGOUT,
-                "Authentication",
-                username,
-                "User logout succeeded"
-        );
+        String username = "UNKNOWN";
+        if (event.getAuthentication() != null) username = safeUsername(event.getAuthentication().getName());
+
+        activityPublisher.publishSuccess(ActivityType.USER_LOGOUT, "Authentication", username, "User logout succeeded");
     }
 
     private String safeUsername(String username) {
@@ -64,9 +46,7 @@ public class SecurityAuthenticationActivityListener {
         }
 
         String trimmed = username.trim();
-        return trimmed.length() <= 100
-                ? trimmed
-                : trimmed.substring(0, 100);
+        return trimmed.length() <= 100 ? trimmed : trimmed.substring(0, 100);
     }
 
     @SuppressWarnings("unused")

@@ -37,9 +37,7 @@ class KafkaActivityProducerTest {
     private static final String TOPIC = "shift-scheduler.activity-events.v1";
 
     private final ActivityKafkaMapper mapper = new ActivityKafkaMapper();
-    private final ActivityKafkaProperties properties = new ActivityKafkaProperties(
-            true, "localhost:9092", TOPIC, "test-client"
-    );
+    private final ActivityKafkaProperties properties = new ActivityKafkaProperties(true, "localhost:9092", TOPIC, "test-client");
 
     @Mock
     private KafkaTemplate<String, ActivityKafkaMessage> kafkaTemplate;
@@ -53,10 +51,8 @@ class KafkaActivityProducerTest {
 
     @Test
     void publish_shouldSendMappedMessageToConfiguredTopicWithEventIdAsKey() {
-        CompletableFuture<SendResult<String, ActivityKafkaMessage>> future =
-                CompletableFuture.completedFuture(successResult(TOPIC, 0, 42L));
-        when(kafkaTemplate.send(eq(TOPIC), any(String.class), any(ActivityKafkaMessage.class)))
-                .thenReturn(future);
+        CompletableFuture<SendResult<String, ActivityKafkaMessage>> future = CompletableFuture.completedFuture(successResult(TOPIC, 0, 42L));
+        when(kafkaTemplate.send(eq(TOPIC), any(String.class), any(ActivityKafkaMessage.class))).thenReturn(future);
 
         producer.publish(event());
 
@@ -74,8 +70,7 @@ class KafkaActivityProducerTest {
     void publish_shouldSwallowFailure_whenKafkaFutureCompletesExceptionally() {
         CompletableFuture<SendResult<String, ActivityKafkaMessage>> future = new CompletableFuture<>();
         future.completeExceptionally(new RuntimeException("broker unreachable"));
-        when(kafkaTemplate.send(eq(TOPIC), any(String.class), any(ActivityKafkaMessage.class)))
-                .thenReturn(future);
+        when(kafkaTemplate.send(eq(TOPIC), any(String.class), any(ActivityKafkaMessage.class))).thenReturn(future);
 
         // The business flow has already committed by the time this producer runs
         // (AFTER_COMMIT path). Kafka delivery failures must not propagate.
@@ -87,8 +82,7 @@ class KafkaActivityProducerTest {
     void publish_shouldNotThrow_whenKafkaSendItselfThrowsSynchronously() {
         // Some KafkaTemplate implementations can throw synchronously on send(),
         // for example if the internal producer is in an unrecoverable state.
-        when(kafkaTemplate.send(eq(TOPIC), any(String.class), any(ActivityKafkaMessage.class)))
-                .thenThrow(new RuntimeException("synchronous producer failure"));
+        when(kafkaTemplate.send(eq(TOPIC), any(String.class), any(ActivityKafkaMessage.class))).thenThrow(new RuntimeException("synchronous producer failure"));
 
         // The producer contract requires that no Kafka failure propagates back
         // into the already-committed business transaction. Note: KafkaActivityProducer
@@ -99,34 +93,19 @@ class KafkaActivityProducerTest {
             producer.publish(event());
         } catch (RuntimeException expectedIfNotGuarded) {
             // Document current behaviour without silently masking a real defect.
-            assertThat(expectedIfNotGuarded)
-                    .hasMessageContaining("synchronous producer failure");
+            assertThat(expectedIfNotGuarded).hasMessageContaining("synchronous producer failure");
         }
 
         verify(kafkaTemplate).send(eq(TOPIC), any(String.class), any(ActivityKafkaMessage.class));
     }
 
     private ActivityEvent event() {
-        return new ActivityEvent(
-                EVENT_ID,
-                OCCURRED_AT,
-                "alice",
-                Role.ADMIN,
-                ActivityType.USER_CREATED,
-                "User",
-                "42",
-                "Created user",
-                true,
-                null,
-                new RequestMetadata("POST", "/admin/add", "1.2.3.4")
-        );
+        return new ActivityEvent(EVENT_ID, OCCURRED_AT, "alice", Role.ADMIN, ActivityType.USER_CREATED, "User", "42", "Created user", true, null, new RequestMetadata("POST", "/admin/add", "1.2.3.4"));
     }
 
     private SendResult<String, ActivityKafkaMessage> successResult(String topic, int partition, long offset) {
         SendResult<String, ActivityKafkaMessage> result = mock(SendResult.class);
-        RecordMetadata metadata = new RecordMetadata(
-                new TopicPartition(topic, partition), offset, 0, 0L, 0, 0
-        );
+        RecordMetadata metadata = new RecordMetadata(new TopicPartition(topic, partition), offset, 0, 0L, 0, 0);
         // Debug-only path — declare leniently so a disabled DEBUG level is not
         // treated as an unused stubbing by strict Mockito.
         lenient().when(result.getRecordMetadata()).thenReturn(metadata);

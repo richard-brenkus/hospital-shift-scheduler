@@ -39,12 +39,7 @@ public class PlannedTasksService {
             if (task.isActive()) {
                 task.setActive(false);
 
-                activityPublisher.publishSuccess(
-                        ActivityType.ADMIN_SETTINGS_CHANGED,
-                        "CleanupTask",
-                        String.valueOf(task.getId()),
-                        "Cleanup task disabled"
-                );
+                activityPublisher.publishSuccess(ActivityType.ADMIN_SETTINGS_CHANGED, "CleanupTask", String.valueOf(task.getId()), "Cleanup task disabled");
             }
             return;
         }
@@ -62,12 +57,7 @@ public class PlannedTasksService {
             task.setCreationTime(now);
         }
 
-        activityPublisher.publishSuccess(
-                ActivityType.ADMIN_SETTINGS_CHANGED,
-                "CleanupTask",
-                String.valueOf(task.getId()),
-                "Cleanup task configuration updated"
-        );
+        activityPublisher.publishSuccess(ActivityType.ADMIN_SETTINGS_CHANGED, "CleanupTask", String.valueOf(task.getId()), "Cleanup task configuration updated");
     }
 
     @Transactional
@@ -81,12 +71,7 @@ public class PlannedTasksService {
             if (task.isActive()) {
                 task.setActive(false);
 
-                activityPublisher.publishSuccess(
-                        ActivityType.ADMIN_SETTINGS_CHANGED,
-                        "SendReminderTask",
-                        String.valueOf(task.getId()),
-                        "Reminder task disabled"
-                );
+                activityPublisher.publishSuccess(ActivityType.ADMIN_SETTINGS_CHANGED, "SendReminderTask", String.valueOf(task.getId()), "Reminder task disabled");
             }
             return;
         }
@@ -108,27 +93,13 @@ public class PlannedTasksService {
             task.setCreationTime(now);
         }
 
-        activityPublisher.publishSuccess(
-                ActivityType.ADMIN_SETTINGS_CHANGED,
-                "SendReminderTask",
-                String.valueOf(task.getId()),
-                "Reminder task configuration updated"
-        );
+        activityPublisher.publishSuccess(ActivityType.ADMIN_SETTINGS_CHANGED, "SendReminderTask", String.valueOf(task.getId()), "Reminder task configuration updated");
     }
 
-    public boolean hasDayError(
-            SendReminderTaskForm form
-    ) {
-        Objects.requireNonNull(
-                form,
-                "form must not be null"
-        );
+    public boolean hasDayError(SendReminderTaskForm form) {
+        Objects.requireNonNull(form, "form must not be null");
 
-        return form.isSendReminderTaskActive()
-                && form.getStartSendingRemindersDay() > 0
-                && form.getFinalSubmissionDay() > 0
-                && form.getStartSendingRemindersDay()
-                >= form.getFinalSubmissionDay();
+        return form.isSendReminderTaskActive() && form.getStartSendingRemindersDay() > 0 && form.getFinalSubmissionDay() > 0 && form.getStartSendingRemindersDay() >= form.getFinalSubmissionDay();
     }
 
     public boolean isFirstReminderInFuture(SendReminderTaskForm form, Instant now) {
@@ -181,9 +152,7 @@ public class PlannedTasksService {
                 return false;
             }
 
-            long daysUntilLastReminder = repetitions == 1
-                    ? 0
-                    : Math.multiplyExact(repetitions - 1L, (long) frequencyInDays);
+            long daysUntilLastReminder = repetitions == 1 ? 0 : Math.multiplyExact(repetitions - 1L, (long) frequencyInDays);
 
             Instant lastReminder = startSendingTime.atZone(applicationZoneId).plusDays(daysUntilLastReminder).toInstant();
             YearMonth month = YearMonth.from(now.atZone(applicationZoneId));
@@ -233,16 +202,11 @@ public class PlannedTasksService {
 
     @Transactional(readOnly = true)
     public SendReminderTaskForm getSendReminderTaskForm() {
-        SendReminderTask task =
-                getSendReminderTask();
+        SendReminderTask task = getSendReminderTask();
 
-        SendReminderTaskForm form =
-                new SendReminderTaskForm();
+        SendReminderTaskForm form = new SendReminderTaskForm();
 
-        if (task.isActive()
-                && task.getStartSendingTime() != null
-                && task.getFinalRequestSubmissionDate()
-                != null) {
+        if (task.isActive() && task.getStartSendingTime() != null && task.getFinalRequestSubmissionDate() != null) {
 
             form.setSendReminderTaskActive(true);
 
@@ -278,13 +242,7 @@ public class PlannedTasksService {
         SendReminderTask task = getSendReminderTask();
 
         if (!task.isActive() || task.getStartSendingTime() == null || task.getFinalRequestSubmissionDate() == null) {
-            return new SendReminderTaskRecord(
-                    false,
-                    0,
-                    0,
-                    null,
-                    0
-            );
+            return new SendReminderTaskRecord(false, 0, 0, null, 0);
         }
 
         return plannedTaskMapper.entityToSendReminderTaskRecord(task);
@@ -313,13 +271,7 @@ public class PlannedTasksService {
     private Instant createCleanupInstant(CleanupTaskForm form) {
         YearMonth month = YearMonth.now(applicationClock);
 
-        LocalDateTime localDateTime = LocalDateTime.of(
-                month.getYear(),
-                month.getMonth(),
-                form.getCleanupDay(),
-                form.getCleanupHour(),
-                form.getCleanupMinute()
-        );
+        LocalDateTime localDateTime = LocalDateTime.of(month.getYear(), month.getMonth(), form.getCleanupDay(), form.getCleanupHour(), form.getCleanupMinute());
 
         return localDateTime.atZone(applicationZoneId).toInstant();
     }
@@ -327,12 +279,7 @@ public class PlannedTasksService {
     private Instant createReminderStartInstant(SendReminderTaskForm form) {
         YearMonth month = YearMonth.now(applicationClock);
 
-        LocalDateTime localDateTime = LocalDateTime.of(
-                month.getYear(),
-                month.getMonth(),
-                form.getStartSendingRemindersDay(),
-                form.getStartSendingRemindersHour(),
-                form.getStartSendingRemindersMinute());
+        LocalDateTime localDateTime = LocalDateTime.of(month.getYear(), month.getMonth(), form.getStartSendingRemindersDay(), form.getStartSendingRemindersHour(), form.getStartSendingRemindersMinute());
 
         return localDateTime.atZone(applicationZoneId).toInstant();
     }
@@ -349,9 +296,7 @@ public class PlannedTasksService {
      * Concurrent administrators must serialize updates.
      **/
     private CleanupTask getCleanupTaskForUpdate() {
-        return cleanupTaskRepository
-                .findByIdForUpdate(CleanupTask.SINGLETON_ID)
-                .orElseThrow(() -> missingSingleton("cleanup_task", CleanupTask.SINGLETON_ID));
+        return cleanupTaskRepository.findByIdForUpdate(CleanupTask.SINGLETON_ID).orElseThrow(() -> missingSingleton("cleanup_task", CleanupTask.SINGLETON_ID));
     }
 
     /**
@@ -359,23 +304,16 @@ public class PlannedTasksService {
      * <p>
      * Concurrent administrators must serialize updates.
      **/
-    private SendReminderTask
-    getSendReminderTaskForUpdate() {
-        return sendReminderTaskRepository
-                .findByIdForUpdate(SendReminderTask.SINGLETON_ID)
-                .orElseThrow(() -> missingSingleton("send_reminder_task", SendReminderTask.SINGLETON_ID));
+    private SendReminderTask getSendReminderTaskForUpdate() {
+        return sendReminderTaskRepository.findByIdForUpdate(SendReminderTask.SINGLETON_ID).orElseThrow(() -> missingSingleton("send_reminder_task", SendReminderTask.SINGLETON_ID));
     }
 
     private CleanupTask getCleanupTask() {
-        return cleanupTaskRepository
-                .findById(CleanupTask.SINGLETON_ID)
-                .orElseThrow(() -> missingSingleton("cleanup_task", CleanupTask.SINGLETON_ID));
+        return cleanupTaskRepository.findById(CleanupTask.SINGLETON_ID).orElseThrow(() -> missingSingleton("cleanup_task", CleanupTask.SINGLETON_ID));
     }
 
     private SendReminderTask getSendReminderTask() {
-        return sendReminderTaskRepository
-                .findById(SendReminderTask.SINGLETON_ID)
-                .orElseThrow(() -> missingSingleton("send_reminder_task", SendReminderTask.SINGLETON_ID));
+        return sendReminderTaskRepository.findById(SendReminderTask.SINGLETON_ID).orElseThrow(() -> missingSingleton("send_reminder_task", SendReminderTask.SINGLETON_ID));
     }
 
     private IllegalStateException missingSingleton(String tableName, Long id) {

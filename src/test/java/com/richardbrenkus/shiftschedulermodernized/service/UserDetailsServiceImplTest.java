@@ -38,9 +38,7 @@ class UserDetailsServiceImplTest {
 
         assertThat(result.getUsername()).isEqualTo("freddie");
         assertThat(result.getPassword()).isEqualTo("encoded");
-        assertThat(result.getAuthorities())
-                .extracting(Object::toString)
-                .containsExactly("ROLE_ADMIN");
+        assertThat(result.getAuthorities()).extracting(Object::toString).containsExactly("ROLE_ADMIN");
     }
 
     @Test
@@ -51,17 +49,13 @@ class UserDetailsServiceImplTest {
 
         UserDetails result = service.loadUserByUsername("mick");
 
-        assertThat(result.getAuthorities())
-                .extracting(Object::toString)
-                .containsExactly("ROLE_USER");
+        assertThat(result.getAuthorities()).extracting(Object::toString).containsExactly("ROLE_USER");
     }
 
     @Test
     void shouldThrowUsernameNotFoundException_whenUserRepositoryReturnsNull() {
         when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.loadUserByUsername("ghost"))
-                .isInstanceOf(UsernameNotFoundException.class)
-                .hasMessageContaining("ghost");
+        assertThatThrownBy(() -> service.loadUserByUsername("ghost")).isInstanceOf(UsernameNotFoundException.class).hasMessageContaining("ghost");
     }
 }

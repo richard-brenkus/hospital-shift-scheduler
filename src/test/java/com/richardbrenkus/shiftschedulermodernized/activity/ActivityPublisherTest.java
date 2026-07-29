@@ -67,12 +67,7 @@ class ActivityPublisherTest {
     void publishSuccess_shouldPublishImmediately_whenNoActiveTransaction() {
         givenSystemActor();
 
-        publisher.publishSuccess(
-                ActivityType.USER_CREATED,
-                "User",
-                "1",
-                "Created"
-        );
+        publisher.publishSuccess(ActivityType.USER_CREATED, "User", "1", "Created");
 
         ArgumentCaptor<ActivityEvent> captor = ArgumentCaptor.forClass(ActivityEvent.class);
         verify(eventPublisher).publishEvent(captor.capture());
@@ -91,17 +86,11 @@ class ActivityPublisherTest {
         try {
             simulateActiveTransaction();
 
-            publisher.publishSuccess(
-                    ActivityType.USER_CREATED,
-                    "User",
-                    "1",
-                    "Created"
-            );
+            publisher.publishSuccess(ActivityType.USER_CREATED, "User", "1", "Created");
 
             verify(eventPublisher, never()).publishEvent(org.mockito.ArgumentMatchers.any(ActivityEvent.class));
 
-            List<TransactionSynchronization> synchronizations =
-                    TransactionSynchronizationManager.getSynchronizations();
+            List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
             assertThat(synchronizations).hasSize(1);
 
             // Trigger the after-commit callback and verify publish is now invoked
@@ -118,14 +107,7 @@ class ActivityPublisherTest {
         SecurityContextHolder.clearContext();
         RequestMetadata providedMetadata = new RequestMetadata("POST", "/x", "1.2.3.4");
 
-        publisher.publishFailure(
-                ActivityType.USER_LOGIN_FAILED,
-                "Authentication",
-                "bob",
-                "Login failed",
-                "Bad credentials",
-                providedMetadata
-        );
+        publisher.publishFailure(ActivityType.USER_LOGIN_FAILED, "Authentication", "bob", "Login failed", "Bad credentials", providedMetadata);
 
         ArgumentCaptor<ActivityEvent> captor = ArgumentCaptor.forClass(ActivityEvent.class);
         verify(eventPublisher).publishEvent(captor.capture());
@@ -141,14 +123,7 @@ class ActivityPublisherTest {
         RequestMetadata contextMetadata = new RequestMetadata("GET", "/x", "9.9.9.9");
         org.mockito.Mockito.when(requestMetadataProvider.current()).thenReturn(contextMetadata);
 
-        publisher.publishFailure(
-                ActivityType.USER_LOGIN_FAILED,
-                "Authentication",
-                "bob",
-                "Login failed",
-                "Bad credentials",
-                null
-        );
+        publisher.publishFailure(ActivityType.USER_LOGIN_FAILED, "Authentication", "bob", "Login failed", "Bad credentials", null);
 
         ArgumentCaptor<ActivityEvent> captor = ArgumentCaptor.forClass(ActivityEvent.class);
         verify(eventPublisher).publishEvent(captor.capture());
@@ -157,22 +132,12 @@ class ActivityPublisherTest {
 
     @Test
     void publishSuccess_shouldMapAuthenticatedUserToRoleAndUsername() {
-        UserDetails principal = User.withUsername("alice")
-                .password("x")
-                .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))
-                .build();
-        Authentication auth = new UsernamePasswordAuthenticationToken(
-                principal, "x", principal.getAuthorities());
+        UserDetails principal = User.withUsername("alice").password("x").authorities(new SimpleGrantedAuthority("ROLE_ADMIN")).build();
+        Authentication auth = new UsernamePasswordAuthenticationToken(principal, "x", principal.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(auth);
-        org.mockito.Mockito.when(requestMetadataProvider.current())
-                .thenReturn(RequestMetadata.system());
+        org.mockito.Mockito.when(requestMetadataProvider.current()).thenReturn(RequestMetadata.system());
 
-        publisher.publishSuccess(
-                ActivityType.USER_CREATED,
-                "User",
-                "1",
-                "Created"
-        );
+        publisher.publishSuccess(ActivityType.USER_CREATED, "User", "1", "Created");
 
         ArgumentCaptor<ActivityEvent> captor = ArgumentCaptor.forClass(ActivityEvent.class);
         verify(eventPublisher).publishEvent(captor.capture());
@@ -183,18 +148,11 @@ class ActivityPublisherTest {
 
     @Test
     void publishSuccess_shouldFallBackToSystem_whenAnonymousAuthentication() {
-        Authentication anonymous = new AnonymousAuthenticationToken(
-                "anon-key",
-                "anonymousUser",
-                List.of(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))
-        );
+        Authentication anonymous = new AnonymousAuthenticationToken("anon-key", "anonymousUser", List.of(new SimpleGrantedAuthority("ROLE_ANONYMOUS")));
         SecurityContextHolder.getContext().setAuthentication(anonymous);
-        org.mockito.Mockito.when(requestMetadataProvider.current())
-                .thenReturn(RequestMetadata.system());
+        org.mockito.Mockito.when(requestMetadataProvider.current()).thenReturn(RequestMetadata.system());
 
-        publisher.publishSuccess(
-                ActivityType.USER_CREATED, "User", "1", "Created"
-        );
+        publisher.publishSuccess(ActivityType.USER_CREATED, "User", "1", "Created");
 
         ArgumentCaptor<ActivityEvent> captor = ArgumentCaptor.forClass(ActivityEvent.class);
         verify(eventPublisher).publishEvent(captor.capture());
@@ -205,21 +163,17 @@ class ActivityPublisherTest {
     @Test
     void publishSuccess_shouldSwallowExceptions_whenPublishThrows() {
         givenSystemActor();
-        doThrow(new RuntimeException("boom"))
-                .when(eventPublisher).publishEvent(org.mockito.ArgumentMatchers.any(ActivityEvent.class));
+        doThrow(new RuntimeException("boom")).when(eventPublisher).publishEvent(org.mockito.ArgumentMatchers.any(ActivityEvent.class));
 
         // Must not propagate to the caller (business flow already committed)
-        publisher.publishSuccess(
-                ActivityType.USER_CREATED, "User", "1", "Created"
-        );
+        publisher.publishSuccess(ActivityType.USER_CREATED, "User", "1", "Created");
 
         verify(eventPublisher).publishEvent(org.mockito.ArgumentMatchers.any(ActivityEvent.class));
     }
 
     private void givenSystemActor() {
         SecurityContextHolder.clearContext();
-        org.mockito.Mockito.when(requestMetadataProvider.current())
-                .thenReturn(RequestMetadata.system());
+        org.mockito.Mockito.when(requestMetadataProvider.current()).thenReturn(RequestMetadata.system());
     }
 
     /**

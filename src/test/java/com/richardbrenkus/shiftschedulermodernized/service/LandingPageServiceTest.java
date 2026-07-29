@@ -56,8 +56,7 @@ class LandingPageServiceTest {
         User u3 = userWithRequest(4L, "david");
         User u4 = userWithRequest(5L, "kurt");
         User u5NoRequest = TestFixtures.user(6L, "jim");
-        when(userRepository.findAllByRoleNotOrderByNameAsc(Role.ADMIN))
-                .thenReturn(List.of(u1, u2, u3, u4, u5NoRequest));
+        when(userRepository.findAllByRoleNotOrderByNameAsc(Role.ADMIN)).thenReturn(List.of(u1, u2, u3, u4, u5NoRequest));
 
         LandingPageRecord result = service.getLandingPageRecord();
 
@@ -68,16 +67,7 @@ class LandingPageServiceTest {
 
     @Test
     void shouldRoundPercentageDownwards_whenSevenOfEightNonAdminsHaveRequest() {
-        List<User> users = List.of(
-                userWithRequest(1L, "u1"),
-                userWithRequest(2L, "u2"),
-                userWithRequest(3L, "u3"),
-                userWithRequest(4L, "u4"),
-                userWithRequest(5L, "u5"),
-                userWithRequest(6L, "u6"),
-                userWithRequest(7L, "u7"),
-                TestFixtures.user(8L, "u8-no-request")
-        );
+        List<User> users = List.of(userWithRequest(1L, "u1"), userWithRequest(2L, "u2"), userWithRequest(3L, "u3"), userWithRequest(4L, "u4"), userWithRequest(5L, "u5"), userWithRequest(6L, "u6"), userWithRequest(7L, "u7"), TestFixtures.user(8L, "u8-no-request"));
         when(userRepository.findAllByRoleNotOrderByNameAsc(Role.ADMIN)).thenReturn(users);
 
         LandingPageRecord result = service.getLandingPageRecord();

@@ -12,21 +12,11 @@ class LoggingEmailReminderServiceTest {
 
     @Test
     void shouldNotThrow_whenSendingReminder() {
-        assertThatCode(() -> service.sendShiftRequestReminderEmail(
-                "recipient@example.test",
-                "Recipient Name",
-                CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(20).toLocalDate(),
-                "test-idempotentKey-1"
-        )).doesNotThrowAnyException();
+        assertThatCode(() -> service.sendShiftRequestReminderEmail("recipient@example.test", "Recipient Name", CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(20).toLocalDate(), "test-idempotentKey-1")).doesNotThrowAnyException();
     }
 
     @Test
     void shouldRejectBlankRecipientEmail() {
-        assertThatThrownBy(() -> service.sendShiftRequestReminderEmail(
-                "",
-                "Recipient Name",
-                CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(20).toLocalDate(),
-                "test-idempotentKey-2"
-        )).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.sendShiftRequestReminderEmail("", "Recipient Name", CalendarDateIdUtils.returnAdjustedFinalSubmissionDateTime(20).toLocalDate(), "test-idempotentKey-2")).isInstanceOf(IllegalArgumentException.class);
     }
 }

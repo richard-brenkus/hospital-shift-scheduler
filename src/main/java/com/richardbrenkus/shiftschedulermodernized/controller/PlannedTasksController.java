@@ -1,5 +1,6 @@
 package com.richardbrenkus.shiftschedulermodernized.controller;
 
+import com.richardbrenkus.shiftschedulermodernized.config.SelectionLists;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.CleanupTaskForm;
 import com.richardbrenkus.shiftschedulermodernized.dto.form.SendReminderTaskForm;
 import com.richardbrenkus.shiftschedulermodernized.service.PlannedTasksService;
@@ -112,7 +113,7 @@ public class PlannedTasksController {
         model.addAttribute("daysList", IntStream.rangeClosed(1, YearMonth.now(applicationClock).lengthOfMonth()).boxed().toList());
         model.addAttribute("hoursList", IntStream.rangeClosed(0, 23).boxed().toList());
         model.addAttribute("minutesList", IntStream.rangeClosed(0, 59).boxed().toList());
-        model.addAttribute("repetitionsList", IntStream.rangeClosed(1, 10).boxed().toList());
+        model.addAttribute("repetitionsList", SelectionLists.GENERIC_ONE_TO_TEN_LIST);
         model.addAttribute("frequencyList", IntStream.rangeClosed(0, 10).boxed().toList());
         model.addAttribute("finalSubmissionDaysList", IntStream.rangeClosed(1, YearMonth.now(applicationClock).lengthOfMonth()).boxed().toList());
     }

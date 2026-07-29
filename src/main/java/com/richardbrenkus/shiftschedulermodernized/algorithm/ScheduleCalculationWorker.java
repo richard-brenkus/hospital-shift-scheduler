@@ -23,14 +23,12 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class ScheduleCalculationWorker {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(
-                    ScheduleCalculationWorker.class
-            );
+    private static final Logger log = LoggerFactory.getLogger(ScheduleCalculationWorker.class);
 
     private final ScheduleGenerationEngine scheduleGenerationEngine;
 
     public ScheduleCandidate calculateBestCandidate(CalculationInput input, int attempts, int workerNumber) {
+
         if (attempts <= 0) {
             throw new IllegalArgumentException("attempts must be positive");
         }
@@ -71,15 +69,12 @@ public class ScheduleCalculationWorker {
     }
 
     private CalculatedScheduleMonth calculateSingleCandidate(CalculationInput input, Random random) {
+
         checkInterrupted();
 
         CalculatedScheduleMonth scheduleMonth = createEmptyScheduleMonth(input);
-
         CalculationCounters counters = new CalculationCounters();
-
-        List<Integer> monthDays = IntStream.rangeClosed(1, input.month().lengthOfMonth())
-                        .boxed()
-                        .collect(Collectors.toCollection(ArrayList::new));
+        List<Integer> monthDays = IntStream.rangeClosed(1, input.month().lengthOfMonth()).boxed().collect(Collectors.toCollection(ArrayList::new));
 
         Collections.shuffle(monthDays, random);
 
@@ -97,22 +92,9 @@ public class ScheduleCalculationWorker {
     }
 
     private CalculatedScheduleMonth createEmptyScheduleMonth(CalculationInput input) {
-        List<CalculatedScheduleDay> days = IntStream.rangeClosed(1, input.month().lengthOfMonth())
-                        .mapToObj(input.month()::atDay)
-                        .map(date ->
-                                CalculatedScheduleDay.builder()
-                                        .date(date)
-                                        .weekendOrHoliday(
-                                                isWeekendOrHoliday(date, input.holidays()))
-                                        .assignments(new ArrayList<>())
-                                        .build())
-                        .toList();
+        List<CalculatedScheduleDay> days = IntStream.rangeClosed(1, input.month().lengthOfMonth()).mapToObj(input.month()::atDay).map(date -> CalculatedScheduleDay.builder().date(date).weekendOrHoliday(isWeekendOrHoliday(date, input.holidays())).assignments(new ArrayList<>()).build()).toList();
 
-        return CalculatedScheduleMonth.builder()
-                .month(input.month())
-                .hitCounter(0)
-                .days(new ArrayList<>(days))
-                .build();
+        return CalculatedScheduleMonth.builder().month(input.month()).hitCounter(0).days(new ArrayList<>(days)).build();
     }
 
     private boolean isWeekendOrHoliday(LocalDate date, List<LocalDate> holidays) {

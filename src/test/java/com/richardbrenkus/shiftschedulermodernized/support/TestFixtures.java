@@ -49,38 +49,15 @@ public final class TestFixtures {
         return user;
     }
 
-    public static ShiftPreference preference(int shiftType,
-                                             int priority,
-                                             int weekdayCount,
-                                             int weekendCount,
-                                             boolean anyDateSelected,
-                                             List<LocalDate> datesYes) {
-        return ShiftPreference.builder()
-                .shiftType(shiftType)
-                .priority(priority)
-                .weekdayCount(weekdayCount)
-                .weekendCount(weekendCount)
-                .anyDateSelected(anyDateSelected)
-                .datesYes(new ArrayList<>(datesYes))
-                .noShiftRequested(false)
-                .build();
+    public static ShiftPreference preference(int shiftType, int priority, int weekdayCount, int weekendCount, boolean anyDateSelected, List<LocalDate> datesYes) {
+        return ShiftPreference.builder().shiftType(shiftType).priority(priority).weekdayCount(weekdayCount).weekendCount(weekendCount).anyDateSelected(anyDateSelected).datesYes(new ArrayList<>(datesYes)).noShiftRequested(false).build();
     }
 
     public static ShiftPreference noShiftPreference(int shiftType, int priority) {
-        return ShiftPreference.builder()
-                .shiftType(shiftType)
-                .priority(priority)
-                .weekdayCount(0)
-                .weekendCount(0)
-                .anyDateSelected(false)
-                .noShiftRequested(true)
-                .datesYes(new ArrayList<>())
-                .build();
+        return ShiftPreference.builder().shiftType(shiftType).priority(priority).weekdayCount(0).weekendCount(0).anyDateSelected(false).noShiftRequested(true).datesYes(new ArrayList<>()).build();
     }
 
-    public static void attachRequest(User user,
-                                     List<LocalDate> datesNo,
-                                     ShiftPreference... preferences) {
+    public static void attachRequest(User user, List<LocalDate> datesNo, ShiftPreference... preferences) {
         ShiftRequest request = new ShiftRequest();
         request.setDatesNo(new ArrayList<>(datesNo));
 
@@ -95,38 +72,21 @@ public final class TestFixtures {
     }
 
     public static ScheduleMonth emptyScheduleMonth(YearMonth month) {
-        List<ScheduleDay> days = IntStream.rangeClosed(1, month.lengthOfMonth())
-                .mapToObj(dayOfMonth -> ScheduleDay.builder()
-                        .date(month.atDay(dayOfMonth))
-                        .weekendOrHoliday(isWeekendDate(month.atDay(dayOfMonth)))
-                        .assignments(new ArrayList<>())
-                        .build())
-                .toList();
+        List<ScheduleDay> days = IntStream.rangeClosed(1, month.lengthOfMonth()).mapToObj(dayOfMonth -> ScheduleDay.builder().date(month.atDay(dayOfMonth)).weekendOrHoliday(isWeekendDate(month.atDay(dayOfMonth))).assignments(new ArrayList<>()).build()).toList();
 
-        return ScheduleMonth.builder()
-                .month(month)
-                .days(new ArrayList<>(days))
-                .hitCounter(0)
-                .build();
+        return ScheduleMonth.builder().month(month).days(new ArrayList<>(days)).hitCounter(0).build();
     }
 
     public static void assign(ScheduleMonth scheduleMonth, LocalDate date, int shiftType, User user) {
-        ScheduleDay day = scheduleMonth.getDays()
-                .stream()
-                .filter(candidate -> candidate.getDate().equals(date))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No day for date " + date));
+        ScheduleDay day = scheduleMonth.getDays().stream().filter(candidate -> candidate.getDate().equals(date)).findFirst().orElseThrow(() -> new IllegalStateException("No day for date " + date));
 
-        day.getAssignments().add(ShiftAssignment.builder()
-                .shiftType(shiftType)
-                .userCalculationData(toUserCalculationData(user))
-                .build());
+        day.getAssignments().add(ShiftAssignment.builder().shiftType(shiftType).userCalculationData(toUserCalculationData(user)).build());
     }
 
     /**
      * Adapter from a JPA {@link User} to the calculation-domain
      * {@link UserCalculationData} snapshot used by the schedule algorithm.
-     *
+     * <p>
      * Delegates to the production {@link UserCalculationDataMapper} so that the
      * shift preferences attached via {@link #attachRequest(User, java.util.List, ShiftPreference...)}
      * survive into the algorithm-facing snapshot (required by any test that
@@ -136,8 +96,7 @@ public final class TestFixtures {
         return USER_CALCULATION_DATA_MAPPER.toCalculationData(user, null);
     }
 
-    private static final UserCalculationDataMapper USER_CALCULATION_DATA_MAPPER =
-            new UserCalculationDataMapper();
+    private static final UserCalculationDataMapper USER_CALCULATION_DATA_MAPPER = new UserCalculationDataMapper();
 
     public static Set<Integer> shiftTypeSet(Integer... shiftTypes) {
         return new HashSet<>(Arrays.asList(shiftTypes));

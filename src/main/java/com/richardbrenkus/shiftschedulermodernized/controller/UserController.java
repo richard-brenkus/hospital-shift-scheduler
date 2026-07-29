@@ -40,9 +40,7 @@ public class UserController {
     @GetMapping({"/", "/home", "/index"})
     public String index(Authentication authentication) {
 
-        return this.isAdmin(authentication)
-                ? "redirect:/admin/adminIndex"
-                : "redirect:/user/userIndex";
+        return this.isAdmin(authentication) ? "redirect:/admin/adminIndex" : "redirect:/user/userIndex";
     }
 
     @GetMapping("/login")
@@ -64,22 +62,15 @@ public class UserController {
 
         Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = shiftRequestService.getShiftRequestViewRecord(username);
         submittedShiftRequestRecord.ifPresentOrElse(record -> {
-                    model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, true);
-                    model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, record);
-                },
-                () -> model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, false)
-        );
+            model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, true);
+            model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, record);
+        }, () -> model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, false));
 
         return "user/userIndex";
     }
 
     @PostMapping("/request_submitted")
-    public String requestSubmitted(
-            @Valid @ModelAttribute(ModelAttributeName.SHIFT_REQUEST_FORM) ShiftRequestForm shiftRequestForm,
-            BindingResult bindingResult,
-            Model model,
-            Authentication authentication,
-            @RequestParam(required = false) String usernamePassed) {
+    public String requestSubmitted(@Valid @ModelAttribute(ModelAttributeName.SHIFT_REQUEST_FORM) ShiftRequestForm shiftRequestForm, BindingResult bindingResult, Model model, Authentication authentication, @RequestParam(required = false) String usernamePassed) {
 
         boolean isAdmin = this.isAdmin(authentication);
 
@@ -93,11 +84,9 @@ public class UserController {
 
         Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = shiftRequestService.getShiftRequestViewRecord(targetUsername);
         submittedShiftRequestRecord.ifPresentOrElse(record -> {
-                    model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, true);
-                    model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, record);
-                },
-                () -> model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, false)
-        );
+            model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, true);
+            model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, record);
+        }, () -> model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, false));
 
         if (!isAdmin) {
             shiftRequestService.applyDefaultUserPriorities(shiftRequestForm);
@@ -139,6 +128,7 @@ public class UserController {
 
     @PostMapping("/user/change_password")
     public String changeUserPassword(@Valid @ModelAttribute("passwordChangeForm") PasswordChangeForm form, BindingResult bindingResult, Authentication authentication) {
+
         if (bindingResult.hasErrors()) {
             clearAllPasswords(form);
             return "user/change_password";
@@ -154,7 +144,7 @@ public class UserController {
         }
 
         if (!form.passwordsMatch()) {
-            bindingResult.rejectValue( "confirmedPassword", "change.password.mustMatch");
+            bindingResult.rejectValue("confirmedPassword", "change.password.mustMatch");
 
             form.setConfirmedPassword("");
             return "user/change_password";
@@ -170,7 +160,7 @@ public class UserController {
 
         boolean isAdmin = this.isAdmin(authentication);
 
-        String redirectUrl = isAdmin? ADMIN_INDEX : USER_INDEX;
+        String redirectUrl = isAdmin ? ADMIN_INDEX : USER_INDEX;
 
         if (!isAdmin && !authentication.getName().equals(username)) {
             return REDIRECT + "/403";
@@ -180,7 +170,7 @@ public class UserController {
         model.addAttribute(ModelAttributeName.IS_ADMIN, isAdmin);
 
         if (!currentUser.hasShiftRequest()) {
-                return REDIRECT + redirectUrl;
+            return REDIRECT + redirectUrl;
         }
 
         model.addAttribute(ModelAttributeName.DISPLAY_NAME, userService.getDisplayNameByUserName(username));
@@ -195,7 +185,7 @@ public class UserController {
 
         boolean isAdmin = this.isAdmin(authentication);
 
-        String redirectUrl = isAdmin? "/admin/adminIndex" : "/user/userIndex";
+        String redirectUrl = isAdmin ? "/admin/adminIndex" : "/user/userIndex";
 
         if (isAdmin || authentication.getName().equals(username)) {
             shiftRequestService.deleteShiftRequest(username);

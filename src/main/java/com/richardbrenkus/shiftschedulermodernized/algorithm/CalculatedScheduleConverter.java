@@ -21,14 +21,12 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class CalculatedScheduleConverter {
+
     private final UserRepository userRepository;
     private final UserCalculationDataMapper userCalculationDataMapper;
 
     @Transactional(readOnly = true)
-    public ScheduleMonth toLegacyScheduleMonth(
-            ScheduleCandidate candidate,
-            CalculationProfileForm originalForm
-    ) {
+    public ScheduleMonth toLegacyScheduleMonth(ScheduleCandidate candidate, CalculationProfileForm originalForm) {
         CalculatedScheduleMonth calculated = candidate.scheduleMonth();
 
         Set<Long> userIds = calculated.getDays().stream()
@@ -65,7 +63,9 @@ public class CalculatedScheduleConverter {
     }
 
     private UserCalculationData requireUser(Map<Long, User> usersById, Long userId) {
+
         UserCalculationData userCalculationData = userCalculationDataMapper.toCalculationData(usersById.get(userId), null);
+
         if (userCalculationData == null) {
             throw new IllegalStateException("Calculated schedule references missing user ID: " + userId);
         }

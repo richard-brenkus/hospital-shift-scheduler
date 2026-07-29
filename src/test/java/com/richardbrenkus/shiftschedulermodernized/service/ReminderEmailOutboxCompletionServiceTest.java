@@ -78,8 +78,7 @@ class ReminderEmailOutboxCompletionServiceTest {
         ReminderEmailOutbox job = claimedJob();
         when(repository.findByIdForUpdate(1L)).thenReturn(Optional.of(job));
 
-        ReminderEmailOutboxCompletionService.FailureCompletionResult result =
-                service.markTransientFailure(1L, CLAIM_TOKEN, NOW.plusSeconds(1), "smtp error");
+        ReminderEmailOutboxCompletionService.FailureCompletionResult result = service.markTransientFailure(1L, CLAIM_TOKEN, NOW.plusSeconds(1), "smtp error");
 
         assertThat(result).isEqualTo(ReminderEmailOutboxCompletionService.FailureCompletionResult.RETRY_SCHEDULED);
         assertThat(job.getStatus()).isEqualTo(ReminderEmailOutboxStatus.FAILED);
@@ -97,8 +96,7 @@ class ReminderEmailOutboxCompletionServiceTest {
         ReflectionTestUtils.setField(job, "attemptCount", MAX_ATTEMPTS);
         when(repository.findByIdForUpdate(1L)).thenReturn(Optional.of(job));
 
-        ReminderEmailOutboxCompletionService.FailureCompletionResult result =
-                service.markTransientFailure(1L, CLAIM_TOKEN, NOW.plusSeconds(1), "smtp error");
+        ReminderEmailOutboxCompletionService.FailureCompletionResult result = service.markTransientFailure(1L, CLAIM_TOKEN, NOW.plusSeconds(1), "smtp error");
 
         assertThat(result).isEqualTo(ReminderEmailOutboxCompletionService.FailureCompletionResult.DEAD);
         assertThat(job.getStatus()).isEqualTo(ReminderEmailOutboxStatus.DEAD);
@@ -109,8 +107,7 @@ class ReminderEmailOutboxCompletionServiceTest {
         ReminderEmailOutbox job = claimedJob();
         when(repository.findByIdForUpdate(1L)).thenReturn(Optional.of(job));
 
-        ReminderEmailOutboxCompletionService.FailureCompletionResult result =
-                service.markTransientFailure(1L, "wrong-token", NOW.plusSeconds(1), "smtp error");
+        ReminderEmailOutboxCompletionService.FailureCompletionResult result = service.markTransientFailure(1L, "wrong-token", NOW.plusSeconds(1), "smtp error");
 
         assertThat(result).isEqualTo(ReminderEmailOutboxCompletionService.FailureCompletionResult.NOT_CHANGED);
         assertThat(job.getStatus()).isEqualTo(ReminderEmailOutboxStatus.PROCESSING);
@@ -122,8 +119,7 @@ class ReminderEmailOutboxCompletionServiceTest {
         ReminderEmailOutbox job = claimedJob();
         when(repository.findByIdForUpdate(1L)).thenReturn(Optional.of(job));
 
-        ReminderEmailOutboxCompletionService.FailureCompletionResult result =
-                service.markPermanentFailure(1L, CLAIM_TOKEN, NOW.plusSeconds(1), "invalid recipient");
+        ReminderEmailOutboxCompletionService.FailureCompletionResult result = service.markPermanentFailure(1L, CLAIM_TOKEN, NOW.plusSeconds(1), "invalid recipient");
 
         assertThat(result).isEqualTo(ReminderEmailOutboxCompletionService.FailureCompletionResult.DEAD);
         assertThat(job.getStatus()).isEqualTo(ReminderEmailOutboxStatus.DEAD);
@@ -135,27 +131,20 @@ class ReminderEmailOutboxCompletionServiceTest {
         ReminderEmailOutbox job = claimedJob();
         when(repository.findByIdForUpdate(1L)).thenReturn(Optional.of(job));
 
-        ReminderEmailOutboxCompletionService.FailureCompletionResult result =
-                service.markPermanentFailure(1L, "wrong-token", NOW.plusSeconds(1), "invalid recipient");
+        ReminderEmailOutboxCompletionService.FailureCompletionResult result = service.markPermanentFailure(1L, "wrong-token", NOW.plusSeconds(1), "invalid recipient");
 
         assertThat(result).isEqualTo(ReminderEmailOutboxCompletionService.FailureCompletionResult.NOT_CHANGED);
     }
 
     @Test
     void markSent_shouldRejectNullArguments() {
-        assertThatThrownBy(() -> service.markSent(null, CLAIM_TOKEN, NOW))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> service.markSent(1L, " ", NOW))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> service.markSent(1L, CLAIM_TOKEN, null))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.markSent(null, CLAIM_TOKEN, NOW)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.markSent(1L, " ", NOW)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.markSent(1L, CLAIM_TOKEN, null)).isInstanceOf(IllegalArgumentException.class);
     }
 
     private static ReminderEmailOutbox claimedJob() {
-        ReminderEmailOutbox job = ReminderEmailOutbox.pending(
-                1L, NOW, FINAL_DAY, DEADLINE, 99L,
-                "alice@example.test", "Alice", NOW
-        );
+        ReminderEmailOutbox job = ReminderEmailOutbox.pending(1L, NOW, FINAL_DAY, DEADLINE, 99L, "alice@example.test", "Alice", NOW);
         ReflectionTestUtils.setField(job, "id", 1L);
         job.claim(WORKER, CLAIM_TOKEN, NOW);
         return job;

@@ -82,8 +82,7 @@ class ReminderEmailOutboxClaimServiceTest {
         var claimed = service.claim(1L, WORKER, NOW);
 
         assertThat(claimed).isEmpty();
-        assertThat(job.getStatus())
-                .isEqualTo(com.richardbrenkus.shiftschedulermodernized.config.constants.ReminderEmailOutboxStatus.DEAD);
+        assertThat(job.getStatus()).isEqualTo(com.richardbrenkus.shiftschedulermodernized.config.constants.ReminderEmailOutboxStatus.DEAD);
         verify(repository).saveAndFlush(job);
     }
 
@@ -100,28 +99,22 @@ class ReminderEmailOutboxClaimServiceTest {
 
     @Test
     void claim_shouldRejectNullOutboxId() {
-        assertThatThrownBy(() -> service.claim(null, WORKER, NOW))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.claim(null, WORKER, NOW)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void claim_shouldRejectBlankWorkerId() {
-        assertThatThrownBy(() -> service.claim(1L, " ", NOW))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.claim(1L, " ", NOW)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void claim_shouldRejectNonPositiveMaximumAttemptsConfig() {
         ReflectionTestUtils.setField(service, "maximumAttempts", 0);
-        assertThatThrownBy(() -> service.claim(1L, WORKER, NOW))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> service.claim(1L, WORKER, NOW)).isInstanceOf(IllegalStateException.class);
     }
 
     private static ReminderEmailOutbox pendingJob() {
-        ReminderEmailOutbox job = ReminderEmailOutbox.pending(
-                1L, NOW, FINAL_DAY, DEADLINE,
-                99L, "alice@example.test", "Alice", NOW
-        );
+        ReminderEmailOutbox job = ReminderEmailOutbox.pending(1L, NOW, FINAL_DAY, DEADLINE, 99L, "alice@example.test", "Alice", NOW);
         ReflectionTestUtils.setField(job, "id", 1L);
         return job;
     }

@@ -20,24 +20,15 @@ import java.util.stream.IntStream;
 @Service
 public class ParallelScheduleCalculationService {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(
-                    ParallelScheduleCalculationService.class
-            );
+    private static final Logger log = LoggerFactory.getLogger(ParallelScheduleCalculationService.class);
 
     private final ScheduleCalculationWorker worker;
     private final Executor scheduleCalculationExecutor;
     private final ScheduleCalculationProperties properties;
 
-    public ParallelScheduleCalculationService(
-            ScheduleCalculationWorker worker,
-            @Qualifier("scheduleCalculationExecutor")
-            Executor scheduleCalculationExecutor,
-            ScheduleCalculationProperties properties
-    ) {
+    public ParallelScheduleCalculationService(ScheduleCalculationWorker worker, @Qualifier("scheduleCalculationExecutor") Executor scheduleCalculationExecutor, ScheduleCalculationProperties properties) {
         this.worker = worker;
-        this.scheduleCalculationExecutor =
-                scheduleCalculationExecutor;
+        this.scheduleCalculationExecutor = scheduleCalculationExecutor;
         this.properties = properties;
     }
 
@@ -46,20 +37,16 @@ public class ParallelScheduleCalculationService {
 
         Duration timeout = properties.timeout();
 
-        List<CompletableFuture<ScheduleCandidate>> futures = IntStream.range(0, properties.numberOfThreads())
-                        .mapToObj(workerNumber -> {
-                            log.info("Submitting schedule worker {} from thread {}", workerNumber, Thread.currentThread().getName());
+        List<CompletableFuture<ScheduleCandidate>> futures = IntStream.range(0, properties.numberOfThreads()).mapToObj(workerNumber -> {
+            log.info("Submitting schedule worker {} from thread {}", workerNumber, Thread.currentThread().getName());
 
-                            return CompletableFuture.supplyAsync(() -> worker.calculateBestCandidate(input, properties.attemptsPerThread(), workerNumber), scheduleCalculationExecutor)
-                                    .orTimeout(timeout.toMillis(), TimeUnit.MILLISECONDS)
-                                    .exceptionally(exception -> {
-                                        Throwable cause = unwrapException(exception);
-                                        log.error("Schedule worker {} failed or timed out", workerNumber, cause);
+            return CompletableFuture.supplyAsync(() -> worker.calculateBestCandidate(input, properties.attemptsPerThread(), workerNumber), scheduleCalculationExecutor).orTimeout(timeout.toMillis(), TimeUnit.MILLISECONDS).exceptionally(exception -> {
+                Throwable cause = unwrapException(exception);
+                log.error("Schedule worker {} failed or timed out", workerNumber, cause);
 
-                                        return null;
-                                    });
-                        })
-                        .toList();
+                return null;
+            });
+        }).toList();
 
         /*
          * Because every worker future handles its own exception and returns
@@ -69,10 +56,7 @@ public class ParallelScheduleCalculationService {
         List<ScheduleCandidate> successfulCandidates;
 
         try {
-            successfulCandidates = futures.stream()
-                    .map(CompletableFuture::join)
-                    .filter(Objects::nonNull)
-                    .toList();
+            successfulCandidates = futures.stream().map(CompletableFuture::join).filter(Objects::nonNull).toList();
 
         } catch (CompletionException exception) {
             /*
@@ -90,9 +74,7 @@ public class ParallelScheduleCalculationService {
             throw new IllegalStateException("All schedule calculation workers failed.");
         }
 
-        ScheduleCandidate winner = successfulCandidates.stream()
-                        .max(ScheduleCandidateComparators.BY_QUALITY)
-                        .orElseThrow(() -> new IllegalStateException("No valid schedule candidate was produced."));
+        ScheduleCandidate winner = successfulCandidates.stream().max(ScheduleCandidateComparators.BY_QUALITY).orElseThrow(() -> new IllegalStateException("No valid schedule candidate was produced."));
 
         log.info("Winning candidate: worker={}, attempt={}, hitCounter={}", winner.workerIndex(), winner.attemptIndex(), winner.hitCounter());
 

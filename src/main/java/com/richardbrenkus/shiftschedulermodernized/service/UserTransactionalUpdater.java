@@ -52,12 +52,7 @@ public class UserTransactionalUpdater {
          * The actual commit still happens after this method returns.
          */
         entityManager.flush();
-        
-        activityPublisher.publishSuccess(
-                ActivityType.USER_UPDATED,
-                "User",
-                String.valueOf(existingUser.getId()),
-                "Updated user '" + existingUser.getUsername() + "'"
-        );
+
+        activityPublisher.publishSuccess(ActivityType.USER_UPDATED, "User", String.valueOf(existingUser.getId()), "Updated user '" + existingUser.getUsername() + "'");
     }
 }

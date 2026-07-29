@@ -31,10 +31,17 @@ class CalculationInputLoaderTest {
 
     private static final YearMonth AUGUST_2026 = YearMonth.of(2026, 8);
 
-    @Mock private UserRepository userRepository;
-    @Mock private ShiftTypeService shiftTypeService;
-    @Mock private ScheduleRuleService scheduleRuleService;
-    @Mock private UserCalculationDataMapper userCalculationDataMapper;
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private ShiftTypeService shiftTypeService;
+
+    @Mock
+    private ScheduleRuleService scheduleRuleService;
+
+    @Mock
+    private UserCalculationDataMapper userCalculationDataMapper;
 
     @InjectMocks
     private CalculationInputLoader loader;
@@ -46,30 +53,17 @@ class CalculationInputLoaderTest {
 
         UserCalculationData mapped = calculationUser(1L, Set.of());
 
-        when(userRepository.findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc())
-                .thenReturn(new LinkedHashSet<>(List.of(included)));
-        when(shiftTypeService.getShiftTypes())
-                .thenReturn(List.of(1, 2, 3, 4));
-        when(scheduleRuleService.loadPreviousStoredScheduleDays(
-                AUGUST_2026.atDay(1), 5
-        )).thenReturn(Map.of());
-        when(userCalculationDataMapper.toCalculationData(included, Set.of()))
-                .thenReturn(mapped);
+        when(userRepository.findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc()).thenReturn(new LinkedHashSet<>(List.of(included)));
+        when(shiftTypeService.getShiftTypes()).thenReturn(List.of(1, 2, 3, 4));
+        when(scheduleRuleService.loadPreviousStoredScheduleDays(AUGUST_2026.atDay(1), 5)).thenReturn(Map.of());
+        when(userCalculationDataMapper.toCalculationData(included, Set.of())).thenReturn(mapped);
 
-        CalculationInput result = loader.load(
-                CalculationProfileForm.builder()
-                        .calculationMonth(AUGUST_2026)
-                        .shiftCountCap(10)
-                        .gapBetweenShifts(5)
-                        .sortByDatesAmount(true)
-                        .forceFillShiftTypes(List.of(3, 1))
-                        .build()
-        );
+        CalculationInput result = loader.load(CalculationProfileForm.builder().calculationMonth(AUGUST_2026).shiftCountCap(10).gapBetweenShifts(5).sortByDatesAmount(true).forceFillShiftTypes(List.of(3, 1)).build());
 
         assertThat(result.users()).containsExactly(mapped);
         assertThat(result.shiftTypes()).containsExactly(1, 2, 3, 4);
         assertThat(result.calculationOrder()).containsExactly(3, 1, 2, 4);
-        assertThat(result.priorities()).containsExactly(1,2,3,4,5,6,7,8,9,10);
+        assertThat(result.priorities()).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
         assertThat(result.profile().shiftCountCap()).isEqualTo(10);
         assertThat(result.profile().gapBetweenShifts()).isEqualTo(5);
         assertThat(result.profile().sortByDatesAmount()).isTrue();
@@ -82,38 +76,20 @@ class CalculationInputLoaderTest {
         User user = mock(User.class);
         when(user.getId()).thenReturn(1L);
 
-        StoredScheduleDay finalDay = StoredScheduleDay.builder()
-                .assignmentsByShiftType(Map.of(1, snapshot(1L)))
-                .build();
-        StoredScheduleDay previousDay = StoredScheduleDay.builder()
-                .assignmentsByShiftType(Map.of(2, snapshot(1L)))
-                .build();
+        StoredScheduleDay finalDay = StoredScheduleDay.builder().assignmentsByShiftType(Map.of(1, snapshot(1L))).build();
+        StoredScheduleDay previousDay = StoredScheduleDay.builder().assignmentsByShiftType(Map.of(2, snapshot(1L))).build();
 
-        Set<LocalDate> expectedDates = Set.of(
-                LocalDate.of(2026, 7, 31),
-                LocalDate.of(2026, 7, 30)
-        );
+        Set<LocalDate> expectedDates = Set.of(LocalDate.of(2026, 7, 31), LocalDate.of(2026, 7, 30));
 
-        when(userRepository.findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc())
-                .thenReturn(new LinkedHashSet<>(List.of(user)));
+        when(userRepository.findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc()).thenReturn(new LinkedHashSet<>(List.of(user)));
         when(shiftTypeService.getShiftTypes()).thenReturn(List.of(1, 2));
-        when(scheduleRuleService.loadPreviousStoredScheduleDays(
-                AUGUST_2026.atDay(1), 2
-        )).thenReturn(Map.of(0, finalDay, -1, previousDay));
-        when(userCalculationDataMapper.toCalculationData(user, expectedDates))
-                .thenReturn(calculationUser(1L, expectedDates));
+        when(scheduleRuleService.loadPreviousStoredScheduleDays(AUGUST_2026.atDay(1), 2)).thenReturn(Map.of(0, finalDay, -1, previousDay));
+        when(userCalculationDataMapper.toCalculationData(user, expectedDates)).thenReturn(calculationUser(1L, expectedDates));
 
-        CalculationInput result = loader.load(
-                CalculationProfileForm.builder()
-                        .calculationMonth(AUGUST_2026)
-                        .gapBetweenShifts(2)
-                        .forceFillShiftTypes(List.of())
-                        .build()
-        );
+        CalculationInput result = loader.load(CalculationProfileForm.builder().calculationMonth(AUGUST_2026).gapBetweenShifts(2).forceFillShiftTypes(List.of()).build());
 
         assertThat(result.users()).hasSize(1);
-        assertThat(result.users().getFirst().previousMonthAssignedDates())
-                .containsExactlyInAnyOrderElementsOf(expectedDates);
+        assertThat(result.users().getFirst().previousMonthAssignedDates()).containsExactlyInAnyOrderElementsOf(expectedDates);
     }
 
     @Test
@@ -125,29 +101,17 @@ class CalculationInputLoaderTest {
         assignments.put(1, null);
         assignments.put(2, StoredUserSnapshot.builder().userId(null).build());
 
-        StoredScheduleDay storedDay = StoredScheduleDay.builder()
-                .assignmentsByShiftType(assignments)
-                .build();
+        StoredScheduleDay storedDay = StoredScheduleDay.builder().assignmentsByShiftType(assignments).build();
 
-        when(userRepository.findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc())
-                .thenReturn(new LinkedHashSet<>(List.of(user)));
+        when(userRepository.findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc()).thenReturn(new LinkedHashSet<>(List.of(user)));
         when(shiftTypeService.getShiftTypes()).thenReturn(List.of(1));
-        when(scheduleRuleService.loadPreviousStoredScheduleDays(
-                AUGUST_2026.atDay(1), 1
-        )).thenReturn(new HashMap<>() {{
+        when(scheduleRuleService.loadPreviousStoredScheduleDays(AUGUST_2026.atDay(1), 1)).thenReturn(new HashMap<>() {{
             put(0, storedDay);
             put(-1, null);
         }});
-        when(userCalculationDataMapper.toCalculationData(user, Set.of()))
-                .thenReturn(calculationUser(1L, Set.of()));
+        when(userCalculationDataMapper.toCalculationData(user, Set.of())).thenReturn(calculationUser(1L, Set.of()));
 
-        CalculationInput result = loader.load(
-                CalculationProfileForm.builder()
-                        .calculationMonth(AUGUST_2026)
-                        .gapBetweenShifts(1)
-                        .forceFillShiftTypes(List.of())
-                        .build()
-        );
+        CalculationInput result = loader.load(CalculationProfileForm.builder().calculationMonth(AUGUST_2026).gapBetweenShifts(1).forceFillShiftTypes(List.of()).build());
 
         assertThat(result.users().getFirst().previousMonthAssignedDates()).isEmpty();
     }
@@ -156,51 +120,22 @@ class CalculationInputLoaderTest {
     void shouldCalculateGoodFridayEasterMondayAndChristmas() {
         YearMonth april2026 = YearMonth.of(2026, 4);
 
-        when(userRepository.findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc())
-                .thenReturn(new LinkedHashSet<>());
+        when(userRepository.findAllByEnabledTrueAndShiftRequestIsNotNullOrderByNameAsc()).thenReturn(new LinkedHashSet<>());
         when(shiftTypeService.getShiftTypes()).thenReturn(List.of(1));
-        when(scheduleRuleService.loadPreviousStoredScheduleDays(
-                april2026.atDay(1), 0
-        )).thenReturn(Map.of());
+        when(scheduleRuleService.loadPreviousStoredScheduleDays(april2026.atDay(1), 0)).thenReturn(Map.of());
 
-        CalculationInput result = loader.load(
-                CalculationProfileForm.builder()
-                        .calculationMonth(april2026)
-                        .gapBetweenShifts(0)
-                        .forceFillShiftTypes(null)
-                        .build()
-        );
+        CalculationInput result = loader.load(CalculationProfileForm.builder().calculationMonth(april2026).gapBetweenShifts(0).forceFillShiftTypes(null).build());
 
         assertThat(result.calculationOrder()).containsExactly(1);
         assertThat(result.profile().forceFillShiftTypes()).isEmpty();
-        assertThat(result.holidays()).contains(
-                LocalDate.of(2026, 4, 3),
-                LocalDate.of(2026, 4, 6),
-                LocalDate.of(2026, 12, 24),
-                LocalDate.of(2026, 12, 25),
-                LocalDate.of(2026, 12, 26)
-        );
+        assertThat(result.holidays()).contains(LocalDate.of(2026, 4, 3), LocalDate.of(2026, 4, 6), LocalDate.of(2026, 12, 24), LocalDate.of(2026, 12, 25), LocalDate.of(2026, 12, 26));
     }
 
     private StoredUserSnapshot snapshot(Long id) {
-        return StoredUserSnapshot.builder()
-                .userId(id)
-                .username("user-" + id)
-                .name("User " + id)
-                .build();
+        return StoredUserSnapshot.builder().userId(id).username("user-" + id).name("User " + id).build();
     }
 
     private UserCalculationData calculationUser(Long id, Set<LocalDate> previousDates) {
-        return new UserCalculationData(
-                id,
-                "User " + id,
-                "user-" + id,
-                null,
-                Set.of(1, 2),
-                Set.of(),
-                Map.of(),
-                previousDates,
-                true
-        );
+        return new UserCalculationData(id, "User " + id, "user-" + id, null, Set.of(1, 2), Set.of(), Map.of(), previousDates, true);
     }
 }

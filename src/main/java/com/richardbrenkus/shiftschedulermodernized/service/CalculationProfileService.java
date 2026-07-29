@@ -33,11 +33,7 @@ public class CalculationProfileService {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/yyyy");
 
         return LongStream.range(2, 14)
-                .mapToObj(months -> YearMonth.now(ApplicationConstants.ZONE_ID).plusMonths(months))
-                .map(month -> new MonthOption(
-                        month,
-                        month.format(formatter)
-                ))
+                .mapToObj(months -> YearMonth.now(ApplicationConstants.ZONE_ID).plusMonths(months)).map(month -> new MonthOption(month, month.format(formatter)))
                 .toList();
     }
 }

@@ -15,8 +15,7 @@ public class RequestMetadataProvider {
     public RequestMetadata current() {
 
         try {
-            ServletRequestAttributes attributes =
-                    (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 
             if (attributes == null) {
                 return RequestMetadata.system();
@@ -24,18 +23,11 @@ public class RequestMetadataProvider {
 
             HttpServletRequest request = attributes.getRequest();
 
-            return new RequestMetadata(
-                    safeMethod(request),
-                    safeUri(request),
-                    safeClientIp(request)
-            );
+            return new RequestMetadata(safeMethod(request), safeUri(request), safeClientIp(request));
 
         } catch (RuntimeException exception) {
 
-            log.error(
-                    "Could not determine request metadata. Falling back to SYSTEM metadata.",
-                    exception
-            );
+            log.error("Could not determine request metadata. Falling back to SYSTEM metadata.", exception);
 
             return RequestMetadata.system();
         }
@@ -46,9 +38,7 @@ public class RequestMetadataProvider {
         try {
             String method = request.getMethod();
 
-            return method == null || method.isBlank()
-                    ? UNKNOWN_VALUE
-                    : method;
+            return method == null || method.isBlank() ? UNKNOWN_VALUE : method;
 
         } catch (RuntimeException exception) {
             return UNKNOWN_VALUE;
@@ -60,9 +50,7 @@ public class RequestMetadataProvider {
         try {
             String uri = request.getRequestURI();
 
-            return uri == null || uri.isBlank()
-                    ? UNKNOWN_VALUE
-                    : uri;
+            return uri == null || uri.isBlank() ? UNKNOWN_VALUE : uri;
 
         } catch (RuntimeException exception) {
             return UNKNOWN_VALUE;
@@ -80,9 +68,7 @@ public class RequestMetadataProvider {
              */
             String ip = request.getRemoteAddr();
 
-            return ip == null || ip.isBlank()
-                    ? UNKNOWN_VALUE
-                    : ip;
+            return ip == null || ip.isBlank() ? UNKNOWN_VALUE : ip;
 
         } catch (RuntimeException exception) {
             return UNKNOWN_VALUE;

@@ -30,20 +30,10 @@ class NoOpActivityKafkaProducerTest {
 
     @Test
     void publish_shouldNeverThrow() {
-        assertThatCode(() -> producer.publish(anyEvent()))
-                .doesNotThrowAnyException();
+        assertThatCode(() -> producer.publish(anyEvent())).doesNotThrowAnyException();
     }
 
     private ActivityEvent anyEvent() {
-        return ActivityEvent.success(
-                Instant.parse("2026-08-05T08:00:00Z"),
-                ActivityType.USER_CREATED,
-                "alice",
-                Role.ADMIN,
-                "User",
-                "1",
-                "Created",
-                new RequestMetadata("POST", "/x", "1.2.3.4")
-        );
+        return ActivityEvent.success(Instant.parse("2026-08-05T08:00:00Z"), ActivityType.USER_CREATED, "alice", Role.ADMIN, "User", "1", "Created", new RequestMetadata("POST", "/x", "1.2.3.4"));
     }
 }

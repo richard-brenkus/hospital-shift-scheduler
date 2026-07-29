@@ -14,18 +14,16 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class ReminderEmailOutboxRecoveryTransactionService {
 
-    private static final String STALE_CLAIM_REASON =
-            "Processing claim expired";
+    private static final String STALE_CLAIM_REASON = "Processing claim expired";
 
     private final ReminderEmailOutboxRepository repository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean releaseStaleClaim(Long outboxId, Instant staleBefore, Instant retryAt) {
+
         validateArguments(outboxId, staleBefore, retryAt);
 
-        ReminderEmailOutbox outbox = repository
-                .findByIdForUpdate(outboxId)
-                .orElse(null);
+        ReminderEmailOutbox outbox = repository.findByIdForUpdate(outboxId).orElse(null);
 
         if (!isStillStale(outbox, staleBefore)) {
             return false;
@@ -37,10 +35,7 @@ public class ReminderEmailOutboxRecoveryTransactionService {
     }
 
     private boolean isStillStale(ReminderEmailOutbox outbox, Instant staleBefore) {
-        return outbox != null
-                && outbox.getStatus() == ReminderEmailOutboxStatus.PROCESSING
-                && outbox.getClaimedAt() != null
-                && !outbox.getClaimedAt().isAfter(staleBefore);
+        return outbox != null && outbox.getStatus() == ReminderEmailOutboxStatus.PROCESSING && outbox.getClaimedAt() != null && !outbox.getClaimedAt().isAfter(staleBefore);
     }
 
     private void validateArguments(Long outboxId, Instant staleBefore, Instant retryAt) {

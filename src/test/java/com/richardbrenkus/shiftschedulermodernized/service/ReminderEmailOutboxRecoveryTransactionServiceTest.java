@@ -36,11 +36,7 @@ class ReminderEmailOutboxRecoveryTransactionServiceTest {
         ReminderEmailOutbox job = pendingJob();
         when(repository.findByIdForUpdate(1L)).thenReturn(Optional.of(job));
 
-        boolean released = service.releaseStaleClaim(
-                1L,
-                NOW.minusSeconds(600),
-                NOW.plusSeconds(60)
-        );
+        boolean released = service.releaseStaleClaim(1L, NOW.minusSeconds(600), NOW.plusSeconds(60));
 
         assertThat(released).isFalse();
         assertThat(job.getStatus()).isEqualTo(ReminderEmailOutboxStatus.PENDING);
@@ -50,9 +46,7 @@ class ReminderEmailOutboxRecoveryTransactionServiceTest {
     void releaseStaleClaim_shouldReturnFalse_whenJobMissing() {
         when(repository.findByIdForUpdate(1L)).thenReturn(Optional.empty());
 
-        assertThat(service.releaseStaleClaim(
-                1L, NOW.minusSeconds(600), NOW.plusSeconds(60)
-        )).isFalse();
+        assertThat(service.releaseStaleClaim(1L, NOW.minusSeconds(600), NOW.plusSeconds(60))).isFalse();
     }
 
     @Test
@@ -63,11 +57,8 @@ class ReminderEmailOutboxRecoveryTransactionServiceTest {
         job.claim("worker", "token", claimedAt);
         when(repository.findByIdForUpdate(1L)).thenReturn(Optional.of(job));
 
-        boolean released = service.releaseStaleClaim(
-                1L,
-                NOW.minusSeconds(300), // stale-before is older than claimedAt
-                NOW.plusSeconds(60)
-        );
+        boolean released = service.releaseStaleClaim(1L, NOW.minusSeconds(300), // stale-before is older than claimedAt
+                NOW.plusSeconds(60));
 
         assertThat(released).isFalse();
         assertThat(job.getStatus()).isEqualTo(ReminderEmailOutboxStatus.PROCESSING);
@@ -80,11 +71,8 @@ class ReminderEmailOutboxRecoveryTransactionServiceTest {
         job.claim("worker", "token", claimedAt);
         when(repository.findByIdForUpdate(1L)).thenReturn(Optional.of(job));
 
-        boolean released = service.releaseStaleClaim(
-                1L,
-                NOW.minusSeconds(300), // stale-before newer than claimedAt
-                NOW.plusSeconds(60)
-        );
+        boolean released = service.releaseStaleClaim(1L, NOW.minusSeconds(300), // stale-before newer than claimedAt
+                NOW.plusSeconds(60));
 
         assertThat(released).isTrue();
         assertThat(job.getStatus()).isEqualTo(ReminderEmailOutboxStatus.FAILED);
@@ -92,10 +80,7 @@ class ReminderEmailOutboxRecoveryTransactionServiceTest {
     }
 
     private static ReminderEmailOutbox pendingJob() {
-        ReminderEmailOutbox job = ReminderEmailOutbox.pending(
-                1L, NOW.minusSeconds(1000), FINAL_DAY, DEADLINE,
-                99L, "alice@example.test", "Alice", NOW.minusSeconds(1000)
-        );
+        ReminderEmailOutbox job = ReminderEmailOutbox.pending(1L, NOW.minusSeconds(1000), FINAL_DAY, DEADLINE, 99L, "alice@example.test", "Alice", NOW.minusSeconds(1000));
         ReflectionTestUtils.setField(job, "id", 1L);
         return job;
     }

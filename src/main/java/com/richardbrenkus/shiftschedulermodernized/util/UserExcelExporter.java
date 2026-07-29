@@ -22,6 +22,7 @@ public class UserExcelExporter {
     private final MessageSource messageSource;
 
     public void export(List<UserExportRecord> users, OutputStream outputStream, Locale locale) throws IOException {
+
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet(message(SHEET_NAME_MESSAGE_KEY, locale));
 
@@ -37,6 +38,7 @@ public class UserExcelExporter {
     }
 
     private void writeHeader(Sheet sheet, CellStyle headerStyle, Locale locale) {
+
         Row row = sheet.createRow(0);
 
         createCell(row, 0, message("spreadsheet.users.column.id", locale), headerStyle);
@@ -48,6 +50,7 @@ public class UserExcelExporter {
     }
 
     private void writeRows(Sheet sheet, List<UserExportRecord> users, CellStyle dataStyle) {
+
         int rowIndex = 1;
 
         for (UserExportRecord user : users) {
@@ -63,6 +66,7 @@ public class UserExcelExporter {
     }
 
     private void createCell(Row row, int columnIndex, Object value, CellStyle style) {
+
         Cell cell = row.createCell(columnIndex);
 
         switch (value) {
@@ -76,6 +80,7 @@ public class UserExcelExporter {
     }
 
     private CellStyle createHeaderStyle(Workbook workbook) {
+
         Font font = workbook.createFont();
         font.setBold(true);
         font.setFontHeightInPoints((short) 14);
@@ -88,6 +93,7 @@ public class UserExcelExporter {
     }
 
     private CellStyle createDataStyle(Workbook workbook) {
+
         Font font = workbook.createFont();
         font.setFontHeightInPoints((short) 12);
 
@@ -99,6 +105,7 @@ public class UserExcelExporter {
     }
 
     private void autoSizeColumns(Sheet sheet, int columnCount) {
+
         for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
             sheet.autoSizeColumn(columnIndex);
         }

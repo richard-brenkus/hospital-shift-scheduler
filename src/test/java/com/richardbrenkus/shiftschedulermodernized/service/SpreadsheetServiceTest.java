@@ -50,33 +50,20 @@ class SpreadsheetServiceTest {
 
     @Test
     void shouldFormatFileNameFromMonth() {
-        assertThat(service.createFileName(YearMonth.of(2026, 8)))
-                .isEqualTo("schedule_08_2026.xlsx");
+        assertThat(service.createFileName(YearMonth.of(2026, 8))).isEqualTo("schedule_08_2026.xlsx");
     }
 
     @Test
     void shouldThrowIllegalArgumentException_whenWritingScheduleForNullMonth() {
-        assertThatThrownBy(() -> service.writeSavedSchedule(new ByteArrayOutputStream(), null))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.writeSavedSchedule(new ByteArrayOutputStream(), null)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void shouldQueryRepositoryUsingMonthYearIdAndWriteXlsxWithOneRowPerDay() throws Exception {
         YearMonth month = YearMonth.of(2026, 8);
-        StoredScheduleDay day1 = StoredScheduleDay.builder()
-                .dateId(20260801L)
-                .monthYearId("08/2026")
-                .dayInteger(1)
-                .assignmentsByShiftType(assignments(1, new StoredUserSnapshot(10L, "freddie", "Freddie", "MUDr.")))
-                .build();
-        StoredScheduleDay day2 = StoredScheduleDay.builder()
-                .dateId(20260802L)
-                .monthYearId("08/2026")
-                .dayInteger(2)
-                .assignmentsByShiftType(new HashMap<>())
-                .build();
-        when(storedScheduleDayRepository.findByMonthYearIdOrderByDayIntegerAsc("08/2026"))
-                .thenReturn(List.of(day1, day2));
+        StoredScheduleDay day1 = StoredScheduleDay.builder().dateId(20260801L).monthYearId("08/2026").dayInteger(1).assignmentsByShiftType(assignments(1, new StoredUserSnapshot(10L, "freddie", "Freddie", "MUDr."))).build();
+        StoredScheduleDay day2 = StoredScheduleDay.builder().dateId(20260802L).monthYearId("08/2026").dayInteger(2).assignmentsByShiftType(new HashMap<>()).build();
+        when(storedScheduleDayRepository.findByMonthYearIdOrderByDayIntegerAsc("08/2026")).thenReturn(List.of(day1, day2));
         when(shiftTypeService.getShiftTypes()).thenReturn(List.of(1, 2));
         when(messageSource.getMessage(eq("spreadsheet.schedule.column.day"), any(), any(Locale.class))).thenReturn("Day");
         when(messageSource.getMessage(eq("spreadsheet.schedule.column.shiftType"), any(Object[].class), any(Locale.class))).thenReturn("Shift");
@@ -105,14 +92,8 @@ class SpreadsheetServiceTest {
     @Test
     void shouldReturnJustNameWithoutTitle_whenTitleIsBlank() throws Exception {
         YearMonth month = YearMonth.of(2026, 8);
-        StoredScheduleDay day = StoredScheduleDay.builder()
-                .dateId(20260801L)
-                .monthYearId("08/2026")
-                .dayInteger(1)
-                .assignmentsByShiftType(assignments(1, new StoredUserSnapshot(10L, "kurt", "Kurt", "")))
-                .build();
-        when(storedScheduleDayRepository.findByMonthYearIdOrderByDayIntegerAsc("08/2026"))
-                .thenReturn(List.of(day));
+        StoredScheduleDay day = StoredScheduleDay.builder().dateId(20260801L).monthYearId("08/2026").dayInteger(1).assignmentsByShiftType(assignments(1, new StoredUserSnapshot(10L, "kurt", "Kurt", ""))).build();
+        when(storedScheduleDayRepository.findByMonthYearIdOrderByDayIntegerAsc("08/2026")).thenReturn(List.of(day));
         when(shiftTypeService.getShiftTypes()).thenReturn(List.of(1));
         when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("X");
         when(messageSource.getMessage(eq("spreadsheet.schedule.column.shiftType"), any(Object[].class), any(Locale.class))).thenReturn("Shift");

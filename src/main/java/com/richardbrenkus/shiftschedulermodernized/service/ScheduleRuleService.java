@@ -33,8 +33,7 @@ public class ScheduleRuleService {
         int requestedWeekdayCount = preference.weekdayCount();
         int currentWeekdayCount = getShiftCounter(userCalculationData, shiftType, counters);
 
-        return requestedWeekdayCount != 0
-                && currentWeekdayCount < requestedWeekdayCount;
+        return requestedWeekdayCount != 0 && currentWeekdayCount < requestedWeekdayCount;
     }
 
     boolean isWithinRequestedWeekendLimit(UserCalculationData userCalculationData, int shiftType, CalculationCounters counters) {
@@ -48,8 +47,7 @@ public class ScheduleRuleService {
         int requestedWeekendCount = preference.weekendCount();
         int currentWeekendCount = getWeekendCounter(userCalculationData, shiftType, counters);
 
-        return requestedWeekendCount != 0
-                && currentWeekendCount < requestedWeekendCount;
+        return requestedWeekendCount != 0 && currentWeekendCount < requestedWeekendCount;
     }
 
     private ShiftPreferenceCalculationData getPreference(UserCalculationData userCalculationData, int shiftType) {
@@ -61,15 +59,11 @@ public class ScheduleRuleService {
     }
 
     private int getShiftCounter(UserCalculationData user, int shiftType, CalculationCounters counters) {
-        return counters.getWeekdayCounters()
-                .getOrDefault(user.userId(), Map.of())
-                .getOrDefault(shiftType, 0);
+        return counters.getWeekdayCounters().getOrDefault(user.userId(), Map.of()).getOrDefault(shiftType, 0);
     }
 
     private int getWeekendCounter(UserCalculationData user, int shiftType, CalculationCounters counters) {
-        return counters.getWeekendCounters()
-                .getOrDefault(user.userId(), Map.of())
-                .getOrDefault(shiftType, 0);
+        return counters.getWeekendCounters().getOrDefault(user.userId(), Map.of()).getOrDefault(shiftType, 0);
     }
 
     boolean respectsMinimalGap(LocalDate date, int minimalGap, UserCalculationData userCalculationData, ScheduleMonth scheduleMonth, int currentShiftType) {
@@ -98,9 +92,7 @@ public class ScheduleRuleService {
                     continue;
                 }
 
-                boolean sameSlot =
-                        checkedDate.equals(date)
-                                && assignment.getShiftType() == currentShiftType;
+                boolean sameSlot = checkedDate.equals(date) && assignment.getShiftType() == currentShiftType;
 
                 if (sameSlot) {
                     continue;
@@ -118,11 +110,7 @@ public class ScheduleRuleService {
     }
 
     public boolean respectsPreviousMonthGap(Map<Integer, StoredScheduleDay> previousMonthStoredScheduleDays, Integer minimalGap, LocalDate date, UserCalculationData userCalculationData) {
-        if (previousMonthStoredScheduleDays == null
-                || minimalGap == null
-                || date == null
-                || userCalculationData == null
-                || userCalculationData.username() == null) {
+        if (previousMonthStoredScheduleDays == null || minimalGap == null || date == null || userCalculationData == null || userCalculationData.username() == null) {
             return true;
         }
 
@@ -131,20 +119,13 @@ public class ScheduleRuleService {
         }
 
         for (int backwardIndex = 0; backwardIndex > -minimalGap; backwardIndex--) {
-            StoredScheduleDay previousMonthDay =
-                    previousMonthStoredScheduleDays.get(backwardIndex);
+            StoredScheduleDay previousMonthDay = previousMonthStoredScheduleDays.get(backwardIndex);
 
             if (previousMonthDay == null) {
                 continue;
             }
 
-            boolean userWorkedPreviousMonthDay = previousMonthDay.getAssignmentsByShiftType()
-                            .values()
-                            .stream()
-                            .anyMatch(snapshot ->
-                                    snapshot != null
-                                            && userCalculationData.username().equals(snapshot.getUsername())
-                            );
+            boolean userWorkedPreviousMonthDay = previousMonthDay.getAssignmentsByShiftType().values().stream().anyMatch(snapshot -> snapshot != null && userCalculationData.username().equals(snapshot.getUsername()));
 
             if (userWorkedPreviousMonthDay) {
                 return false;
@@ -206,7 +187,7 @@ public class ScheduleRuleService {
     public Map<Integer, StoredScheduleDay> loadPreviousStoredScheduleDays(LocalDate adminDate, int minimalGap) {
         List<LocalDate> previousMonthDates = createPreviousMonthDatesToCheck(adminDate, minimalGap);
 
-        Map<Integer, StoredScheduleDay> previousMonthStoredScheduleDays= new HashMap<>();
+        Map<Integer, StoredScheduleDay> previousMonthStoredScheduleDays = new HashMap<>();
 
         int backwardIndex = 0;
 
@@ -214,10 +195,7 @@ public class ScheduleRuleService {
             Long dateId = CalendarDateIdUtils.toDateId(previousMonthDate);
 
             int finalBackwardIndex = backwardIndex;
-            storedScheduleDayRepository.findById(dateId)
-                    .ifPresent(storedDay ->
-                            previousMonthStoredScheduleDays.put(finalBackwardIndex, storedDay)
-                    );
+            storedScheduleDayRepository.findById(dateId).ifPresent(storedDay -> previousMonthStoredScheduleDays.put(finalBackwardIndex, storedDay));
 
             backwardIndex--;
         }
@@ -228,32 +206,17 @@ public class ScheduleRuleService {
     private static List<LocalDate> createPreviousMonthDatesToCheck(LocalDate adminDate, int minimalGap) {
         LocalDate firstDayOfAdminMonth = adminDate.withDayOfMonth(1);
 
-        return IntStream.rangeClosed(1, minimalGap)
-                .mapToObj(firstDayOfAdminMonth::minusDays)
-                .toList();
+        return IntStream.rangeClosed(1, minimalGap).mapToObj(firstDayOfAdminMonth::minusDays).toList();
     }
 
     // Overloaded methods for multithreading:
-    boolean isWithinTotalShiftLimit(Integer shiftCountCap,
-            UserCalculationData user,
-            CalculationCounters counters
-    ) {
+    boolean isWithinTotalShiftLimit(Integer shiftCountCap, UserCalculationData user, CalculationCounters counters) {
         if (shiftCountCap == null) return true;
         return counters.getTotalCount(user.userId()) < shiftCountCap;
     }
 
-    boolean respectsMinimalGap(
-            LocalDate date,
-            int minimalGap,
-            UserCalculationData user,
-            CalculatedScheduleMonth scheduleMonth,
-            int currentShiftType
-    ) {
-        if (date == null
-                || user == null
-                || user.userId() == null
-                || scheduleMonth == null
-                || minimalGap <= 0) {
+    boolean respectsMinimalGap(LocalDate date, int minimalGap, UserCalculationData user, CalculatedScheduleMonth scheduleMonth, int currentShiftType) {
+        if (date == null || user == null || user.userId() == null || scheduleMonth == null || minimalGap <= 0) {
             return true;
         }
 
@@ -265,29 +228,18 @@ public class ScheduleRuleService {
             LocalDate checkedDate = day.getDate();
             if (checkedDate.isBefore(startDate) || checkedDate.isAfter(endDate)) continue;
 
-            boolean assignedInsideGap = day.getAssignments().stream()
-                    .filter(Objects::nonNull)
-                    .anyMatch(assignment -> {
-                        boolean sameSlot = checkedDate.equals(date)
-                                && assignment.shiftType() == currentShiftType;
-                        return !sameSlot && Objects.equals(assignment.userId(), user.userId());
-                    });
+            boolean assignedInsideGap = day.getAssignments().stream().filter(Objects::nonNull).anyMatch(assignment -> {
+                boolean sameSlot = checkedDate.equals(date) && assignment.shiftType() == currentShiftType;
+                return !sameSlot && Objects.equals(assignment.userId(), user.userId());
+            });
 
             if (assignedInsideGap) return false;
         }
         return true;
     }
 
-    boolean respectsPreviousMonthGap(
-            int minimalGap,
-            LocalDate candidateDate,
-            UserCalculationData user,
-            YearMonth calculationMonth
-    ) {
-        if (minimalGap <= 0
-                || candidateDate == null
-                || user == null
-                || calculationMonth == null) {
+    boolean respectsPreviousMonthGap(int minimalGap, LocalDate candidateDate, UserCalculationData user, YearMonth calculationMonth) {
+        if (minimalGap <= 0 || candidateDate == null || user == null || calculationMonth == null) {
             return true;
         }
 
@@ -299,13 +251,8 @@ public class ScheduleRuleService {
 
         LocalDate earliestAllowed = candidateDate.minusDays(minimalGap);
 
-        return user.previousMonthAssignedDates().stream()
-                .noneMatch(previousDate ->
-                        !previousDate.isBefore(earliestAllowed)
-                                && previousDate.isBefore(firstDay)
-                );
+        return user.previousMonthAssignedDates().stream().noneMatch(previousDate -> !previousDate.isBefore(earliestAllowed) && previousDate.isBefore(firstDay));
     }
-
 
 
 }

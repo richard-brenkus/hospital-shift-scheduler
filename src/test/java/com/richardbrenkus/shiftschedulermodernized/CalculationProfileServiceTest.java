@@ -15,20 +15,16 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 class CalculationProfileServiceTest {
 
-    private final CalculationProfileService calculationProfileService =
-            new CalculationProfileService(new ShiftTypeProperties(6));
+    private final CalculationProfileService calculationProfileService = new CalculationProfileService(new ShiftTypeProperties(6));
 
     @Test
     void shouldReturnNumbersFromOneToTen() {
-        assertThat(calculationProfileService.getGenericOneToTenList())
-                .hasSize(10)
-                .containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        assertThat(calculationProfileService.getGenericOneToTenList()).hasSize(10).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
     }
 
     @Test
     void shouldReturnShiftTypesOneToSix_whenConfiguredCountIsSix() {
-        assertThat(calculationProfileService.getAvailableShiftTypes())
-                .containsExactly(1, 2, 3, 4, 5, 6);
+        assertThat(calculationProfileService.getAvailableShiftTypes()).containsExactly(1, 2, 3, 4, 5, 6);
     }
 
     @Test

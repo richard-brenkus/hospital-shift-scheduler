@@ -40,30 +40,11 @@ class UserStatisticServiceIT extends AbstractMySqlContainerTest {
     void shouldPersistStatsForMonth_whenReplacingStats() {
         User alice = userRepository.findByUsername("alice.doe").orElseThrow();
 
-        UserStatViewRecord record = UserStatViewRecord.builder()
-                .userCalculationData(TestFixtures.toUserCalculationData(alice))
-                .name(alice.getName())
-                .shiftType(1)
-                .requestedWeekdays(3)
-                .requestedWeekends(1)
-                .calculatedWeekdays(1)
-                .calculatedWeekends(0)
-                .remainingWeekdays(2)
-                .remainingWeekends(1)
-                .anyDateSelected(false)
-                .requestedDateDays(new TreeSet<>(Set.of(5, 12)))
-                .assignedWeekdays(1)
-                .assignedWeekends(0)
-                .assignedTotal(1)
-                .assignedTotalAllShiftTypes(1)
-                .assignedDateDays(new TreeSet<>(Set.of(5)))
-                .month(AUGUST_2026)
-                .build();
+        UserStatViewRecord record = UserStatViewRecord.builder().userCalculationData(TestFixtures.toUserCalculationData(alice)).name(alice.getName()).shiftType(1).requestedWeekdays(3).requestedWeekends(1).calculatedWeekdays(1).calculatedWeekends(0).remainingWeekdays(2).remainingWeekends(1).anyDateSelected(false).requestedDateDays(new TreeSet<>(Set.of(5, 12))).assignedWeekdays(1).assignedWeekends(0).assignedTotal(1).assignedTotalAllShiftTypes(1).assignedDateDays(new TreeSet<>(Set.of(5))).month(AUGUST_2026).build();
 
         userStatisticService.replaceStatsForMonth(AUGUST_2026, Map.of(1, Set.of(record)));
 
-        List<UserStatEntity> saved =
-                userStatRepository.findByYearMonthOrderByShiftTypeAscNameAsc(AUGUST_2026);
+        List<UserStatEntity> saved = userStatRepository.findByYearMonthOrderByShiftTypeAscNameAsc(AUGUST_2026);
         assertThat(saved).hasSize(1);
         UserStatEntity persistedEntity = saved.getFirst();
         assertThat(persistedEntity.getShiftType()).isEqualTo(1);
@@ -84,8 +65,7 @@ class UserStatisticServiceIT extends AbstractMySqlContainerTest {
         UserStatViewRecord replacement = viewRecord(alice, 2, 5);
         userStatisticService.replaceStatsForMonth(AUGUST_2026, Map.of(2, Set.of(replacement)));
 
-        List<UserStatEntity> reloaded =
-                userStatRepository.findByYearMonthOrderByShiftTypeAscNameAsc(AUGUST_2026);
+        List<UserStatEntity> reloaded = userStatRepository.findByYearMonthOrderByShiftTypeAscNameAsc(AUGUST_2026);
         assertThat(reloaded).hasSize(1);
         assertThat(reloaded.getFirst().getShiftType()).isEqualTo(2);
         assertThat(reloaded.getFirst().getRequestedWeekdays()).isEqualTo(5);
@@ -95,8 +75,7 @@ class UserStatisticServiceIT extends AbstractMySqlContainerTest {
     @Transactional
     void shouldDeleteExistingRowsWithoutInsertingNew_whenReplacingWithEmptyMap() {
         User alice = userRepository.findByUsername("alice.doe").orElseThrow();
-        userStatisticService.replaceStatsForMonth(AUGUST_2026,
-                Map.of(1, Set.of(viewRecord(alice, 1, 1))));
+        userStatisticService.replaceStatsForMonth(AUGUST_2026, Map.of(1, Set.of(viewRecord(alice, 1, 1))));
         assertThat(userStatRepository.findByYearMonthOrderByShiftTypeAscNameAsc(AUGUST_2026)).hasSize(1);
 
         userStatisticService.replaceStatsForMonth(AUGUST_2026, Map.of());
@@ -120,8 +99,7 @@ class UserStatisticServiceIT extends AbstractMySqlContainerTest {
         UserStatViewRecord c = viewRecord(alice, 2, 4);
         userStatisticService.replaceStatsForMonth(AUGUST_2026, Map.of(1, Set.of(a, b), 2, Set.of(c)));
 
-        Map<Integer, Set<UserStatViewRecord>> results =
-                userStatisticService.findViewRecordsByYearMonth(AUGUST_2026);
+        Map<Integer, Set<UserStatViewRecord>> results = userStatisticService.findViewRecordsByYearMonth(AUGUST_2026);
 
         assertThat(results.keySet()).containsExactlyInAnyOrder(1, 2);
         assertThat(results.get(1)).hasSize(2);
@@ -129,24 +107,6 @@ class UserStatisticServiceIT extends AbstractMySqlContainerTest {
     }
 
     private UserStatViewRecord viewRecord(User user, int shiftType, int requestedWeekdays) {
-        return UserStatViewRecord.builder()
-                .userCalculationData(TestFixtures.toUserCalculationData(user))
-                .name(user.getName())
-                .shiftType(shiftType)
-                .requestedWeekdays(requestedWeekdays)
-                .requestedWeekends(0)
-                .calculatedWeekdays(0)
-                .calculatedWeekends(0)
-                .remainingWeekdays(requestedWeekdays)
-                .remainingWeekends(0)
-                .anyDateSelected(false)
-                .requestedDateDays(new TreeSet<>())
-                .assignedWeekdays(0)
-                .assignedWeekends(0)
-                .assignedTotal(0)
-                .assignedTotalAllShiftTypes(0)
-                .assignedDateDays(new TreeSet<>())
-                .month(AUGUST_2026)
-                .build();
+        return UserStatViewRecord.builder().userCalculationData(TestFixtures.toUserCalculationData(user)).name(user.getName()).shiftType(shiftType).requestedWeekdays(requestedWeekdays).requestedWeekends(0).calculatedWeekdays(0).calculatedWeekends(0).remainingWeekdays(requestedWeekdays).remainingWeekends(0).anyDateSelected(false).requestedDateDays(new TreeSet<>()).assignedWeekdays(0).assignedWeekends(0).assignedTotal(0).assignedTotalAllShiftTypes(0).assignedDateDays(new TreeSet<>()).month(AUGUST_2026).build();
     }
 }

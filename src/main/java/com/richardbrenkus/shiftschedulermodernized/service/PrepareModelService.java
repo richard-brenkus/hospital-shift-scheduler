@@ -60,12 +60,7 @@ public class PrepareModelService {
     }
 
     public void prepareCalculateScheduleModel(Model model) {
-        CalculationProfileForm calculationProfileForm = CalculationProfileForm.builder()
-                .calculationMonth(YearMonth.now(ApplicationConstants.ZONE_ID).plusMonths(2))
-                .shiftCountCap(5)
-                .gapBetweenShifts(5)
-                .forceFillShiftTypes(new ArrayList<>())
-                .build();
+        CalculationProfileForm calculationProfileForm = CalculationProfileForm.builder().calculationMonth(YearMonth.now(ApplicationConstants.ZONE_ID).plusMonths(2)).shiftCountCap(5).gapBetweenShifts(5).forceFillShiftTypes(new ArrayList<>()).build();
 
         model.addAttribute(ModelAttributeName.CALCULATION_PROFILE_FORM, calculationProfileForm);
         model.addAttribute(ModelAttributeName.MONTH_OPTIONS, calculationProfileService.getAvailableCalculationMonths());

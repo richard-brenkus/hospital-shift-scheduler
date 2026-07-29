@@ -34,6 +34,7 @@ class UserServiceIT extends AbstractMySqlContainerTest {
     @Test
     @Transactional
     void shouldPersistBcryptEncodedPasswordAndDefaults_whenCreatingUser() {
+
         UserRegisterForm form = new UserRegisterForm();
         form.setName("Charlie Doe");
         form.setUsername("charlie.doe");
@@ -95,9 +96,7 @@ class UserServiceIT extends AbstractMySqlContainerTest {
 
     @Test
     void shouldReturnUsersWithoutAdminByNameAsc_whenListingWithoutAdmin() {
-        assertThat(userService.getAllUsersWithoutAdminByNameAsc())
-                .extracting(User::getUsername)
-                .containsExactly("alice.doe", "bob.smith");
+        assertThat(userService.getAllUsersWithoutAdminByNameAsc()).extracting(User::getUsername).containsExactly("alice.doe", "bob.smith");
     }
 
     @Test

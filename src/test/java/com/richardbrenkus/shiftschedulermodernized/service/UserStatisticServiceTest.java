@@ -69,21 +69,13 @@ class UserStatisticServiceTest {
     void setUp() {
         // Real mapper — no external dependencies, and its preference-copying
         // behaviour is what makes the stat calculations meaningful in tests.
-        service = new UserStatisticService(
-                userRepository,
-                shiftTypeService,
-                scheduleMapper,
-                userStatRepository,
-                new UserCalculationDataMapper()
-        );
+        service = new UserStatisticService(userRepository, shiftTypeService, scheduleMapper, userStatRepository, new UserCalculationDataMapper());
     }
 
     @Test
     void shouldStoreFullStatisticsInSession_whenResultAndFormArePresent() {
         Map<Integer, Set<UserStatViewRecord>> fullStats = Map.of(1, Set.of());
-        ScheduleValidationResult result = ScheduleValidationResult.builder()
-                .fullUserStatsByShiftType(new java.util.HashMap<>(fullStats))
-                .build();
+        ScheduleValidationResult result = ScheduleValidationResult.builder().fullUserStatsByShiftType(new java.util.HashMap<>(fullStats)).build();
         ScheduleEditForm form = ScheduleEditForm.builder().month(AUGUST_2026).build();
 
         service.storeFullStatisticsInSession(session, result, form);
@@ -128,15 +120,12 @@ class UserStatisticServiceTest {
         verify(model).addAttribute("fullUserStatsByShiftType", Map.of());
         verify(model).addAttribute("shiftTypes", List.of(1, 2));
         verify(model).addAttribute("statsExist", false);
-        verify(model, never()).addAttribute(org.mockito.ArgumentMatchers.eq("month"),
-                org.mockito.ArgumentMatchers.any());
+        verify(model, never()).addAttribute(org.mockito.ArgumentMatchers.eq("month"), org.mockito.ArgumentMatchers.any());
     }
 
     @Test
     void shouldAddStatsAndMonthAttributesToModel_whenSessionContainsStats() {
-        Map<Integer, Set<UserStatViewRecord>> stats = Map.of(1, Set.of(
-                UserStatViewRecord.builder().name("Freddie").build()
-        ));
+        Map<Integer, Set<UserStatViewRecord>> stats = Map.of(1, Set.of(UserStatViewRecord.builder().name("Freddie").build()));
         when(session.getAttribute("fullUserStatsByShiftType")).thenReturn(stats);
         when(session.getAttribute("fullStatsMonth")).thenReturn(AUGUST_2026);
 
@@ -158,8 +147,7 @@ class UserStatisticServiceTest {
     void shouldReturnQuickUserStats_whenPreferenceAppliesAndUnderCap() {
         LocalDate date = LocalDate.of(2026, 8, 5);
         User user = TestFixtures.userWithAllowedShiftTypes(1L, "freddie", 1);
-        TestFixtures.attachRequest(user, List.of(),
-                TestFixtures.preference(1, 1, 3, 1, false, List.of(date)));
+        TestFixtures.attachRequest(user, List.of(), TestFixtures.preference(1, 1, 3, 1, false, List.of(date)));
         ScheduleMonth month = TestFixtures.emptyScheduleMonth(AUGUST_2026);
         TestFixtures.assign(month, date, 1, user);
         CalculationCounters counters = new CalculationCounters();
@@ -180,8 +168,7 @@ class UserStatisticServiceTest {
     void shouldNotAddQuickUserStatEntry_whenTotalCountReachesCap() {
         LocalDate date = LocalDate.of(2026, 8, 5);
         User user = TestFixtures.userWithAllowedShiftTypes(1L, "freddie", 1);
-        TestFixtures.attachRequest(user, List.of(),
-                TestFixtures.preference(1, 1, 5, 0, false, List.of(date)));
+        TestFixtures.attachRequest(user, List.of(), TestFixtures.preference(1, 1, 5, 0, false, List.of(date)));
         ScheduleMonth month = TestFixtures.emptyScheduleMonth(AUGUST_2026);
         TestFixtures.assign(month, date, 1, user);
         CalculationCounters counters = new CalculationCounters();
@@ -196,15 +183,12 @@ class UserStatisticServiceTest {
     @Test
     void shouldReturnUsersWithRequestNotAssignedForShiftType_whenNoShiftAssigned() {
         User user = TestFixtures.userWithAllowedShiftTypes(1L, "freddie", 1);
-        TestFixtures.attachRequest(user, List.of(),
-                TestFixtures.preference(1, 1, 5, 0, false, List.of(LocalDate.of(2026, 8, 3))));
+        TestFixtures.attachRequest(user, List.of(), TestFixtures.preference(1, 1, 5, 0, false, List.of(LocalDate.of(2026, 8, 3))));
         ScheduleMonth month = TestFixtures.emptyScheduleMonth(AUGUST_2026);
-        when(userRepository.findByShiftRequestIsNotNullOrderByNameAsc())
-                .thenReturn(List.of(user));
+        when(userRepository.findByShiftRequestIsNotNullOrderByNameAsc()).thenReturn(List.of(user));
         when(shiftTypeService.getShiftTypes()).thenReturn(List.of(1));
 
-        Map<Integer, Set<UserStatViewRecord>> result =
-                service.returnNoShiftAssignedUserStatMap(month, new CalculationCounters());
+        Map<Integer, Set<UserStatViewRecord>> result = service.returnNoShiftAssignedUserStatMap(month, new CalculationCounters());
 
         assertThat(result.get(1)).hasSize(1);
     }
@@ -213,18 +197,15 @@ class UserStatisticServiceTest {
     void shouldNotReportUserAsNoShiftAssigned_whenUserWasAssignedAnywhere() {
         LocalDate date = LocalDate.of(2026, 8, 3);
         User user = TestFixtures.userWithAllowedShiftTypes(1L, "freddie", 1);
-        TestFixtures.attachRequest(user, List.of(),
-                TestFixtures.preference(1, 1, 5, 0, false, List.of(date)));
+        TestFixtures.attachRequest(user, List.of(), TestFixtures.preference(1, 1, 5, 0, false, List.of(date)));
         ScheduleMonth month = TestFixtures.emptyScheduleMonth(AUGUST_2026);
         TestFixtures.assign(month, date, 1, user);
         CalculationCounters counters = new CalculationCounters();
         counters.incrementWeekday(user.getId(), 1);
-        when(userRepository.findByShiftRequestIsNotNullOrderByNameAsc())
-                .thenReturn(List.of(user));
+        when(userRepository.findByShiftRequestIsNotNullOrderByNameAsc()).thenReturn(List.of(user));
         when(shiftTypeService.getShiftTypes()).thenReturn(List.of(1));
 
-        Map<Integer, Set<UserStatViewRecord>> result =
-                service.returnNoShiftAssignedUserStatMap(month, counters);
+        Map<Integer, Set<UserStatViewRecord>> result = service.returnNoShiftAssignedUserStatMap(month, counters);
 
         assertThat(result.get(1)).isEmpty();
     }
@@ -233,8 +214,7 @@ class UserStatisticServiceTest {
     void shouldReturnSortedUserNamesWithoutRequest() {
         // The service delegates entirely to the repository query, which is
         // expected to sort and de-duplicate. Return the desired list verbatim.
-        when(userRepository.findDistinctNamesWithoutShiftRequest())
-                .thenReturn(List.of("Amy", "Zoe"));
+        when(userRepository.findDistinctNamesWithoutShiftRequest()).thenReturn(List.of("Amy", "Zoe"));
 
         List<String> names = service.returnUsersWithNoRequest();
 
@@ -262,12 +242,7 @@ class UserStatisticServiceTest {
     void shouldConvertDatesToDayOfMonthSet_ignoringForeignMonthDates() {
         // java.util.Set.of() forbids nulls; use a mutable set so we can pass one
         // and prove the method itself skips it.
-        Set<LocalDate> input = new HashSet<>(Arrays.asList(
-                LocalDate.of(2026, 8, 5),
-                LocalDate.of(2026, 8, 10),
-                LocalDate.of(2026, 9, 1),
-                null
-        ));
+        Set<LocalDate> input = new HashSet<>(Arrays.asList(LocalDate.of(2026, 8, 5), LocalDate.of(2026, 8, 10), LocalDate.of(2026, 9, 1), null));
 
         Set<Integer> days = service.toCurrentMonthDayOfMonthSet(input, AUGUST_2026);
 
@@ -281,9 +256,7 @@ class UserStatisticServiceTest {
 
     @Test
     void shouldThrowIllegalArgumentException_whenReplacingStatsWithNullYearMonth() {
-        assertThatThrownBy(() ->
-                service.replaceStatsForMonth(null, Map.of())
-        ).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.replaceStatsForMonth(null, Map.of())).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -300,8 +273,7 @@ class UserStatisticServiceTest {
         LocalDate date2 = LocalDate.of(2026, 8, 6);
         User user = TestFixtures.userWithAllowedShiftTypes(1L, "freddie", 1);
         user.setName("Freddie");
-        TestFixtures.attachRequest(user, List.of(),
-                TestFixtures.preference(1, 1, 3, 0, false, List.of(date1, date2)));
+        TestFixtures.attachRequest(user, List.of(), TestFixtures.preference(1, 1, 3, 0, false, List.of(date1, date2)));
         ScheduleMonth month = TestFixtures.emptyScheduleMonth(AUGUST_2026);
         TestFixtures.assign(month, date1, 1, user);
         TestFixtures.assign(month, date2, 1, user);

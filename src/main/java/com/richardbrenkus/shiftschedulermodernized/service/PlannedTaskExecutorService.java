@@ -26,9 +26,9 @@ public class PlannedTaskExecutorService {
     private static final String ACTIVITY_TARGET_CLEANUP = "CleanupTask";
     private static final String ACTIVITY_TARGET_REMINDER_EMAIL = "SendReminderTask";
 
-    @Scheduled(fixedDelayString ="${planned-tasks.executor.fixed-delay-ms:60000}")
+    @Scheduled(fixedDelayString = "${planned-tasks.executor.fixed-delay-ms:60000}")
     public void executeDueTasks() {
-        Instant now  = Instant.now(applicationClock);
+        Instant now = Instant.now(applicationClock);
 
         executeCleanup(now);
         createReminderOutboxJobs(now);
@@ -44,14 +44,7 @@ public class PlannedTaskExecutorService {
             /*
              * Publish outside the rolled-back transaction.
              */
-            activityPublisher.publishFailure(
-                    ActivityType.PLANNED_CLEANUP_FAILED,
-                    ACTIVITY_TARGET_CLEANUP,
-                    String.valueOf(CleanupTask.SINGLETON_ID),
-                    "Scheduled cleanup failed for " + now,
-                    "Cleanup task execution failed",
-                    RequestMetadata.system()
-            );
+            activityPublisher.publishFailure(ActivityType.PLANNED_CLEANUP_FAILED, ACTIVITY_TARGET_CLEANUP, String.valueOf(CleanupTask.SINGLETON_ID), "Scheduled cleanup failed for " + now, "Cleanup task execution failed", RequestMetadata.system());
         }
     }
 
@@ -65,14 +58,7 @@ public class PlannedTaskExecutorService {
             /*
              * Publish outside the rolled-back transaction.
              */
-            activityPublisher.publishFailure(
-                    ActivityType.REMINDER_EMAIL_JOB_CREATION_FAILED,
-                    ACTIVITY_TARGET_REMINDER_EMAIL,
-                    String.valueOf(SendReminderTask.SINGLETON_ID),
-                    "Reminder email job creation failed for UTC " + now,
-                    "Unable to create reminder email outbox jobs",
-                    RequestMetadata.system()
-            );
+            activityPublisher.publishFailure(ActivityType.REMINDER_EMAIL_JOB_CREATION_FAILED, ACTIVITY_TARGET_REMINDER_EMAIL, String.valueOf(SendReminderTask.SINGLETON_ID), "Reminder email job creation failed for UTC " + now, "Unable to create reminder email outbox jobs", RequestMetadata.system());
         }
     }
 }

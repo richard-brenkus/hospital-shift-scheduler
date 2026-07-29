@@ -40,7 +40,7 @@ import static org.mockito.Mockito.doThrow;
  *   <li>a runtime failure inside schedule persistence prevents statistics
  *       from being replaced.</li>
  * </ul>
- *
+ * <p>
  * The test exercises the public orchestrating method as required — it does not
  * bypass into the two collaborating services directly.
  */
@@ -63,11 +63,9 @@ class SchedulePersistenceIT extends AbstractMySqlContainerTest {
     @MockitoSpyBean
     private UserStatisticService userStatisticService;
 
-    private org.springframework.transaction.support.TransactionTemplate transactionTemplate;
-
     @BeforeEach
     void cleanState() {
-        transactionTemplate = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
+        org.springframework.transaction.support.TransactionTemplate transactionTemplate = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
         transactionTemplate.executeWithoutResult(status -> {
             userStatRepository.deleteByYearMonth(AUGUST_2026);
             storedScheduleDayRepository.deleteAll();
@@ -83,12 +81,10 @@ class SchedulePersistenceIT extends AbstractMySqlContainerTest {
 
         storedScheduleService.saveScheduleWithStats(month, validationResult);
 
-        List<StoredScheduleDay> storedDays = storedScheduleDayRepository
-                .findByMonthYearIdOrderByDayIntegerAsc("08/2026");
+        List<StoredScheduleDay> storedDays = storedScheduleDayRepository.findByMonthYearIdOrderByDayIntegerAsc("08/2026");
         assertThat(storedDays).hasSize(31);
 
-        List<UserStatEntity> storedStats = userStatRepository
-                .findByYearMonthOrderByShiftTypeAscNameAsc(AUGUST_2026);
+        List<UserStatEntity> storedStats = userStatRepository.findByYearMonthOrderByShiftTypeAscNameAsc(AUGUST_2026);
         assertThat(storedStats).hasSize(1);
         assertThat(storedStats.getFirst().getUserId()).isEqualTo(42L);
     }
@@ -99,19 +95,12 @@ class SchedulePersistenceIT extends AbstractMySqlContainerTest {
         assign(month, LocalDate.of(2026, 8, 5), 1, 42L);
         ScheduleValidationResult validationResult = validationResultWithStats(42L, 1);
 
-        doThrow(new RuntimeException("simulated stats failure"))
-                .when(userStatisticService).replaceStatsForMonth(any(YearMonth.class), any());
+        doThrow(new RuntimeException("simulated stats failure")).when(userStatisticService).replaceStatsForMonth(any(YearMonth.class), any());
 
-        assertThatThrownBy(() -> storedScheduleService.saveScheduleWithStats(month, validationResult))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("simulated stats failure");
+        assertThatThrownBy(() -> storedScheduleService.saveScheduleWithStats(month, validationResult)).isInstanceOf(RuntimeException.class).hasMessageContaining("simulated stats failure");
 
-        assertThat(storedScheduleDayRepository
-                .findByMonthYearIdOrderByDayIntegerAsc("08/2026"))
-                .as("schedule days must be rolled back when statistics persistence fails")
-                .isEmpty();
-        assertThat(userStatRepository.findByYearMonthOrderByShiftTypeAscNameAsc(AUGUST_2026))
-                .isEmpty();
+        assertThat(storedScheduleDayRepository.findByMonthYearIdOrderByDayIntegerAsc("08/2026")).as("schedule days must be rolled back when statistics persistence fails").isEmpty();
+        assertThat(userStatRepository.findByYearMonthOrderByShiftTypeAscNameAsc(AUGUST_2026)).isEmpty();
     }
 
     @Test
@@ -119,26 +108,17 @@ class SchedulePersistenceIT extends AbstractMySqlContainerTest {
         // Seed an existing stats row so we can verify it survives.
         UserStatViewRecord seedStat = statViewRecord(42L, 1);
         userStatisticService.replaceStatsForMonth(AUGUST_2026, Map.of(1, Set.of(seedStat)));
-        long seededCount = userStatRepository
-                .findByYearMonthOrderByShiftTypeAscNameAsc(AUGUST_2026)
-                .size();
+        long seededCount = userStatRepository.findByYearMonthOrderByShiftTypeAscNameAsc(AUGUST_2026).size();
         assertThat(seededCount).isEqualTo(1);
 
         // Fail schedule save by feeding an invalid month.
-        ScheduleMonth badMonth = ScheduleMonth.builder()
-                .month(AUGUST_2026)
-                .days(List.of())
-                .build();
+        ScheduleMonth badMonth = ScheduleMonth.builder().month(AUGUST_2026).days(List.of()).build();
         ScheduleValidationResult validationResult = validationResultWithStats(42L, 1);
 
-        assertThatThrownBy(() -> storedScheduleService.saveScheduleWithStats(badMonth, validationResult))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> storedScheduleService.saveScheduleWithStats(badMonth, validationResult)).isInstanceOf(IllegalArgumentException.class);
 
-        List<UserStatEntity> preserved = userStatRepository
-                .findByYearMonthOrderByShiftTypeAscNameAsc(AUGUST_2026);
-        assertThat(preserved)
-                .as("statistics must not be touched when the schedule cannot be saved")
-                .hasSize(1);
+        List<UserStatEntity> preserved = userStatRepository.findByYearMonthOrderByShiftTypeAscNameAsc(AUGUST_2026);
+        assertThat(preserved).as("statistics must not be touched when the schedule cannot be saved").hasSize(1);
         assertThat(preserved.getFirst().getUserId()).isEqualTo(42L);
     }
 
@@ -154,8 +134,7 @@ class SchedulePersistenceIT extends AbstractMySqlContainerTest {
         assign(month2, LocalDate.of(2026, 8, 5), 1, 43L);
         storedScheduleService.saveScheduleWithStats(month2, validationResultWithStats(43L, 1));
 
-        List<UserStatEntity> stats = userStatRepository
-                .findByYearMonthOrderByShiftTypeAscNameAsc(AUGUST_2026);
+        List<UserStatEntity> stats = userStatRepository.findByYearMonthOrderByShiftTypeAscNameAsc(AUGUST_2026);
         assertThat(stats).hasSize(1);
         assertThat(stats.getFirst().getUserId()).isEqualTo(43L);
     }
@@ -163,72 +142,28 @@ class SchedulePersistenceIT extends AbstractMySqlContainerTest {
     private ScheduleMonth emptyMonth() {
         List<ScheduleDay> days = new ArrayList<>();
         for (int day = 1; day <= AUGUST_2026.lengthOfMonth(); day++) {
-            days.add(ScheduleDay.builder()
-                    .date(AUGUST_2026.atDay(day))
-                    .weekendOrHoliday(false)
-                    .assignments(new ArrayList<>())
-                    .build());
+            days.add(ScheduleDay.builder().date(AUGUST_2026.atDay(day)).weekendOrHoliday(false).assignments(new ArrayList<>()).build());
         }
-        return ScheduleMonth.builder()
-                .month(AUGUST_2026)
-                .days(days)
-                .build();
+        return ScheduleMonth.builder().month(AUGUST_2026).days(days).build();
     }
 
     private void assign(ScheduleMonth month, LocalDate date, int shiftType, long userId) {
-        ScheduleDay day = month.getDays().stream()
-                .filter(d -> d.getDate().equals(date))
-                .findFirst()
-                .orElseThrow();
-        day.getAssignments().add(ShiftAssignment.builder()
-                .shiftType(shiftType)
-                .userCalculationData(minimalCalculationData(userId))
-                .build());
+        ScheduleDay day = month.getDays().stream().filter(d -> d.getDate().equals(date)).findFirst().orElseThrow();
+        day.getAssignments().add(ShiftAssignment.builder().shiftType(shiftType).userCalculationData(minimalCalculationData(userId)).build());
     }
 
     private static UserCalculationData minimalCalculationData(long userId) {
-        return new UserCalculationData(
-                userId,
-                "User " + userId,
-                "user-" + userId,
-                null,
-                Set.of(1),
-                Set.of(),
-                Map.of(),
-                Set.of(),
-                true
-        );
+        return new UserCalculationData(userId, "User " + userId, "user-" + userId, null, Set.of(1), Set.of(), Map.of(), Set.of(), true);
     }
 
     private static ScheduleValidationResult validationResultWithStats(long userId, int shiftType) {
-        Map<Integer, Set<UserStatViewRecord>> stats = Map.of(
-                shiftType,
-                Set.of(statViewRecord(userId, shiftType))
-        );
+        Map<Integer, Set<UserStatViewRecord>> stats = Map.of(shiftType, Set.of(statViewRecord(userId, shiftType)));
         ScheduleValidationResult result = ScheduleValidationResult.builder().build();
         result.setFullUserStatsByShiftType(stats);
         return result;
     }
 
     private static UserStatViewRecord statViewRecord(long userId, int shiftType) {
-        return UserStatViewRecord.builder()
-                .userCalculationData(minimalCalculationData(userId))
-                .name("User " + userId)
-                .shiftType(shiftType)
-                .requestedWeekdays(1)
-                .requestedWeekends(0)
-                .calculatedWeekdays(1)
-                .calculatedWeekends(0)
-                .remainingWeekdays(0)
-                .remainingWeekends(0)
-                .anyDateSelected(false)
-                .requestedDateDays(new TreeSet<>())
-                .assignedWeekdays(1)
-                .assignedWeekends(0)
-                .assignedTotal(1)
-                .assignedTotalAllShiftTypes(1)
-                .assignedDateDays(new TreeSet<>(Set.of(5)))
-                .month(AUGUST_2026)
-                .build();
+        return UserStatViewRecord.builder().userCalculationData(minimalCalculationData(userId)).name("User " + userId).shiftType(shiftType).requestedWeekdays(1).requestedWeekends(0).calculatedWeekdays(1).calculatedWeekends(0).remainingWeekdays(0).remainingWeekends(0).anyDateSelected(false).requestedDateDays(new TreeSet<>()).assignedWeekdays(1).assignedWeekends(0).assignedTotal(1).assignedTotalAllShiftTypes(1).assignedDateDays(new TreeSet<>(Set.of(5))).month(AUGUST_2026).build();
     }
 }

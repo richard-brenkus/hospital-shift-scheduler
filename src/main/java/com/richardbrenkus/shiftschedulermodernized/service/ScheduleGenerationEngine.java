@@ -25,40 +25,20 @@ import java.util.stream.Collectors;
 public class ScheduleGenerationEngine {
     private final ScheduleRuleService scheduleRuleService;
 
-    public int assignForceFillShifts(
-            CalculatedScheduleMonth scheduleMonth,
-            List<Integer> monthDays,
-            CalculationInput input,
-            CalculationCounters counters,
-            Random random
-    ) {
+    public int assignForceFillShifts(CalculatedScheduleMonth scheduleMonth, List<Integer> monthDays, CalculationInput input, CalculationCounters counters, Random random) {
         return assignShifts(AssignmentMode.FORCE_FILL, scheduleMonth, monthDays, input, counters, random);
     }
 
-    public int assignRegularShifts(
-            CalculatedScheduleMonth scheduleMonth,
-            List<Integer> monthDays,
-            CalculationInput input,
-            CalculationCounters counters,
-            Random random
-    ) {
+    public int assignRegularShifts(CalculatedScheduleMonth scheduleMonth, List<Integer> monthDays, CalculationInput input, CalculationCounters counters, Random random) {
         return assignShifts(AssignmentMode.REGULAR, scheduleMonth, monthDays, input, counters, random);
     }
 
-    private int assignShifts(
-            AssignmentMode mode,
-            CalculatedScheduleMonth scheduleMonth,
-            List<Integer> monthDays,
-            CalculationInput input,
-            CalculationCounters counters,
-            Random random
-    ) {
+    private int assignShifts(AssignmentMode mode, CalculatedScheduleMonth scheduleMonth, List<Integer> monthDays, CalculationInput input, CalculationCounters counters, Random random) {
         int hitCounter = 0;
         Map<Integer, List<UserCalculationData>> usersByShiftType = prepareUsersByShiftType(input);
 
         for (Integer dayOfMonth : monthDays) {
-            CalculatedScheduleDay scheduleDay = getScheduleDay(
-                    scheduleMonth, input.month().atDay(dayOfMonth));
+            CalculatedScheduleDay scheduleDay = getScheduleDay(scheduleMonth, input.month().atDay(dayOfMonth));
 
             for (Integer priority : input.priorities()) {
                 for (Integer shiftType : input.calculationOrder()) {
@@ -66,23 +46,9 @@ public class ScheduleGenerationEngine {
                     if (mode == AssignmentMode.FORCE_FILL && !forceFill) continue;
                     if (mode == AssignmentMode.REGULAR && forceFill) continue;
 
-                    List<UserCalculationData> orderedUsers = getUsersInCalculationOrder(
-                            usersByShiftType.get(shiftType),
-                            shiftType,
-                            input.profile().sortByDatesAmount(),
-                            input,
-                            random
-                    );
+                    List<UserCalculationData> orderedUsers = getUsersInCalculationOrder(usersByShiftType.get(shiftType), shiftType, input.profile().sortByDatesAmount(), input, random);
 
-                    if (tryAssignUser(
-                            mode,
-                            scheduleMonth,
-                            scheduleDay,
-                            orderedUsers,
-                            shiftType,
-                            priority,
-                            input,
-                            counters)) {
+                    if (tryAssignUser(mode, scheduleMonth, scheduleDay, orderedUsers, shiftType, priority, input, counters)) {
                         hitCounter++;
                     }
                 }
@@ -91,45 +57,21 @@ public class ScheduleGenerationEngine {
         return hitCounter;
     }
 
-    private boolean tryAssignUser(
-            AssignmentMode mode,
-            CalculatedScheduleMonth scheduleMonth,
-            CalculatedScheduleDay scheduleDay,
-            List<UserCalculationData> users,
-            int shiftType,
-            int priority,
-            CalculationInput input,
-            CalculationCounters counters
-    ) {
+    private boolean tryAssignUser(AssignmentMode mode, CalculatedScheduleMonth scheduleMonth, CalculatedScheduleDay scheduleDay, List<UserCalculationData> users, int shiftType, int priority, CalculationInput input, CalculationCounters counters) {
         if (hasAssignment(scheduleDay, shiftType)) return false;
 
         for (UserCalculationData user : users) {
             ShiftPreferenceCalculationData preference = user.preferenceFor(shiftType).orElse(null);
 
-            if (preference == null
-                    || preference.priority() != priority
-                    || !preference.appliesToMonth(input.month())
-                    || !isEligibleForAssignmentMode(mode, user, preference, scheduleDay)) {
+            if (preference == null || preference.priority() != priority || !preference.appliesToMonth(input.month()) || !isEligibleForAssignmentMode(mode, user, preference, scheduleDay)) {
                 continue;
             }
 
-            boolean withinTotalLimit = scheduleRuleService.isWithinTotalShiftLimit(
-                    input.profile().shiftCountCap(), user, counters);
-            boolean withinWeekdayLimit = scheduleRuleService.isWithinRequestedWeekdayLimit(
-                    user, shiftType, counters);
-            boolean withinWeekendLimit = scheduleRuleService.isWithinRequestedWeekendLimit(
-                    user, shiftType, counters);
-            boolean respectsCurrentMonthGap = scheduleRuleService.respectsMinimalGap(
-                    scheduleDay.getDate(),
-                    input.profile().gapBetweenShifts(),
-                    user,
-                    scheduleMonth,
-                    shiftType);
-            boolean respectsPreviousMonthGap = scheduleRuleService.respectsPreviousMonthGap(
-                    input.profile().gapBetweenShifts(),
-                    scheduleDay.getDate(),
-                    user,
-                    input.month());
+            boolean withinTotalLimit = scheduleRuleService.isWithinTotalShiftLimit(input.profile().shiftCountCap(), user, counters);
+            boolean withinWeekdayLimit = scheduleRuleService.isWithinRequestedWeekdayLimit(user, shiftType, counters);
+            boolean withinWeekendLimit = scheduleRuleService.isWithinRequestedWeekendLimit(user, shiftType, counters);
+            boolean respectsCurrentMonthGap = scheduleRuleService.respectsMinimalGap(scheduleDay.getDate(), input.profile().gapBetweenShifts(), user, scheduleMonth, shiftType);
+            boolean respectsPreviousMonthGap = scheduleRuleService.respectsPreviousMonthGap(input.profile().gapBetweenShifts(), scheduleDay.getDate(), user, input.month());
 
             if (!withinTotalLimit || !respectsCurrentMonthGap || !respectsPreviousMonthGap) continue;
 
@@ -148,82 +90,44 @@ public class ScheduleGenerationEngine {
         return false;
     }
 
-    private boolean isEligibleForAssignmentMode(
-            AssignmentMode mode,
-            UserCalculationData user,
-            ShiftPreferenceCalculationData preference,
-            CalculatedScheduleDay scheduleDay
-    ) {
+    private boolean isEligibleForAssignmentMode(AssignmentMode mode, UserCalculationData user, ShiftPreferenceCalculationData preference, CalculatedScheduleDay scheduleDay) {
         if (user.isUnavailableOn(scheduleDay.getDate())) return false;
         return mode == AssignmentMode.FORCE_FILL || preference.acceptsDate(scheduleDay.getDate());
     }
 
     private Map<Integer, List<UserCalculationData>> prepareUsersByShiftType(CalculationInput input) {
-        return input.shiftTypes().stream()
-                .collect(Collectors.toUnmodifiableMap(Function.identity(), shiftType -> input.users().stream()
-                        .filter(user -> user.canWorkShiftType(shiftType))
-                        .filter(user -> user.preferenceFor(shiftType)
-                                .filter(preference -> !preference.noShiftRequested())
-                                .isPresent())
-                        .toList()
-                ));
+        return input.shiftTypes().stream().collect(Collectors.toUnmodifiableMap(Function.identity(), shiftType -> input.users().stream().filter(user -> user.canWorkShiftType(shiftType)).filter(user -> user.preferenceFor(shiftType).filter(preference -> !preference.noShiftRequested()).isPresent()).toList()));
     }
 
-    private List<UserCalculationData> getUsersInCalculationOrder(
-            List<UserCalculationData> users,
-            int shiftType,
-            boolean sortByDatesAmount,
-            CalculationInput input,
-            Random random
-    ) {
+    private List<UserCalculationData> getUsersInCalculationOrder(List<UserCalculationData> users, int shiftType, boolean sortByDatesAmount, CalculationInput input, Random random) {
         if (users == null || users.isEmpty()) return List.of();
 
-        List<UserCalculationData> specificDateUsers = users.stream()
-                .filter(user -> user.preferenceFor(shiftType)
-                        .map(preference -> !preference.anyDateSelected()
-                                && preference.appliesToMonth(input.month()))
-                        .orElse(false))
-                .collect(Collectors.toCollection(ArrayList::new));
+        List<UserCalculationData> specificDateUsers = users.stream().filter(user -> user.preferenceFor(shiftType).map(preference -> !preference.anyDateSelected() && preference.appliesToMonth(input.month())).orElse(false)).collect(Collectors.toCollection(ArrayList::new));
 
-        List<UserCalculationData> anyDateUsers = users.stream()
-                .filter(user -> user.preferenceFor(shiftType)
-                        .map(ShiftPreferenceCalculationData::anyDateSelected)
-                        .orElse(false))
-                .collect(Collectors.toCollection(ArrayList::new));
+        List<UserCalculationData> anyDateUsers = users.stream().filter(user -> user.preferenceFor(shiftType).map(ShiftPreferenceCalculationData::anyDateSelected).orElse(false)).collect(Collectors.toCollection(ArrayList::new));
 
         if (sortByDatesAmount) {
-            specificDateUsers.sort(Comparator.comparingInt(user ->
-                    user.preferenceFor(shiftType)
-                            .map(preference -> {
-                                int count = preference.requestedDatesInMonth(input.month());
-                                return count == 0 ? Integer.MAX_VALUE : count;
-                            })
-                            .orElse(Integer.MAX_VALUE)));
+            specificDateUsers.sort(Comparator.comparingInt(user -> user.preferenceFor(shiftType).map(preference -> {
+                int count = preference.requestedDatesInMonth(input.month());
+                return count == 0 ? Integer.MAX_VALUE : count;
+            }).orElse(Integer.MAX_VALUE)));
         } else {
             Collections.shuffle(specificDateUsers, random);
         }
 
         Collections.shuffle(anyDateUsers, random);
-        List<UserCalculationData> result = new ArrayList<>(
-                specificDateUsers.size() + anyDateUsers.size());
+        List<UserCalculationData> result = new ArrayList<>(specificDateUsers.size() + anyDateUsers.size());
         result.addAll(specificDateUsers);
         result.addAll(anyDateUsers);
         return result;
     }
 
-    private CalculatedScheduleDay getScheduleDay(
-            CalculatedScheduleMonth scheduleMonth,
-            LocalDate date
-    ) {
-        return scheduleMonth.getDays().stream()
-                .filter(day -> day.getDate().equals(date))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Schedule day not found: " + date));
+    private CalculatedScheduleDay getScheduleDay(CalculatedScheduleMonth scheduleMonth, LocalDate date) {
+        return scheduleMonth.getDays().stream().filter(day -> day.getDate().equals(date)).findFirst().orElseThrow(() -> new IllegalStateException("Schedule day not found: " + date));
     }
 
     private boolean hasAssignment(CalculatedScheduleDay day, int shiftType) {
-        return day.getAssignments().stream()
-                .anyMatch(assignment -> assignment.shiftType() == shiftType);
+        return day.getAssignments().stream().anyMatch(assignment -> assignment.shiftType() == shiftType);
     }
 
     private void addAssignment(CalculatedScheduleDay day, int shiftType, Long userId) {
@@ -231,7 +135,6 @@ public class ScheduleGenerationEngine {
     }
 
     private enum AssignmentMode {
-        FORCE_FILL,
-        REGULAR
+        FORCE_FILL, REGULAR
     }
 }

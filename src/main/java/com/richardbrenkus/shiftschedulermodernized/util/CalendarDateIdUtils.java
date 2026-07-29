@@ -29,6 +29,7 @@ public final class CalendarDateIdUtils {
     public static final DateTimeFormatter CSV_DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss XXX");
 
     private static boolean dayExistsInMonth(int day, LocalDateTime now) {
+
         YearMonth currentMonth = YearMonth.from(now);
         int maximumDay = currentMonth.lengthOfMonth();
 

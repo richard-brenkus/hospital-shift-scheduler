@@ -60,9 +60,7 @@ class ReminderEmailOutboxIT extends AbstractMySqlContainerTest {
     void save_shouldRejectDuplicate_whenSameTaskOccurrenceRecipient() {
         transactionTemplate.executeWithoutResult(status -> repository.saveAndFlush(pendingJob(1L, 99L)));
 
-        assertThatThrownBy(() -> transactionTemplate.executeWithoutResult(status ->
-                repository.saveAndFlush(pendingJob(1L, 99L))
-        )).isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> transactionTemplate.executeWithoutResult(status -> repository.saveAndFlush(pendingJob(1L, 99L)))).isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
@@ -87,21 +85,12 @@ class ReminderEmailOutboxIT extends AbstractMySqlContainerTest {
             repository.flush();
         });
 
-        List<Long> due = repository.findDispatchableIds(
-                List.of(
-                        ReminderEmailOutboxStatus.PENDING,
-                        ReminderEmailOutboxStatus.FAILED
-                ),
-                NOW,
-                PageRequest.of(0, 10)
-        );
+        List<Long> due = repository.findDispatchableIds(List.of(ReminderEmailOutboxStatus.PENDING, ReminderEmailOutboxStatus.FAILED), NOW, PageRequest.of(0, 10));
 
         // future / sent / dead must not appear; first two are ordered by nextAttemptAt.
         assertThat(due).hasSize(2);
         // We cannot reference the auto-generated ids beforehand, so verify by re-loading.
-        List<ReminderEmailOutbox> ordered = due.stream()
-                .map(id -> repository.findById(id).orElseThrow())
-                .toList();
+        List<ReminderEmailOutbox> ordered = due.stream().map(id -> repository.findById(id).orElseThrow()).toList();
         assertThat(ordered.get(0).getRecipientUserId()).isEqualTo(10L);
         assertThat(ordered.get(1).getRecipientUserId()).isEqualTo(11L);
     }
@@ -132,31 +121,21 @@ class ReminderEmailOutboxIT extends AbstractMySqlContainerTest {
         // Direct-save path also relies on the unique index. Ensure two saves for
         // the same idempotency key are rejected by the database, not silently
         // absorbed.
-        ReminderEmailOutbox first = transactionTemplate.execute(status ->
-                repository.saveAndFlush(pendingJob(1L, 42L))
-        );
+        ReminderEmailOutbox first = transactionTemplate.execute(status -> repository.saveAndFlush(pendingJob(1L, 42L)));
         // Craft a second row with the same idempotency key value.
         ReminderEmailOutbox second = pendingJob(1L, 43L);
         Assertions.assertNotNull(first);
         ReflectionTestUtils.setField(second, "idempotencyKey", first.getIdempotencyKey());
 
-        assertThatThrownBy(() -> transactionTemplate.executeWithoutResult(status ->
-                repository.saveAndFlush(second)
-        )).isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> transactionTemplate.executeWithoutResult(status -> repository.saveAndFlush(second))).isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void existsBySourceTaskIdAndScheduledExecutionTimeAndRecipientUserId_shouldReturnTrue_whenRowExists() {
-        transactionTemplate.executeWithoutResult(status ->
-                repository.saveAndFlush(pendingJob(1L, 42L))
-        );
+        transactionTemplate.executeWithoutResult(status -> repository.saveAndFlush(pendingJob(1L, 42L)));
 
-        boolean present = repository
-                .existsBySourceTaskIdAndScheduledExecutionTimeAndRecipientUserId(
-                        1L, NOW, 42L);
-        boolean absent = repository
-                .existsBySourceTaskIdAndScheduledExecutionTimeAndRecipientUserId(
-                        1L, NOW, 999L);
+        boolean present = repository.existsBySourceTaskIdAndScheduledExecutionTimeAndRecipientUserId(1L, NOW, 42L);
+        boolean absent = repository.existsBySourceTaskIdAndScheduledExecutionTimeAndRecipientUserId(1L, NOW, 999L);
 
         assertThat(present).isTrue();
         assertThat(absent).isFalse();
@@ -164,23 +143,14 @@ class ReminderEmailOutboxIT extends AbstractMySqlContainerTest {
 
     @Test
     void findByIdForUpdate_shouldReturnRow_whenPresent() {
-        Long id = transactionTemplate.execute(status ->
-                repository.saveAndFlush(pendingJob(1L, 42L)).getId()
-        );
+        Long id = transactionTemplate.execute(status -> repository.saveAndFlush(pendingJob(1L, 42L)).getId());
 
-        Optional<ReminderEmailOutbox> found = transactionTemplate.execute(status ->
-                repository.findByIdForUpdate(id)
-        );
+        Optional<ReminderEmailOutbox> found = transactionTemplate.execute(status -> repository.findByIdForUpdate(id));
 
         assertThat(found).isPresent();
     }
 
     private static ReminderEmailOutbox pendingJob(long taskId, long recipientId) {
-        return ReminderEmailOutbox.pending(
-                taskId, NOW, FINAL_DAY, DEADLINE, recipientId,
-                "user-" + recipientId + "@example.test",
-                "User " + recipientId,
-                NOW
-        );
+        return ReminderEmailOutbox.pending(taskId, NOW, FINAL_DAY, DEADLINE, recipientId, "user-" + recipientId + "@example.test", "User " + recipientId, NOW);
     }
 }

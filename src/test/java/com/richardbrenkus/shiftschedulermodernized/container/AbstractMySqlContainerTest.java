@@ -16,11 +16,7 @@ public abstract class AbstractMySqlContainerTest {
     @MockitoBean
     protected EmailReminderService emailReminderService;
 
-    protected static final MySQLContainer<?> mysql =
-            new MySQLContainer<>("mysql:8.4")
-                    .withDatabaseName("shift_scheduler_test")
-                    .withUsername("test")
-                    .withPassword("test");
+    protected static final MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.4").withDatabaseName("shift_scheduler_test").withUsername("test").withPassword("test");
 
     static {
         mysql.start();

@@ -46,8 +46,7 @@ class StoredScheduleServiceIT extends AbstractMySqlContainerTest {
 
         storedScheduleService.saveScheduleWithStats(scheduleMonth, com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleValidationResult.builder().build());
 
-        assertThat(storedScheduleDayRepository.findByMonthYearIdOrderByDayIntegerAsc("08/2026"))
-                .hasSize(31);
+        assertThat(storedScheduleDayRepository.findByMonthYearIdOrderByDayIntegerAsc("08/2026")).hasSize(31);
         assertThat(storedScheduleService.existsByMonth(AUGUST_2026)).isTrue();
     }
 
@@ -66,9 +65,7 @@ class StoredScheduleServiceIT extends AbstractMySqlContainerTest {
         assertThat(view.getMonth()).isEqualTo(AUGUST_2026);
         assertThat(view.getDays()).hasSize(31);
         assertThat(view.getDays().get(9).getDate()).isEqualTo(LocalDate.of(2026, 8, 10));
-        assertThat(view.getDays().get(9).getAssignments())
-                .anyMatch(assignment -> assignment.getShiftType() == 1
-                        && "MUDr. Alice Doe".equals(assignment.getDisplayName()));
+        assertThat(view.getDays().get(9).getAssignments()).anyMatch(assignment -> assignment.getShiftType() == 1 && "MUDr. Alice Doe".equals(assignment.getDisplayName()));
     }
 
     @Test
@@ -78,16 +75,10 @@ class StoredScheduleServiceIT extends AbstractMySqlContainerTest {
     }
 
     private void addAssignment(ScheduleMonth scheduleMonth, LocalDate date, int shiftType, User user) {
-        ScheduleDay day = scheduleMonth.getDays().stream()
-                .filter(candidate -> candidate.getDate().equals(date))
-                .findFirst()
-                .orElseThrow();
+        ScheduleDay day = scheduleMonth.getDays().stream().filter(candidate -> candidate.getDate().equals(date)).findFirst().orElseThrow();
         if (day.getAssignments() == null) {
             day.setAssignments(new ArrayList<>());
         }
-        day.getAssignments().add(ShiftAssignment.builder()
-                .shiftType(shiftType)
-                .userCalculationData(TestFixtures.toUserCalculationData(user))
-                .build());
+        day.getAssignments().add(ShiftAssignment.builder().shiftType(shiftType).userCalculationData(TestFixtures.toUserCalculationData(user)).build());
     }
 }

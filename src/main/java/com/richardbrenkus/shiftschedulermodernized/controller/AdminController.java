@@ -182,11 +182,9 @@ public class AdminController {
 
         Optional<ShiftRequestViewRecord> submittedShiftRequestRecord = shiftRequestService.getShiftRequestViewRecord(username);
         submittedShiftRequestRecord.ifPresentOrElse(record -> {
-                    model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, true);
-                    model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, record);
-                },
-                () -> model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, false)
-        );
+            model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, true);
+            model.addAttribute(ModelAttributeName.SUBMITTED_SHIFT_REQUEST_RECORD, record);
+        }, () -> model.addAttribute(ModelAttributeName.HAS_SHIFT_REQUEST, false));
 
         return "user/userIndex";
     }
@@ -209,7 +207,7 @@ public class AdminController {
         prepareModelService.prepareUpdateUserModel(model);
 
 
-        if(!bindingResult.hasErrors()) {
+        if (!bindingResult.hasErrors()) {
             UserValidationResult userValidationResult = userService.validateAndUpdateUser(updatedUser);
             if (!userValidationResult.isValid()) {
                 for (int i = 0; i < userValidationResult.getFieldErrors().size(); i++) {
@@ -248,8 +246,7 @@ public class AdminController {
     }
 
     @PostMapping("/admin/show_request_summary")
-    public String showRequestSummaryForAdmin(@RequestParam Long userId,
-                                             Model model) {
+    public String showRequestSummaryForAdmin(@RequestParam Long userId, Model model) {
 
         User user = userService.getUserById(userId);
         ShiftRequestViewRecord record = shiftRequestService.getShiftRequestViewRecord(user.getUsername()).orElse(null);
@@ -326,16 +323,7 @@ public class AdminController {
         boolean storedScheduleExists = storedScheduleService.existsByMonthYearId(monthYearId);
 
         if (storedScheduleExists && !confirmed) {
-            /*
-             * Recreate all lists and other attributes required by
-             * calculate_schedule_select.html.
-             */
             prepareModelService.prepareCalculateScheduleModel(model);
-
-            /*
-             * Make sure the submitted values are retained if the preparation
-             * service creates a new CalculationProfileForm.
-             */
             model.addAttribute("calculationProfileForm", calculationProfileForm);
             model.addAttribute("showExistingScheduleConfirmation", true);
             model.addAttribute("existingScheduleMonth", calculationProfileForm.getCalculationMonth());
@@ -389,8 +377,7 @@ public class AdminController {
 
         model.addAttribute("fullUserStatsByShiftType", stats);
         model.addAttribute("shiftTypes", shiftTypeService.getShiftTypes());
-        model.addAttribute("statsExist",
-                stats.values().stream().anyMatch(set -> set != null && !set.isEmpty()));
+        model.addAttribute("statsExist", stats.values().stream().anyMatch(set -> set != null && !set.isEmpty()));
         model.addAttribute("month", selectedMonth);
         model.addAttribute("year", selectedMonth.getYear());
         model.addAttribute("monthInt", selectedMonth.getMonthValue());

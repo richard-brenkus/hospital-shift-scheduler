@@ -11,23 +11,14 @@ import java.util.UUID;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(
-        prefix = "application.kafka.activity",
-        name = "enabled",
-        havingValue = "true"
-)
+@ConditionalOnProperty(prefix = "application.kafka.activity", name = "enabled", havingValue = "true")
 public class KafkaActivityProducer implements ActivityKafkaProducer {
 
     private final ActivityKafkaMapper activityKafkaMapper;
     private final ActivityKafkaProperties activityKafkaProperties;
     private final KafkaTemplate<String, ActivityKafkaMessage> activityKafkaTemplate;
 
-    public KafkaActivityProducer(
-            ActivityKafkaMapper activityKafkaMapper,
-            ActivityKafkaProperties activityKafkaProperties,
-            @Qualifier("activityKafkaTemplate")
-            KafkaTemplate<String, ActivityKafkaMessage> activityKafkaTemplate
-    ) {
+    public KafkaActivityProducer(ActivityKafkaMapper activityKafkaMapper, ActivityKafkaProperties activityKafkaProperties, @Qualifier("activityKafkaTemplate") KafkaTemplate<String, ActivityKafkaMessage> activityKafkaTemplate) {
         this.activityKafkaMapper = activityKafkaMapper;
         this.activityKafkaProperties = activityKafkaProperties;
         this.activityKafkaTemplate = activityKafkaTemplate;
@@ -42,29 +33,16 @@ public class KafkaActivityProducer implements ActivityKafkaProducer {
          * send(...) is asynchronous. Failure is handled in the callback and is
          * deliberately not rethrown into the already-completed business flow.
          */
-        activityKafkaTemplate
-                .send(activityKafkaProperties.topic(), messageKey, message)
-                .whenComplete((result, throwable) -> {
-                    if (throwable != null) {
-                        log.error(
-                                "Failed to publish activity event {} to Kafka topic {}",
-                                message.eventId(),
-                                activityKafkaProperties.topic(),
-                                throwable
-                        );
-                        return;
-                    }
+        activityKafkaTemplate.send(activityKafkaProperties.topic(), messageKey, message).whenComplete((result, throwable) -> {
+            if (throwable != null) {
+                log.error("Failed to publish activity event {} to Kafka topic {}", message.eventId(), activityKafkaProperties.topic(), throwable);
+                return;
+            }
 
-                    if (log.isDebugEnabled()) {
-                        log.debug(
-                                "Published activity event {} to Kafka topic {}, partition {}, offset {}",
-                                message.eventId(),
-                                result.getRecordMetadata().topic(),
-                                result.getRecordMetadata().partition(),
-                                result.getRecordMetadata().offset()
-                        );
-                    }
-                });
+            if (log.isDebugEnabled()) {
+                log.debug("Published activity event {} to Kafka topic {}, partition {}, offset {}", message.eventId(), result.getRecordMetadata().topic(), result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
+            }
+        });
     }
 
     private String createMessageKey(ActivityKafkaMessage message) {

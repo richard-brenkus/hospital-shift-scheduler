@@ -46,16 +46,14 @@ class UserExcelExportServiceTest {
         ArgumentCaptor<List<UserExportRecord>> captor = ArgumentCaptor.forClass(List.class);
         verify(userExcelExporter).export(captor.capture(), org.mockito.ArgumentMatchers.eq(stream), org.mockito.ArgumentMatchers.any(Locale.class));
 
-        assertThat(captor.getValue())
-                .singleElement()
-                .satisfies(record -> {
-                    assertThat(record.userId()).isEqualTo(7L);
-                    assertThat(record.email()).isEqualTo("freddie@example.test");
-                    assertThat(record.name()).isEqualTo("Freddie Mercury");
-                    assertThat(record.username()).isEqualTo("freddie");
-                    assertThat(record.role()).isEqualTo("USER");
-                    assertThat(record.enabled()).isTrue();
-                });
+        assertThat(captor.getValue()).singleElement().satisfies(record -> {
+            assertThat(record.userId()).isEqualTo(7L);
+            assertThat(record.email()).isEqualTo("freddie@example.test");
+            assertThat(record.name()).isEqualTo("Freddie Mercury");
+            assertThat(record.username()).isEqualTo("freddie");
+            assertThat(record.role()).isEqualTo("USER");
+            assertThat(record.enabled()).isTrue();
+        });
     }
 
     @Test

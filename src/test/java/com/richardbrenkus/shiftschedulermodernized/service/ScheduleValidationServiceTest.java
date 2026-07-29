@@ -50,12 +50,7 @@ class ScheduleValidationServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ScheduleValidationService(
-                new ShiftTypeProperties(6),
-                scheduleRuleService,
-                userStatisticService,
-                userService
-        );
+        service = new ScheduleValidationService(new ShiftTypeProperties(6), scheduleRuleService, userStatisticService, userService);
     }
 
     @Test
@@ -88,19 +83,13 @@ class ScheduleValidationServiceTest {
 
     @Test
     void shouldThrowIllegalArgumentException_whenScheduleHasNoCalculationProfile() {
-        ScheduleEditForm form = ScheduleEditForm.builder()
-                .month(AUGUST_2026)
-                .build();
+        ScheduleEditForm form = ScheduleEditForm.builder().month(AUGUST_2026).build();
 
-        ScheduleMonth mapped = ScheduleMonth.builder()
-                .month(AUGUST_2026)
-                .build();
+        ScheduleMonth mapped = ScheduleMonth.builder().month(AUGUST_2026).build();
 
         when(userService.getScheduleMonth(any(ScheduleEditForm.class))).thenReturn(mapped);
 
-        assertThatThrownBy(() -> service.validateSchedule(form))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("calculation profile");
+        assertThatThrownBy(() -> service.validateSchedule(form)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("calculation profile");
     }
 
     @Test
@@ -389,34 +378,16 @@ class ScheduleValidationServiceTest {
     }
 
     private CalculationProfileForm calculationProfile(int shiftCountCap, int minimalGap) {
-        return CalculationProfileForm.builder()
-                .calculationMonth(AUGUST_2026)
-                .shiftCountCap(shiftCountCap)
-                .gapBetweenShifts(minimalGap)
-                .forceFillShiftTypes(List.of())
-                .build();
+        return CalculationProfileForm.builder().calculationMonth(AUGUST_2026).shiftCountCap(shiftCountCap).gapBetweenShifts(minimalGap).forceFillShiftTypes(List.of()).build();
     }
 
     private void stubEmptyStatistics() {
-        when(userStatisticService.returnQuickUserStats(
-                any(ScheduleMonth.class),
-                anyInt(),
-                any(CalculationCounters.class)
-        )).thenReturn(Map.of());
+        when(userStatisticService.returnQuickUserStats(any(ScheduleMonth.class), anyInt(), any(CalculationCounters.class))).thenReturn(Map.of());
 
-        when(userStatisticService.returnNoShiftAssignedUserStatMap(
-                any(ScheduleMonth.class),
-                any(CalculationCounters.class)
-        )).thenReturn(Map.of());
+        when(userStatisticService.returnNoShiftAssignedUserStatMap(any(ScheduleMonth.class), any(CalculationCounters.class))).thenReturn(Map.of());
 
-        when(userStatisticService.returnFullUserStats(
-                any(ScheduleMonth.class),
-                any(CalculationCounters.class)
-        )).thenReturn(Map.of());
+        when(userStatisticService.returnFullUserStats(any(ScheduleMonth.class), any(CalculationCounters.class))).thenReturn(Map.of());
 
-        when(userStatisticService.returnScheduleScoreAsString(
-                any(ScheduleMonth.class),
-                anyInt()
-        )).thenReturn("0/186");
+        when(userStatisticService.returnScheduleScoreAsString(any(ScheduleMonth.class), anyInt())).thenReturn("0/186");
     }
 }

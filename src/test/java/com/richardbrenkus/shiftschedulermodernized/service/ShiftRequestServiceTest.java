@@ -161,8 +161,7 @@ class ShiftRequestServiceTest {
     void shouldThrowUsernameNotFound_whenGettingViewRecordForNonExistentUser() {
         when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.getShiftRequestViewRecord("ghost"))
-                .isInstanceOf(org.springframework.security.core.userdetails.UsernameNotFoundException.class);
+        assertThatThrownBy(() -> service.getShiftRequestViewRecord("ghost")).isInstanceOf(org.springframework.security.core.userdetails.UsernameNotFoundException.class);
     }
 
     @Test
@@ -205,9 +204,7 @@ class ShiftRequestServiceTest {
 
         ShiftRequestForm form = service.getShiftRequestForm("freddie");
 
-        assertThat(form.getPreferences())
-                .extracting(ShiftPreferenceForm::getShiftType)
-                .containsExactlyInAnyOrder(1, 3);
+        assertThat(form.getPreferences()).extracting(ShiftPreferenceForm::getShiftType).containsExactlyInAnyOrder(1, 3);
     }
 
     @Test
@@ -233,9 +230,7 @@ class ShiftRequestServiceTest {
     void shouldReplaceDatesNoOnExistingRequest_whenUpdatingEntity() {
         ShiftRequest existing = new ShiftRequest();
         existing.setDatesNo(new ArrayList<>(List.of(LocalDate.of(2026, 8, 1))));
-        ShiftPreference existingPref = ShiftPreference.builder()
-                .shiftType(1).priority(3).weekdayCount(2).weekendCount(0)
-                .datesYes(new ArrayList<>()).build();
+        ShiftPreference existingPref = ShiftPreference.builder().shiftType(1).priority(3).weekdayCount(2).weekendCount(0).datesYes(new ArrayList<>()).build();
         existingPref.setShiftRequest(existing);
         existing.getPreferences().add(existingPref);
 
@@ -260,9 +255,7 @@ class ShiftRequestServiceTest {
         ShiftPreferenceForm newPref = preference(5, false, true, 1, 0, List.of());
         ShiftRequestForm form = new ShiftRequestForm();
         form.getPreferences().add(newPref);
-        ShiftPreference mappedEntity = ShiftPreference.builder()
-                .shiftType(5).priority(1).weekdayCount(1).weekendCount(0)
-                .anyDateSelected(true).datesYes(new ArrayList<>()).build();
+        ShiftPreference mappedEntity = ShiftPreference.builder().shiftType(5).priority(1).weekdayCount(1).weekendCount(0).anyDateSelected(true).datesYes(new ArrayList<>()).build();
         when(shiftRequestMapper.preferenceFormToEntity(newPref)).thenReturn(mappedEntity);
 
         ShiftRequest updated = service.updateEntity(existing, form);
@@ -271,12 +264,7 @@ class ShiftRequestServiceTest {
         assertThat(mappedEntity.getShiftRequest()).isSameAs(existing);
     }
 
-    private static ShiftPreferenceForm preference(int shiftType,
-                                                  boolean noShift,
-                                                  boolean anyDate,
-                                                  int weekdayCount,
-                                                  int weekendCount,
-                                                  List<LocalDate> datesYes) {
+    private static ShiftPreferenceForm preference(int shiftType, boolean noShift, boolean anyDate, int weekdayCount, int weekendCount, List<LocalDate> datesYes) {
         ShiftPreferenceForm form = new ShiftPreferenceForm();
         form.setShiftType(shiftType);
         form.setNoShiftRequested(noShift);

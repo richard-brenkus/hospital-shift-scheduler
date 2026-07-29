@@ -66,28 +66,16 @@ class ActivityLogPersistenceIT extends AbstractMySqlContainerTest {
 
         assertThat(firstResult).isEqualTo(1);
 
-        List<ActivityLog> stored = activityLogRepository.findAllByOrderByOccurredAtDescIdDesc(
-                PageRequest.of(0, 10)
-        );
+        List<ActivityLog> stored = activityLogRepository.findAllByOrderByOccurredAtDescIdDesc(PageRequest.of(0, 10));
 
-        assertThat(stored)
-                .extracting(ActivityLog::getEventId)
-                .filteredOn(eventId::equals)
-                .hasSize(1);
+        assertThat(stored).extracting(ActivityLog::getEventId).filteredOn(eventId::equals).hasSize(1);
     }
 
     @Test
     void afterCommit_shouldPersistActivityLog_whenBusinessTransactionCommits() {
         long before = activityLogRepository.count();
 
-        transactionTemplate.executeWithoutResult(status ->
-                activityPublisher.publishSuccess(
-                        ActivityType.USER_CREATED,
-                        "User",
-                        "42",
-                        "Created user under a committing transaction"
-                )
-        );
+        transactionTemplate.executeWithoutResult(status -> activityPublisher.publishSuccess(ActivityType.USER_CREATED, "User", "42", "Created user under a committing transaction"));
 
         long after = activityLogRepository.count();
 
@@ -98,20 +86,11 @@ class ActivityLogPersistenceIT extends AbstractMySqlContainerTest {
     void afterCommit_shouldNotPersistActivityLog_whenBusinessTransactionRollsBack() {
         long before = activityLogRepository.count();
 
-        assertThatThrownBy(() ->
-                transactionTemplate.executeWithoutResult(status -> {
-                    activityPublisher.publishSuccess(
-                            ActivityType.USER_CREATED,
-                            "User",
-                            "42",
-                            "Should not be persisted"
-                    );
+        assertThatThrownBy(() -> transactionTemplate.executeWithoutResult(status -> {
+            activityPublisher.publishSuccess(ActivityType.USER_CREATED, "User", "42", "Should not be persisted");
 
-                    throw new IllegalStateException(
-                            "simulated business failure"
-                    );
-                })
-        ).isInstanceOf(IllegalStateException.class);
+            throw new IllegalStateException("simulated business failure");
+        })).isInstanceOf(IllegalStateException.class);
 
         long after = activityLogRepository.count();
 
@@ -119,28 +98,10 @@ class ActivityLogPersistenceIT extends AbstractMySqlContainerTest {
     }
 
     private int insertOnce(UUID eventId, Instant occurredAt) {
-        Integer affectedRows = transactionTemplate.execute(status ->
-                activityLogRepository.insertIfAbsent(
-                        eventId,
-                        ActivityType.USER_CREATED.name(),
-                        "alice",
-                        Role.ADMIN.name(),
-                        "User",
-                        "42",
-                        "Duplicate protection test",
-                        true,
-                        null,
-                        "POST",
-                        "/admin/add",
-                        "127.0.0.1",
-                        occurredAt
-                )
-        );
+        Integer affectedRows = transactionTemplate.execute(status -> activityLogRepository.insertIfAbsent(eventId, ActivityType.USER_CREATED.name(), "alice", Role.ADMIN.name(), "User", "42", "Duplicate protection test", true, null, "POST", "/admin/add", "127.0.0.1", occurredAt));
 
         if (affectedRows == null) {
-            throw new IllegalStateException(
-                    "Transaction completed without returning the affected-row count"
-            );
+            throw new IllegalStateException("Transaction completed without returning the affected-row count");
         }
 
         return affectedRows;

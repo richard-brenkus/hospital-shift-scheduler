@@ -31,21 +31,13 @@ public record UserCalculationData(
         Objects.requireNonNull(name, "name must not be null");
         Objects.requireNonNull(username, "username must not be null");
 
-        allowedShiftTypes = allowedShiftTypes == null
-                ? Set.of()
-                : Set.copyOf(allowedShiftTypes);
+        allowedShiftTypes = allowedShiftTypes == null ? Set.of() : Set.copyOf(allowedShiftTypes);
 
-        unavailableDates = unavailableDates == null
-                ? Set.of()
-                : Set.copyOf(unavailableDates);
+        unavailableDates = unavailableDates == null ? Set.of() : Set.copyOf(unavailableDates);
 
-        preferencesByShiftType = preferencesByShiftType == null
-                ? Map.of()
-                : Map.copyOf(preferencesByShiftType);
+        preferencesByShiftType = preferencesByShiftType == null ? Map.of() : Map.copyOf(preferencesByShiftType);
 
-        previousMonthAssignedDates = previousMonthAssignedDates == null
-                        ? Set.of()
-                        : Set.copyOf(previousMonthAssignedDates);
+        previousMonthAssignedDates = previousMonthAssignedDates == null ? Set.of() : Set.copyOf(previousMonthAssignedDates);
     }
 
     public boolean canWorkShiftType(int shiftType) {

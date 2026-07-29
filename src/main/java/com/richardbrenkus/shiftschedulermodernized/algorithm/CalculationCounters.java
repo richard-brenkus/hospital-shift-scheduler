@@ -7,17 +7,16 @@ import java.util.Map;
 
 @Getter
 public class CalculationCounters {
+
     private final Map<Long, Map<Integer, Integer>> weekdayCounters = new HashMap<>();
     private final Map<Long, Map<Integer, Integer>> weekendCounters = new HashMap<>();
 
     public void incrementWeekday(Long userId, int shiftType) {
-        weekdayCounters.computeIfAbsent(userId, ignored -> new HashMap<>())
-                .merge(shiftType, 1, Integer::sum);
+        weekdayCounters.computeIfAbsent(userId, ignored -> new HashMap<>()).merge(shiftType, 1, Integer::sum);
     }
 
     public void incrementWeekend(Long userId, int shiftType) {
-        weekendCounters.computeIfAbsent(userId, ignored -> new HashMap<>())
-                .merge(shiftType, 1, Integer::sum);
+        weekendCounters.computeIfAbsent(userId, ignored -> new HashMap<>()).merge(shiftType, 1, Integer::sum);
     }
 
     public int getWeekdayCount(Long userId, int shiftType) {
@@ -29,10 +28,9 @@ public class CalculationCounters {
     }
 
     public int getTotalCount(Long userId) {
-        int weekdayTotal = weekdayCounters.getOrDefault(userId, Map.of())
-                .values().stream().mapToInt(Integer::intValue).sum();
-        int weekendTotal = weekendCounters.getOrDefault(userId, Map.of())
-                .values().stream().mapToInt(Integer::intValue).sum();
+        int weekdayTotal = weekdayCounters.getOrDefault(userId, Map.of()).values().stream().mapToInt(Integer::intValue).sum();
+        int weekendTotal = weekendCounters.getOrDefault(userId, Map.of()).values().stream().mapToInt(Integer::intValue).sum();
+
         return weekdayTotal + weekendTotal;
     }
 

@@ -31,70 +31,26 @@ public class ScheduleCalculationService {
 
     public ScheduleMonth calculateSchedule(CalculationProfileForm form) {
         if (!calculationRunning.compareAndSet(false, true)) {
-            /*
-             * ACTIVITY LOG REVIEW:
-             *
-             * No calculation actually started, so this rejected request should
-             * normally not be recorded as SCHEDULE_CALCULATION_FAILED.
-             *
-             * Log it only if rejected concurrent attempts are important audit
-             * information in your application.
-             */
-            throw new CalculationAlreadyRunningException(
-                    "Another schedule calculation is already running."
-            );
+            throw new CalculationAlreadyRunningException("Another schedule calculation is already running.");
         }
 
         String calculationMonth = resolveCalculationMonth(form);
 
         try {
-            /*
-             * If publishing unexpectedly
-             * throws, the finally block must still reset calculationRunning.
-             */
-            activityPublisher.publishSuccess(
-                    ActivityType.SCHEDULE_CALCULATION_STARTED,
-                    "ScheduleCalculation",
-                    calculationMonth,
-                    "Schedule calculation started for " + calculationMonth
-            );
+            activityPublisher.publishSuccess(ActivityType.SCHEDULE_CALCULATION_STARTED, "ScheduleCalculation", calculationMonth, "Schedule calculation started for " + calculationMonth);
 
             CalculationInput input = calculationInputLoader.load(form);
 
-            ScheduleCandidate bestCandidate =
-                    parallelService.calculateBestSchedule(input);
+            ScheduleCandidate bestCandidate = parallelService.calculateBestSchedule(input);
 
-            ScheduleMonth result =
-                    calculatedScheduleConverter.toLegacyScheduleMonth(
-                            bestCandidate,
-                            form
-                    );
+            ScheduleMonth result = calculatedScheduleConverter.toLegacyScheduleMonth(bestCandidate, form);
 
-            activityPublisher.publishSuccess(
-                    ActivityType.SCHEDULE_CALCULATION_COMPLETED,
-                    "ScheduleCalculation",
-                    calculationMonth,
-                    "Schedule calculation completed for "
-                            + calculationMonth
-                            + "; hit counter: "
-                            + bestCandidate.hitCounter()
-                            + "; worker index: "
-                            + bestCandidate.workerIndex()
-                            + "; attempt index: "
-                            + bestCandidate.attemptIndex()
-            );
+            activityPublisher.publishSuccess(ActivityType.SCHEDULE_CALCULATION_COMPLETED, "ScheduleCalculation", calculationMonth, "Schedule calculation completed for " + calculationMonth + "; hit counter: " + bestCandidate.hitCounter() + "; worker index: " + bestCandidate.workerIndex() + "; attempt index: " + bestCandidate.attemptIndex());
 
             return result;
 
         } catch (RuntimeException exception) {
-            activityPublisher.publishFailure(
-                    ActivityType.SCHEDULE_CALCULATION_FAILED,
-                    "ScheduleCalculation",
-                    calculationMonth,
-                    "Schedule calculation failed for " + calculationMonth,
-                    "Schedule calculation failed.",
-                    requestMetadataProvider.current()
-            );
+            activityPublisher.publishFailure(ActivityType.SCHEDULE_CALCULATION_FAILED, "ScheduleCalculation", calculationMonth, "Schedule calculation failed for " + calculationMonth, "Schedule calculation failed.", requestMetadataProvider.current());
             throw exception;
         } finally {
             calculationRunning.set(false);
@@ -102,25 +58,17 @@ public class ScheduleCalculationService {
     }
 
     public boolean isCalculationRunning() {
-        /*
-         * ACTIVITY LOG REVIEW:
-         *
-         * Read-only status check. Do not log.
-         */
         return calculationRunning.get();
     }
 
     private String resolveCalculationMonth(CalculationProfileForm form) {
-        /*
-         * ACTIVITY LOG REVIEW:
-         *
-         * Pure helper method. Do not log.
-         */
+
         if (form == null) {
             return "UNKNOWN";
         }
 
         YearMonth month = form.getCalculationMonth();
+
         return month != null ? month.toString() : "UNKNOWN";
     }
 }

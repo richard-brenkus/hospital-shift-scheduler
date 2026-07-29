@@ -73,15 +73,7 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new UserService(
-                userRepository,
-                passwordEncoderConfig,
-                userMapper,
-                userTransactionalUpdater,
-                userTransactionalCreator,
-                activityPublisher,
-                scheduleMapper
-        );
+        service = new UserService(userRepository, passwordEncoderConfig, userMapper, userTransactionalUpdater, userTransactionalCreator, activityPublisher, scheduleMapper);
     }
 
     @Test
@@ -108,8 +100,7 @@ class UserServiceTest {
     void shouldThrowUsernameNotFound_whenGettingDisplayNameForUnknownUser() {
         when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.getDisplayNameByUserName("ghost"))
-                .isInstanceOf(UsernameNotFoundException.class);
+        assertThatThrownBy(() -> service.getDisplayNameByUserName("ghost")).isInstanceOf(UsernameNotFoundException.class);
     }
 
     @Test
@@ -167,14 +158,11 @@ class UserServiceTest {
         b.setName("Bruce");
         User a = TestFixtures.user(3L, "amy");
         a.setName("Amy");
-        when(userRepository.findAllByRoleNotOrderByNameAsc(Role.ADMIN))
-                .thenReturn(List.of(a, b));
+        when(userRepository.findAllByRoleNotOrderByNameAsc(Role.ADMIN)).thenReturn(List.of(a, b));
 
         List<User> users = service.getAllUsersWithoutAdminByNameAsc();
 
-        assertThat(users)
-                .extracting(User::getName)
-                .containsExactly("Amy", "Bruce");
+        assertThat(users).extracting(User::getName).containsExactly("Amy", "Bruce");
     }
 
     @Test
@@ -189,9 +177,7 @@ class UserServiceTest {
     void shouldThrowIllegalArgumentException_whenUserIdNotFound() {
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.getUserById(99L))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("99");
+        assertThatThrownBy(() -> service.getUserById(99L)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("99");
     }
 
     @Test
@@ -207,8 +193,7 @@ class UserServiceTest {
         User withRequest = TestFixtures.user(1L, "freddie");
         withRequest.setName("Freddie");
         withRequest.setShiftRequest(new ShiftRequest());
-        when(userRepository.findByShiftRequestIsNotNullOrderByNameAsc())
-                .thenReturn(List.of(withRequest));
+        when(userRepository.findByShiftRequestIsNotNullOrderByNameAsc()).thenReturn(List.of(withRequest));
 
         List<User> users = service.getAllUsersWithShiftRequestByNameAsc();
 
@@ -269,8 +254,7 @@ class UserServiceTest {
 
         UserValidationResult result = service.validateAndUpdateUser(form);
         assertThat(result.isValid()).isFalse();
-        assertThat(result.getGlobalErrors().getFirst().message())
-                .isEqualTo("The selected user no longer exists.");
+        assertThat(result.getGlobalErrors().getFirst().message()).isEqualTo("The selected user no longer exists.");
     }
 
     @Test
@@ -310,9 +294,7 @@ class UserServiceTest {
 
         assertThat(result.isValid()).isFalse();
 
-        List<String> errorFields = result.getFieldErrors().stream()
-                .map(ValidationError::field)
-                .toList();
+        List<String> errorFields = result.getFieldErrors().stream().map(ValidationError::field).toList();
 
         assertThat(errorFields).containsExactly("username", "email", "name", "allowedShiftTypes");
     }
@@ -332,9 +314,7 @@ class UserServiceTest {
 
         UserValidationResult result = service.validateAndUpdateUser(form);
 
-        List<String> errorFields = result.getFieldErrors().stream()
-                .map(ValidationError::field)
-                .toList();
+        List<String> errorFields = result.getFieldErrors().stream().map(ValidationError::field).toList();
 
         assertThat(errorFields).containsExactly("allowedShiftTypes");
     }

@@ -21,10 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_METHOD;
 
-@Sql(scripts =
-        {"/sql/cleanup.sql",
-        "/sql/user-with-shift-request.sql"},
-        executionPhase = BEFORE_TEST_METHOD)
+@Sql(scripts = {"/sql/cleanup.sql", "/sql/user-with-shift-request.sql"}, executionPhase = BEFORE_TEST_METHOD)
 class ShiftRequestServiceIT extends AbstractMySqlContainerTest {
 
     @Autowired
@@ -86,15 +83,10 @@ class ShiftRequestServiceIT extends AbstractMySqlContainerTest {
         assertThat(reloadedRequest.getShiftRequestId()).isEqualTo(originalRequestId);
         assertThat(reloadedRequest.getDatesNo()).containsExactly(LocalDate.of(2026, 8, 25));
 
-        ShiftPreference reloadedPref1 = reloadedRequest.getPreferences()
-                .stream()
-                .filter(preference -> preference.getShiftType() == 1)
-                .findFirst()
-                .orElseThrow();
+        ShiftPreference reloadedPref1 = reloadedRequest.getPreferences().stream().filter(preference -> preference.getShiftType() == 1).findFirst().orElseThrow();
         assertThat(reloadedPref1.getWeekdayCount()).isEqualTo(4);
         assertThat(reloadedPref1.getWeekendCount()).isEqualTo(2);
-        assertThat(reloadedPref1.getDatesYes()).containsExactlyInAnyOrder(
-                LocalDate.of(2026, 8, 2), LocalDate.of(2026, 8, 8));
+        assertThat(reloadedPref1.getDatesYes()).containsExactlyInAnyOrder(LocalDate.of(2026, 8, 2), LocalDate.of(2026, 8, 8));
     }
 
     @Test
@@ -136,10 +128,7 @@ class ShiftRequestServiceIT extends AbstractMySqlContainerTest {
     void shouldReturnFormPopulatedFromDatabase_whenGettingShiftRequestFormForUserWithRequest() {
         ShiftRequestForm form = shiftRequestService.getShiftRequestForm("freddie.mercury");
 
-        assertThat(form.getDatesNo()).containsExactlyInAnyOrder(
-                LocalDate.of(2026, 8, 14),
-                LocalDate.of(2026, 8, 19)
-        );
+        assertThat(form.getDatesNo()).containsExactlyInAnyOrder(LocalDate.of(2026, 8, 14), LocalDate.of(2026, 8, 19));
         assertThat(form.getPreferences()).hasSize(2);
     }
 }

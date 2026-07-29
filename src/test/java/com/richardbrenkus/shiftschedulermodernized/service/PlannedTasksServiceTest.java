@@ -42,73 +42,46 @@ class PlannedTasksServiceTest {
     private PlannedTaskMapper plannedTaskMapper;
 
     private final ZoneId zone = ZoneId.of("Europe/Prague");
-    private final Clock fixedClock = Clock.fixed(
-            Instant.parse("2026-08-05T08:00:00Z"),
-            zone
-    );
+    private final Clock fixedClock = Clock.fixed(Instant.parse("2026-08-05T08:00:00Z"), zone);
 
     private PlannedTasksService service;
 
     @BeforeEach
     void setUp() {
-        service = new PlannedTasksService(
-                cleanupTaskRepository,
-                sendReminderTaskRepository,
-                activityPublisher,
-                plannedTaskMapper,
-                fixedClock,
-                zone
-        );
+        service = new PlannedTasksService(cleanupTaskRepository, sendReminderTaskRepository, activityPublisher, plannedTaskMapper, fixedClock, zone);
     }
 
     @Test
     void shouldReturnDayError_whenReminderDayIsGreaterThanOrEqualToFinalSubmissionDay() {
-        SendReminderTaskForm form = SendReminderTaskForm.builder()
-                .isSendReminderTaskActive(true)
-                .startSendingRemindersDay(21)
-                .finalSubmissionDay(20)
-                .build();
+        SendReminderTaskForm form = SendReminderTaskForm.builder().isSendReminderTaskActive(true).startSendingRemindersDay(21).finalSubmissionDay(20).build();
 
         assertThat(service.hasDayError(form)).isTrue();
     }
 
     @Test
     void shouldNotReturnDayError_whenReminderDayIsBeforeFinalSubmissionDay() {
-        SendReminderTaskForm form = SendReminderTaskForm.builder()
-                .isSendReminderTaskActive(true)
-                .startSendingRemindersDay(15)
-                .finalSubmissionDay(20)
-                .build();
+        SendReminderTaskForm form = SendReminderTaskForm.builder().isSendReminderTaskActive(true).startSendingRemindersDay(15).finalSubmissionDay(20).build();
 
         assertThat(service.hasDayError(form)).isFalse();
     }
 
     @Test
     void shouldNotReturnDayError_whenReminderIsInactive() {
-        SendReminderTaskForm form = SendReminderTaskForm.builder()
-                .isSendReminderTaskActive(false)
-                .startSendingRemindersDay(25)
-                .finalSubmissionDay(20)
-                .build();
+        SendReminderTaskForm form = SendReminderTaskForm.builder().isSendReminderTaskActive(false).startSendingRemindersDay(25).finalSubmissionDay(20).build();
 
         assertThat(service.hasDayError(form)).isFalse();
     }
 
     @Test
     void shouldReturnTrue_whenCleanupIsInactive() {
-        CleanupTaskForm form = CleanupTaskForm.builder()
-                .isCleanupTaskActive(false)
-                .build();
+        CleanupTaskForm form = CleanupTaskForm.builder().isCleanupTaskActive(false).build();
 
-        assertThat(service.isCleanupTimeInFuture(form, Instant.parse("2026-08-05T08:00:00Z")))
-                .isTrue();
+        assertThat(service.isCleanupTimeInFuture(form, Instant.parse("2026-08-05T08:00:00Z"))).isTrue();
     }
 
     @Test
     void shouldReturnTrue_whenSendReminderIsInactive() {
-        SendReminderTaskForm form = SendReminderTaskForm.builder()
-                .isSendReminderTaskActive(false)
-                .build();
+        SendReminderTaskForm form = SendReminderTaskForm.builder().isSendReminderTaskActive(false).build();
 
         Instant now = Instant.parse("2026-08-05T08:00:00Z");
 

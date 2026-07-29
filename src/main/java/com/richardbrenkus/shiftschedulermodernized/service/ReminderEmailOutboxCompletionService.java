@@ -24,9 +24,7 @@ public class ReminderEmailOutboxCompletionService {
     public boolean markSent(Long outboxId, String claimToken, Instant now) {
         validateRequiredArguments(outboxId, claimToken, now);
 
-        ReminderEmailOutbox outbox = repository
-                .findByIdForUpdate(outboxId)
-                .orElse(null);
+        ReminderEmailOutbox outbox = repository.findByIdForUpdate(outboxId).orElse(null);
 
         if (outbox == null || !outbox.isOwnedByClaim(claimToken)) {
             return false;
@@ -34,6 +32,7 @@ public class ReminderEmailOutboxCompletionService {
 
         outbox.markSent(claimToken, now);
         repository.saveAndFlush(outbox);
+
         return true;
     }
 
@@ -42,9 +41,7 @@ public class ReminderEmailOutboxCompletionService {
         validateRequiredArguments(outboxId, claimToken, now);
         validateMaximumAttempts();
 
-        ReminderEmailOutbox outbox = repository
-                .findByIdForUpdate(outboxId)
-                .orElse(null);
+        ReminderEmailOutbox outbox = repository.findByIdForUpdate(outboxId).orElse(null);
 
         if (outbox == null || !outbox.isOwnedByClaim(claimToken)) {
             return FailureCompletionResult.NOT_CHANGED;
@@ -55,6 +52,7 @@ public class ReminderEmailOutboxCompletionService {
         if (outbox.getAttemptCount() >= maximumAttempts) {
             outbox.markDead(claimToken, normalizedFailureReason, now);
             repository.saveAndFlush(outbox);
+
             return FailureCompletionResult.DEAD;
         }
 
@@ -62,6 +60,7 @@ public class ReminderEmailOutboxCompletionService {
 
         outbox.markFailed(claimToken, normalizedFailureReason, retryAt);
         repository.saveAndFlush(outbox);
+
         return FailureCompletionResult.RETRY_SCHEDULED;
     }
 
@@ -69,9 +68,7 @@ public class ReminderEmailOutboxCompletionService {
     public FailureCompletionResult markPermanentFailure(Long outboxId, String claimToken, Instant now, String safeFailureReason) {
         validateRequiredArguments(outboxId, claimToken, now);
 
-        ReminderEmailOutbox outbox = repository
-                .findByIdForUpdate(outboxId)
-                .orElse(null);
+        ReminderEmailOutbox outbox = repository.findByIdForUpdate(outboxId).orElse(null);
 
         if (outbox == null || !outbox.isOwnedByClaim(claimToken)) {
             return FailureCompletionResult.NOT_CHANGED;
@@ -79,6 +76,7 @@ public class ReminderEmailOutboxCompletionService {
 
         outbox.markDead(claimToken, normalizeFailureReason(safeFailureReason), now);
         repository.saveAndFlush(outbox);
+
         return FailureCompletionResult.DEAD;
     }
 
@@ -118,8 +116,6 @@ public class ReminderEmailOutboxCompletionService {
     }
 
     public enum FailureCompletionResult {
-        NOT_CHANGED,
-        RETRY_SCHEDULED,
-        DEAD
+        NOT_CHANGED, RETRY_SCHEDULED, DEAD
     }
 }

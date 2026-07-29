@@ -43,12 +43,7 @@ class PlannedTaskExecutorServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new PlannedTaskExecutorService(
-                plannedTaskDispatchService,
-                cleanupTaskExecutionService,
-                activityPublisher,
-                fixedClock
-        );
+        service = new PlannedTaskExecutorService(plannedTaskDispatchService, cleanupTaskExecutionService, activityPublisher, fixedClock);
     }
 
     @Test
@@ -61,27 +56,21 @@ class PlannedTaskExecutorServiceTest {
 
     @Test
     void shouldPublishCleanupFailure_whenCleanupExecutionThrows() {
-        doThrow(new RuntimeException("boom"))
-                .when(cleanupTaskExecutionService).executeCleanupTaskIfDue(any(Instant.class));
+        doThrow(new RuntimeException("boom")).when(cleanupTaskExecutionService).executeCleanupTaskIfDue(any(Instant.class));
 
         service.executeDueTasks();
 
-        verify(activityPublisher).publishFailure(
-                any(), any(), any(), any(), any(), any()
-        );
+        verify(activityPublisher).publishFailure(any(), any(), any(), any(), any(), any());
         verify(plannedTaskDispatchService).createReminderOutboxJobsIfDue(NOW);
     }
 
     @Test
     void shouldPublishReminderFailure_whenReminderCreationThrows() {
-        doThrow(new RuntimeException("boom"))
-                .when(plannedTaskDispatchService).createReminderOutboxJobsIfDue(any(Instant.class));
+        doThrow(new RuntimeException("boom")).when(plannedTaskDispatchService).createReminderOutboxJobsIfDue(any(Instant.class));
 
         service.executeDueTasks();
 
         verify(cleanupTaskExecutionService).executeCleanupTaskIfDue(NOW);
-        verify(activityPublisher).publishFailure(
-                any(), any(), any(), any(), any(), any()
-        );
+        verify(activityPublisher).publishFailure(any(), any(), any(), any(), any(), any());
     }
 }

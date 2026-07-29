@@ -133,9 +133,7 @@ public class ReminderEmailOutbox {
         requireNonNull(now, "now");
 
         if (scheduledExecutionTime.isAfter(finalSubmissionDeadline)) {
-            throw new IllegalArgumentException(
-                    "scheduledExecutionTime must not be after finalSubmissionDay"
-            );
+            throw new IllegalArgumentException("scheduledExecutionTime must not be after finalSubmissionDay");
         }
 
         ReminderEmailOutbox outbox = new ReminderEmailOutbox();
@@ -157,44 +155,26 @@ public class ReminderEmailOutbox {
         return outbox;
     }
 
-    public void claim(
-            String workerId,
-            String newClaimToken,
-            Instant now
-    ) {
+    public void claim(String workerId, String newClaimToken, Instant now) {
+
         requireNonNegativeAttemptCount();
         requireNonNull(now, "now");
 
-        if (status != ReminderEmailOutboxStatus.PENDING
-                && status != ReminderEmailOutboxStatus.FAILED) {
-            throw new IllegalStateException(
-                    "Only PENDING or FAILED jobs can be claimed"
-            );
+        if (status != ReminderEmailOutboxStatus.PENDING && status != ReminderEmailOutboxStatus.FAILED) {
+            throw new IllegalStateException("Only PENDING or FAILED jobs can be claimed");
         }
 
         if (nextAttemptAt == null) {
-            throw new IllegalStateException(
-                    "A dispatchable outbox job must have nextAttemptAt"
-            );
+            throw new IllegalStateException("A dispatchable outbox job must have nextAttemptAt");
         }
 
         if (now.isBefore(nextAttemptAt)) {
-            throw new IllegalArgumentException(
-                    "claim time must not precede nextAttemptAt"
-            );
+            throw new IllegalArgumentException("claim time must not precede nextAttemptAt");
         }
 
         status = ReminderEmailOutboxStatus.PROCESSING;
-        claimedBy = truncateRequiredIdentifier(
-                workerId,
-                MAXIMUM_WORKER_ID_LENGTH,
-                "workerId"
-        );
-        claimToken = truncateRequiredIdentifier(
-                newClaimToken,
-                MAXIMUM_CLAIM_TOKEN_LENGTH,
-                "claimToken"
-        );
+        claimedBy = truncateRequiredIdentifier(workerId, MAXIMUM_WORKER_ID_LENGTH, "workerId");
+        claimToken = truncateRequiredIdentifier(newClaimToken, MAXIMUM_CLAIM_TOKEN_LENGTH, "claimToken");
         claimedAt = now;
         attemptCount++;
         sentAt = null;

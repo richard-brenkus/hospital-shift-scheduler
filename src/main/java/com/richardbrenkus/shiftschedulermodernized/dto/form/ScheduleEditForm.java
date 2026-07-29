@@ -40,15 +40,4 @@ public class ScheduleEditForm {
                 .forceFillShiftTypes(forceFillShiftTypes)
                 .build();
     }
-
-    public List<Integer> getMonthDaysList(){
-
-        List<Integer> monthDaysList = new ArrayList<>();
-        for (int i = 1; i <= month.lengthOfMonth(); i++) {
-            monthDaysList.add(i);
-        }
-
-        return monthDaysList;
-
-    }
 }

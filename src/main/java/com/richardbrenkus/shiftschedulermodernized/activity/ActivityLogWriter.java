@@ -38,11 +38,7 @@ public class ActivityLogWriter {
         );
 
         if (affectedRows == 0) {
-            log.debug(
-                    "Activity event {} was already persisted; "
-                            + "duplicate delivery ignored",
-                    event.eventId()
-            );
+            log.debug("Activity event {} was already persisted; " + "duplicate delivery ignored", event.eventId());
         }
     }
 }

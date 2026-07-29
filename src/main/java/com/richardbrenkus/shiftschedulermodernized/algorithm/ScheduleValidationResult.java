@@ -69,9 +69,7 @@ public class ScheduleValidationResult {
     private Map<Integer, Set<UserStatViewRecord>> fullUserStatsByShiftType = new HashMap<>();
 
     public void markRedField(int shiftType, int dayOfMonth) {
-        redFieldsByShiftType
-                .computeIfAbsent(shiftType, key -> new HashSet<>())
-                .add(dayOfMonth);
+        redFieldsByShiftType.computeIfAbsent(shiftType, key -> new HashSet<>()).add(dayOfMonth);
     }
 
     public void addShiftCapUser(int shiftType, String userName) {
@@ -107,8 +105,7 @@ public class ScheduleValidationResult {
             return;
         }
 
-        target.computeIfAbsent(shiftType, key -> new TreeSet<>())
-                .add(userName);
+        target.computeIfAbsent(shiftType, key -> new TreeSet<>()).add(userName);
     }
 }
 

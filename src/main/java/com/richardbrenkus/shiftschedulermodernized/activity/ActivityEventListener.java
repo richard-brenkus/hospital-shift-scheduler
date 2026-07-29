@@ -13,10 +13,7 @@ public class ActivityEventListener {
 
     private final ActivityLogWriter activityLogWriter;
 
-    @TransactionalEventListener(
-            phase = TransactionPhase.AFTER_COMMIT,
-            fallbackExecution = true
-    )
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void handle(ActivityEvent event) {
         try {
             activityLogWriter.persist(event);

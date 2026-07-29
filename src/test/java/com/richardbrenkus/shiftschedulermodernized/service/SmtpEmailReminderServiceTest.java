@@ -44,62 +44,35 @@ class SmtpEmailReminderServiceTest {
 
     @Test
     void shouldSendOneMessage_perValidInvocation() {
-        when(mailSender.createMimeMessage())
-                .thenReturn(new MimeMessage(Session.getInstance(new Properties())));
+        when(mailSender.createMimeMessage()).thenReturn(new MimeMessage(Session.getInstance(new Properties())));
 
-        service.sendShiftRequestReminderEmail(
-                "recipient@example.test",
-                "Recipient",
-                LocalDate.now().plusDays(5),
-                "idem-1"
-        );
+        service.sendShiftRequestReminderEmail("recipient@example.test", "Recipient", LocalDate.now().plusDays(5), "idem-1");
 
         verify(mailSender).send(ArgumentCaptor.forClass(MimeMessage.class).capture());
     }
 
     @Test
     void shouldRejectBlankRecipientEmail() {
-        assertThatThrownBy(() -> service.sendShiftRequestReminderEmail(
-                "",
-                "Recipient",
-                LocalDate.now().plusDays(5),
-                "idem-2"
-        )).isInstanceOf(PermanentEmailDeliveryException.class);
+        assertThatThrownBy(() -> service.sendShiftRequestReminderEmail("", "Recipient", LocalDate.now().plusDays(5), "idem-2")).isInstanceOf(PermanentEmailDeliveryException.class);
         verifyNoInteractions(mailSender);
     }
 
     @Test
     void shouldRejectNullFinalSubmissionDate() {
-        assertThatThrownBy(() -> service.sendShiftRequestReminderEmail(
-                "recipient@example.test",
-                "Recipient",
-                null,
-                "idem-3"
-        )).isInstanceOf(PermanentEmailDeliveryException.class);
+        assertThatThrownBy(() -> service.sendShiftRequestReminderEmail("recipient@example.test", "Recipient", null, "idem-3")).isInstanceOf(PermanentEmailDeliveryException.class);
         verifyNoInteractions(mailSender);
     }
 
     @Test
     void shouldRejectBlankIdempotencyKey() {
-        assertThatThrownBy(() -> service.sendShiftRequestReminderEmail(
-                "recipient@example.test",
-                "Recipient",
-                LocalDate.now().plusDays(5),
-                ""
-        )).isInstanceOf(PermanentEmailDeliveryException.class);
+        assertThatThrownBy(() -> service.sendShiftRequestReminderEmail("recipient@example.test", "Recipient", LocalDate.now().plusDays(5), "")).isInstanceOf(PermanentEmailDeliveryException.class);
         verifyNoInteractions(mailSender);
     }
 
     @Test
     void shouldNotThrow_whenAllArgumentsValid() {
-        when(mailSender.createMimeMessage())
-                .thenReturn(new MimeMessage(Session.getInstance(new Properties())));
+        when(mailSender.createMimeMessage()).thenReturn(new MimeMessage(Session.getInstance(new Properties())));
 
-        assertThatCode(() -> service.sendShiftRequestReminderEmail(
-                "recipient@example.test",
-                "Recipient Name",
-                LocalDate.now().plusDays(10),
-                "idem-4"
-        )).doesNotThrowAnyException();
+        assertThatCode(() -> service.sendShiftRequestReminderEmail("recipient@example.test", "Recipient Name", LocalDate.now().plusDays(10), "idem-4")).doesNotThrowAnyException();
     }
 }

@@ -5,15 +5,13 @@ import java.time.YearMonth;
 import java.util.Objects;
 import java.util.Set;
 
-public record ShiftPreferenceCalculationData(
-        int shiftType,
-        int priority,
-        int weekdayCount,
-        int weekendCount,
-        boolean noShiftRequested,
-        boolean anyDateSelected,
-        Set<LocalDate> requestedDates
-) {
+public record ShiftPreferenceCalculationData(int shiftType,
+                                             int priority,
+                                             int weekdayCount,
+                                             int weekendCount,
+                                             boolean noShiftRequested,
+                                             boolean anyDateSelected,
+                                             Set<LocalDate> requestedDates) {
 
     public ShiftPreferenceCalculationData {
         if (shiftType <= 0) {

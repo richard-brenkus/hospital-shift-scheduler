@@ -21,19 +21,7 @@ class ActivityKafkaMapperTest {
 
     @Test
     void toMessage_shouldCopyAllFieldsAndConvertEnumsToStableStrings() {
-        ActivityEvent event = new ActivityEvent(
-                EVENT_ID,
-                OCCURRED_AT,
-                "alice",
-                Role.ADMIN,
-                ActivityType.USER_CREATED,
-                "User",
-                "42",
-                "Created user",
-                true,
-                null,
-                new RequestMetadata("POST", "/admin/add", "1.2.3.4")
-        );
+        ActivityEvent event = new ActivityEvent(EVENT_ID, OCCURRED_AT, "alice", Role.ADMIN, ActivityType.USER_CREATED, "User", "42", "Created user", true, null, new RequestMetadata("POST", "/admin/add", "1.2.3.4"));
 
         ActivityKafkaMessage message = mapper.toMessage(event);
 
@@ -57,19 +45,7 @@ class ActivityKafkaMapperTest {
         // targetType / targetId / description / failureReason are optional payload
         // fields on ActivityEvent. The mapper is expected to normalise them
         // to empty strings so consumers can treat them as always-present.
-        ActivityEvent event = new ActivityEvent(
-                EVENT_ID,
-                OCCURRED_AT,
-                "alice",
-                Role.ADMIN,
-                ActivityType.USER_CREATED,
-                null,
-                null,
-                null,
-                true,
-                null,
-                RequestMetadata.system()
-        );
+        ActivityEvent event = new ActivityEvent(EVENT_ID, OCCURRED_AT, "alice", Role.ADMIN, ActivityType.USER_CREATED, null, null, null, true, null, RequestMetadata.system());
 
         ActivityKafkaMessage message = mapper.toMessage(event);
 
@@ -85,19 +61,7 @@ class ActivityKafkaMapperTest {
         // RequestMetadataProvider, which already substitutes "SYSTEM" or
         // "UNKNOWN" for missing values. The mapper trusts that and forwards
         // the sub-fields verbatim rather than re-mapping them.
-        ActivityEvent event = new ActivityEvent(
-                EVENT_ID,
-                OCCURRED_AT,
-                "alice",
-                Role.ADMIN,
-                ActivityType.USER_CREATED,
-                "User",
-                "42",
-                "Created user",
-                true,
-                null,
-                new RequestMetadata("GET", "/path", "10.0.0.1")
-        );
+        ActivityEvent event = new ActivityEvent(EVENT_ID, OCCURRED_AT, "alice", Role.ADMIN, ActivityType.USER_CREATED, "User", "42", "Created user", true, null, new RequestMetadata("GET", "/path", "10.0.0.1"));
 
         ActivityKafkaMessage message = mapper.toMessage(event);
 
@@ -108,11 +72,7 @@ class ActivityKafkaMapperTest {
 
     @Test
     void toMessage_shouldPreserveEventIdVerbatim() {
-        ActivityEvent event = ActivityEvent.success(
-                OCCURRED_AT, ActivityType.USER_CREATED, "alice", Role.ADMIN,
-                "User", "1", "d",
-                new RequestMetadata("GET", "/", "1.1.1.1")
-        );
+        ActivityEvent event = ActivityEvent.success(OCCURRED_AT, ActivityType.USER_CREATED, "alice", Role.ADMIN, "User", "1", "d", new RequestMetadata("GET", "/", "1.1.1.1"));
 
         ActivityKafkaMessage message = mapper.toMessage(event);
 
@@ -121,19 +81,7 @@ class ActivityKafkaMapperTest {
 
     @Test
     void toMessage_shouldNotEmbedJpaEntitiesOrRuntimeEnumTypes() {
-        ActivityEvent event = new ActivityEvent(
-                EVENT_ID,
-                OCCURRED_AT,
-                "alice",
-                Role.ADMIN,
-                ActivityType.USER_CREATED,
-                "User",
-                "42",
-                "Created user",
-                true,
-                null,
-                new RequestMetadata("POST", "/admin/add", "1.2.3.4")
-        );
+        ActivityEvent event = new ActivityEvent(EVENT_ID, OCCURRED_AT, "alice", Role.ADMIN, ActivityType.USER_CREATED, "User", "42", "Created user", true, null, new RequestMetadata("POST", "/admin/add", "1.2.3.4"));
 
         ActivityKafkaMessage message = mapper.toMessage(event);
 
@@ -141,19 +89,11 @@ class ActivityKafkaMapperTest {
         // no entity type and no request-metadata sub-record leak.
         assertThat(message.activityType()).isInstanceOf(String.class);
         assertThat(message.actorRole()).isInstanceOf(String.class);
-        assertThat(message).extracting(
-                ActivityKafkaMessage::eventId,
-                ActivityKafkaMessage::occurredAt,
-                ActivityKafkaMessage::activityType,
-                ActivityKafkaMessage::actorRole
-        ).allSatisfy(value -> assertThat(value.getClass().getPackageName())
-                .doesNotStartWith("com.richardbrenkus.shiftschedulermodernized"));
+        assertThat(message).extracting(ActivityKafkaMessage::eventId, ActivityKafkaMessage::occurredAt, ActivityKafkaMessage::activityType, ActivityKafkaMessage::actorRole).allSatisfy(value -> assertThat(value.getClass().getPackageName()).doesNotStartWith("com.richardbrenkus.shiftschedulermodernized"));
     }
 
     @Test
     void toMessage_shouldRejectNullEvent() {
-        assertThatThrownBy(() -> mapper.toMessage(null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("ActivityEvent");
+        assertThatThrownBy(() -> mapper.toMessage(null)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ActivityEvent");
     }
 }

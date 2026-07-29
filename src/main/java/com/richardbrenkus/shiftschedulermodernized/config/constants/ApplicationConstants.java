@@ -5,8 +5,7 @@ import java.time.format.DateTimeFormatter;
 
 public final class ApplicationConstants {
 
-    private ApplicationConstants() {
-    }
+    private ApplicationConstants() {}
 
     public static final ZoneId ZONE_ID = ZoneId.of("Europe/Prague");
 

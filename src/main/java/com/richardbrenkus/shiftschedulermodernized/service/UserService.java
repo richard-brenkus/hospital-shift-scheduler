@@ -49,8 +49,7 @@ public class UserService {
 
         User currentUser = userOptional.get();
         String displayName = currentUser.getName();
-        if (currentUser.getTitle() != null)
-            displayName = currentUser.getTitle() + " " + displayName;
+        if (currentUser.getTitle() != null) displayName = currentUser.getTitle() + " " + displayName;
 
         return displayName;
     }
@@ -67,6 +66,7 @@ public class UserService {
 
     @Transactional
     public boolean oldPasswordMatches(String username, String oldPassword) {
+
         Optional<User> userOptional = userRepository.findByUsername(username);
 
         if (userOptional.isEmpty()) {
@@ -80,6 +80,7 @@ public class UserService {
 
     @Transactional
     public void changeUserPassword(String username, String newPassword) {
+
         Optional<User> userOptional = userRepository.findByUsername(username);
 
         if (userOptional.isEmpty()) {
@@ -93,12 +94,7 @@ public class UserService {
         user.setPassword(newEncodedPassword);
         userRepository.saveAndFlush(user);
 
-        activityPublisher.publishSuccess(
-                ActivityType.PASSWORD_CHANGED,
-                "User",
-                user.getId().toString(),
-                "User password changed"
-        );
+        activityPublisher.publishSuccess(ActivityType.PASSWORD_CHANGED, "User", user.getId().toString(), "User password changed");
     }
 
     @Transactional
@@ -164,24 +160,18 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public String getUsernameByUserId(long userId) {
-        return userRepository.findById(userId)
-                .map(User::getUsername)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + userId));
+        return userRepository.findById(userId).map(User::getUsername).orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + userId));
     }
 
     @Transactional
     public void deleteUser(User user) {
+
         Long userId = user.getId();
 
         userRepository.delete(user);
         userRepository.flush();
 
-        activityPublisher.publishSuccess(
-                ActivityType.USER_DELETED,
-                "User",
-                userId.toString(),
-                "User account deleted"
-        );
+        activityPublisher.publishSuccess(ActivityType.USER_DELETED, "User", userId.toString(), "User account deleted");
     }
 
     public List<User> getAllUsersWithShiftRequestByNameAsc() {
@@ -194,10 +184,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public List<UserViewRecord> getAllUserSummaryViewRecordsByNameAsc() {
-        return userRepository.findAllByOrderByNameAsc()
-                .stream()
-                .map(userMapper::entityToUserViewRecord)
-                .toList();
+        return userRepository.findAllByOrderByNameAsc().stream().map(userMapper::entityToUserViewRecord).toList();
     }
 
     public UserValidationResult validateAndUpdateUser(UserUpdateForm updatedUser) {
@@ -248,21 +235,17 @@ public class UserService {
     @Transactional(readOnly = true)
     public List<UserViewRecord> findAllUsersForSelectionByNameAsc() {
 
-        return userRepository.findAllByOrderByNameAsc()
-                .stream()
-                .map(userMapper::entityToUserViewRecord)
-                .toList();
+        return userRepository.findAllByOrderByNameAsc().stream().map(userMapper::entityToUserViewRecord).toList();
     }
 
     public UserViewRecord findUserViewById(Long userId) {
 
-        return userRepository.findById(userId)
-                .map(userMapper::entityToUserViewRecord)
-                .orElse(null);
+        return userRepository.findById(userId).map(userMapper::entityToUserViewRecord).orElse(null);
     }
 
     @Transactional(readOnly = true)
     public UserUpdateForm getUserUpdateFormByUserId(long userId) {
+
         Optional<User> userOptional = userRepository.findById(userId);
 
         if (userOptional.isEmpty()) {
@@ -275,12 +258,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public ScheduleMonth getScheduleMonth(ScheduleEditForm scheduleEditForm) {
 
-        Set<Long> ids = scheduleEditForm.getDays()
-                .stream()
-                .flatMap(day -> day.getAssignments().stream())
-                .map(ShiftAssignmentForm::getUserId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+        Set<Long> ids = scheduleEditForm.getDays().stream().flatMap(day -> day.getAssignments().stream()).map(ShiftAssignmentForm::getUserId).filter(Objects::nonNull).collect(Collectors.toSet());
 
         Map<Long, User> usersById = userRepository.findAllById(ids).stream().collect(Collectors.toMap(User::getId, Function.identity()));
 

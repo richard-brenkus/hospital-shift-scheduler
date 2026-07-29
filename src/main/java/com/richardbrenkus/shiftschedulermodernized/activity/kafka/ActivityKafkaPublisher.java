@@ -19,10 +19,7 @@ public class ActivityKafkaPublisher {
 
     private final ActivityKafkaProducer activityKafkaProducer;
 
-    @TransactionalEventListener(
-            phase = TransactionPhase.AFTER_COMMIT,
-            fallbackExecution = true
-    )
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void publishToKafka(ActivityEvent event) {
         activityKafkaProducer.publish(event);
     }

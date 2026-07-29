@@ -42,50 +42,27 @@ class CalculatedScheduleConverterTest {
         User userOne = user(1L, "Freddie Mercury");
         User userTwo = user(2L, "David Bowie");
 
-        CalculatedScheduleMonth calculated = CalculatedScheduleMonth.builder()
-                .month(AUGUST_2026)
-                .hitCounter(2)
-                .days(new ArrayList<>(List.of(
-                        day(LocalDate.of(2026, 8, 1), true,
-                                new CalculatedShiftAssignment(1, 1L)),
-                        day(LocalDate.of(2026, 8, 2), true,
-                                new CalculatedShiftAssignment(2, 2L))
-                )))
-                .build();
+        CalculatedScheduleMonth calculated = CalculatedScheduleMonth.builder().month(AUGUST_2026).hitCounter(2).days(new ArrayList<>(List.of(day(LocalDate.of(2026, 8, 1), true, new CalculatedShiftAssignment(1, 1L)), day(LocalDate.of(2026, 8, 2), true, new CalculatedShiftAssignment(2, 2L))))).build();
 
-        CalculationProfileForm form = CalculationProfileForm.builder()
-                .calculationMonth(AUGUST_2026)
-                .shiftCountCap(10)
-                .gapBetweenShifts(5)
-                .forceFillShiftTypes(List.of(1))
-                .build();
+        CalculationProfileForm form = CalculationProfileForm.builder().calculationMonth(AUGUST_2026).shiftCountCap(10).gapBetweenShifts(5).forceFillShiftTypes(List.of(1)).build();
 
         UserCalculationData ucdOne = calculationData(1L);
         UserCalculationData ucdTwo = calculationData(2L);
 
-        when(userRepository.findAllById(any()))
-                .thenReturn(List.of(userOne, userTwo));
-        when(userCalculationDataMapper.toCalculationData(eq(userOne), any()))
-                .thenReturn(ucdOne);
-        when(userCalculationDataMapper.toCalculationData(eq(userTwo), any()))
-                .thenReturn(ucdTwo);
+        when(userRepository.findAllById(any())).thenReturn(List.of(userOne, userTwo));
+        when(userCalculationDataMapper.toCalculationData(eq(userOne), any())).thenReturn(ucdOne);
+        when(userCalculationDataMapper.toCalculationData(eq(userTwo), any())).thenReturn(ucdTwo);
 
-        ScheduleMonth result = converter.toLegacyScheduleMonth(
-                ScheduleCandidate.from(calculated, 1, 7, 123L),
-                form
-        );
+        ScheduleMonth result = converter.toLegacyScheduleMonth(ScheduleCandidate.from(calculated, 1, 7, 123L), form);
 
         assertThat(result.getMonth()).isEqualTo(AUGUST_2026);
         assertThat(result.getHitCounter()).isEqualTo(2);
         assertThat(result.getCalculationProfile()).isSameAs(form);
         assertThat(result.getDays()).hasSize(2);
 
-        assertThat(result.getDays().get(0).getAssignments().getFirst().getShiftType())
-                .isEqualTo(1);
-        assertThat(result.getDays().get(0).getAssignments().getFirst().getUserCalculationData())
-                .isSameAs(ucdOne);
-        assertThat(result.getDays().get(1).getAssignments().getFirst().getUserCalculationData())
-                .isSameAs(ucdTwo);
+        assertThat(result.getDays().get(0).getAssignments().getFirst().getShiftType()).isEqualTo(1);
+        assertThat(result.getDays().get(0).getAssignments().getFirst().getUserCalculationData()).isSameAs(ucdOne);
+        assertThat(result.getDays().get(1).getAssignments().getFirst().getUserCalculationData()).isSameAs(ucdTwo);
 
         assertThat(result.isOverrideUserShiftRequestExceptNoDates()).isFalse();
         assertThat(result.isOverrideUserShiftRequestAll()).isFalse();
@@ -103,85 +80,37 @@ class CalculatedScheduleConverterTest {
 
     @Test
     void shouldThrowWhenCalculatedAssignmentReferencesMissingUser() {
-        CalculatedScheduleMonth calculated = CalculatedScheduleMonth.builder()
-                .month(AUGUST_2026)
-                .hitCounter(1)
-                .days(new ArrayList<>(List.of(
-                        day(LocalDate.of(2026, 8, 1), true,
-                                new CalculatedShiftAssignment(1, 999L))
-                )))
-                .build();
+        CalculatedScheduleMonth calculated = CalculatedScheduleMonth.builder().month(AUGUST_2026).hitCounter(1).days(new ArrayList<>(List.of(day(LocalDate.of(2026, 8, 1), true, new CalculatedShiftAssignment(1, 999L))))).build();
 
         when(userRepository.findAllById(any())).thenReturn(List.of());
         // The converter passes usersById.get(999L) → null → mapper returns null →
         // converter throws IllegalStateException.
         when(userCalculationDataMapper.toCalculationData(eq(null), any())).thenReturn(null);
 
-        assertThatThrownBy(() -> converter.toLegacyScheduleMonth(
-                ScheduleCandidate.from(calculated, 0, 0, 1L),
-                CalculationProfileForm.builder()
-                        .calculationMonth(AUGUST_2026)
-                        .build()
-        ))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("999");
+        assertThatThrownBy(() -> converter.toLegacyScheduleMonth(ScheduleCandidate.from(calculated, 0, 0, 1L), CalculationProfileForm.builder().calculationMonth(AUGUST_2026).build())).isInstanceOf(IllegalStateException.class).hasMessageContaining("999");
     }
 
     @Test
     void shouldConvertEmptyCalculatedSchedule() {
-        CalculatedScheduleMonth calculated = CalculatedScheduleMonth.builder()
-                .month(AUGUST_2026)
-                .hitCounter(0)
-                .days(new ArrayList<>())
-                .build();
+        CalculatedScheduleMonth calculated = CalculatedScheduleMonth.builder().month(AUGUST_2026).hitCounter(0).days(new ArrayList<>()).build();
 
         when(userRepository.findAllById(any())).thenReturn(List.of());
 
-        ScheduleMonth result = converter.toLegacyScheduleMonth(
-                ScheduleCandidate.from(calculated, 0, 0, 1L),
-                CalculationProfileForm.builder()
-                        .calculationMonth(AUGUST_2026)
-                        .build()
-        );
+        ScheduleMonth result = converter.toLegacyScheduleMonth(ScheduleCandidate.from(calculated, 0, 0, 1L), CalculationProfileForm.builder().calculationMonth(AUGUST_2026).build());
 
         assertThat(result.getDays()).isEmpty();
         assertThat(result.getHitCounter()).isZero();
     }
 
-    private CalculatedScheduleDay day(
-            LocalDate date,
-            boolean weekend,
-            CalculatedShiftAssignment assignment
-    ) {
-        return CalculatedScheduleDay.builder()
-                .date(date)
-                .weekendOrHoliday(weekend)
-                .assignments(new ArrayList<>(List.of(assignment)))
-                .build();
+    private CalculatedScheduleDay day(LocalDate date, boolean weekend, CalculatedShiftAssignment assignment) {
+        return CalculatedScheduleDay.builder().date(date).weekendOrHoliday(weekend).assignments(new ArrayList<>(List.of(assignment))).build();
     }
 
     private User user(Long id, String name) {
-        return User.builder()
-                .id(id)
-                .name(name)
-                .username(name.toLowerCase().replace(" ", "."))
-                .email(name.toLowerCase().replace(" ", ".") + "@test.local")
-                .password("encoded")
-                .enabled(true)
-                .build();
+        return User.builder().id(id).name(name).username(name.toLowerCase().replace(" ", ".")).email(name.toLowerCase().replace(" ", ".") + "@test.local").password("encoded").enabled(true).build();
     }
 
     private UserCalculationData calculationData(long id) {
-        return new UserCalculationData(
-                id,
-                "User " + id,
-                "user-" + id,
-                null,
-                Set.of(1, 2),
-                Set.of(),
-                Map.of(),
-                Set.of(),
-                true
-        );
+        return new UserCalculationData(id, "User " + id, "user-" + id, null, Set.of(1, 2), Set.of(), Map.of(), Set.of(), true);
     }
 }

@@ -43,12 +43,7 @@ public class StoredScheduleService {
         YearMonth month = scheduleMonth.getMonth();
         String monthYearId = month.format(MONTH_YEAR_FORMATTER);
 
-        List<StoredScheduleDay> storedDays = scheduleMonth.getDays()
-                .stream()
-                .filter(Objects::nonNull)
-                .sorted(Comparator.comparing(ScheduleDay::getDate))
-                .map(day -> toStoredScheduleDay(day, monthYearId))
-                .toList();
+        List<StoredScheduleDay> storedDays = scheduleMonth.getDays().stream().filter(Objects::nonNull).sorted(Comparator.comparing(ScheduleDay::getDate)).map(day -> toStoredScheduleDay(day, monthYearId)).toList();
 
         storedScheduleDayRepository.saveAll(storedDays);
 
@@ -64,9 +59,7 @@ public class StoredScheduleService {
 
         String monthYearId = toMonthYearId(month);
 
-        return !storedScheduleDayRepository
-                .findByMonthYearIdOrderByDayIntegerAsc(monthYearId)
-                .isEmpty();
+        return !storedScheduleDayRepository.findByMonthYearIdOrderByDayIntegerAsc(monthYearId).isEmpty();
     }
 
     @Transactional(readOnly = true)
@@ -86,19 +79,12 @@ public class StoredScheduleService {
         for (int dayOfMonth = 1; dayOfMonth <= month.lengthOfMonth(); dayOfMonth++) {
             int currentDay = dayOfMonth;
 
-            StoredScheduleDay storedDay = storedDays.stream()
-                    .filter(day -> day.getDayInteger() != null && day.getDayInteger() == currentDay)
-                    .findFirst()
-                    .orElse(null);
+            StoredScheduleDay storedDay = storedDays.stream().filter(day -> day.getDayInteger() != null && day.getDayInteger() == currentDay).findFirst().orElse(null);
 
             dayViews.add(toDayView(month, currentDay, storedDay, shiftTypes));
         }
 
-        return SavedScheduleView.builder()
-                .month(month)
-                .shiftTypes(shiftTypes)
-                .days(dayViews)
-                .build();
+        return SavedScheduleView.builder().month(month).shiftTypes(shiftTypes).days(dayViews).build();
     }
 
     @Transactional(readOnly = true)
@@ -120,9 +106,7 @@ public class StoredScheduleService {
             months.add(currentMonth.minusMonths(monthsBack));
         }
 
-        return months.stream()
-                .map(this::toMonthOption)
-                .toList();
+        return months.stream().map(this::toMonthOption).toList();
     }
 
     @Transactional
@@ -134,23 +118,12 @@ public class StoredScheduleService {
         List<SavedScheduleShiftAssignmentView> assignmentViews = new ArrayList<>();
 
         for (Integer shiftType : shiftTypes) {
-            StoredUserSnapshot userSnapshot = storedDay == null
-                    ? null
-                    : storedDay.getAssignmentsByShiftType().get(shiftType);
+            StoredUserSnapshot userSnapshot = storedDay == null ? null : storedDay.getAssignmentsByShiftType().get(shiftType);
 
-            assignmentViews.add(SavedScheduleShiftAssignmentView.builder()
-                    .shiftType(shiftType)
-                    .user(userSnapshot)
-                    .displayName(toDisplayName(userSnapshot))
-                    .build()
-            );
+            assignmentViews.add(SavedScheduleShiftAssignmentView.builder().shiftType(shiftType).user(userSnapshot).displayName(toDisplayName(userSnapshot)).build());
         }
 
-        return SavedScheduleDayView.builder()
-                .date(month.atDay(dayOfMonth))
-                .weekendOrHoliday(storedDay != null && storedDay.isWeekendOrHoliday())
-                .assignments(assignmentViews)
-                .build();
+        return SavedScheduleDayView.builder().date(month.atDay(dayOfMonth)).weekendOrHoliday(storedDay != null && storedDay.isWeekendOrHoliday()).assignments(assignmentViews).build();
     }
 
     private String toDisplayName(StoredUserSnapshot userSnapshot) {
@@ -180,13 +153,7 @@ public class StoredScheduleService {
             throw new IllegalArgumentException("Cannot save schedule: schedule date is missing.");
         }
 
-        StoredScheduleDay storedDay = StoredScheduleDay.builder()
-                .dateId(CalendarDateIdUtils.toDateId(day.getDate()))
-                .monthYearId(monthYearId)
-                .weekendOrHoliday(day.isWeekendOrHoliday())
-                .dayInteger(day.getDate().getDayOfMonth())
-                .assignmentsByShiftType(new HashMap<>())
-                .build();
+        StoredScheduleDay storedDay = StoredScheduleDay.builder().dateId(CalendarDateIdUtils.toDateId(day.getDate())).monthYearId(monthYearId).weekendOrHoliday(day.isWeekendOrHoliday()).dayInteger(day.getDate().getDayOfMonth()).assignmentsByShiftType(new HashMap<>()).build();
 
         if (day.getAssignments() == null) {
             return storedDay;
@@ -203,13 +170,7 @@ public class StoredScheduleService {
                 continue;
             }
 
-            storedDay.putAssignment(
-                    assignment.getShiftType(),
-                    userCalculationData.userId(),
-                    userCalculationData.username(),
-                    userCalculationData.name(),
-                    userCalculationData.title()
-            );
+            storedDay.putAssignment(assignment.getShiftType(), userCalculationData.userId(), userCalculationData.username(), userCalculationData.name(), userCalculationData.title());
         }
 
         return storedDay;

@@ -2,13 +2,8 @@ package com.richardbrenkus.shiftschedulermodernized.algorithm.record;
 
 import java.util.Objects;
 
-public record ScheduleCandidate(
-        CalculatedScheduleMonth scheduleMonth,
-        int hitCounter,
-        int workerIndex,
-        int attemptIndex,
-        long randomSeed
-) {
+public record ScheduleCandidate(CalculatedScheduleMonth scheduleMonth, int hitCounter, int workerIndex, int attemptIndex, long randomSeed) {
+
     public ScheduleCandidate {
         Objects.requireNonNull(scheduleMonth, "scheduleMonth must not be null");
         if (hitCounter < 0) throw new IllegalArgumentException("hitCounter must not be negative");
@@ -19,18 +14,7 @@ public record ScheduleCandidate(
         }
     }
 
-    public static ScheduleCandidate from(
-            CalculatedScheduleMonth scheduleMonth,
-            int workerIndex,
-            int attemptIndex,
-            long randomSeed
-    ) {
-        return new ScheduleCandidate(
-                scheduleMonth,
-                scheduleMonth.getHitCounter(),
-                workerIndex,
-                attemptIndex,
-                randomSeed
-        );
+    public static ScheduleCandidate from(CalculatedScheduleMonth scheduleMonth, int workerIndex, int attemptIndex, long randomSeed) {
+        return new ScheduleCandidate(scheduleMonth, scheduleMonth.getHitCounter(), workerIndex, attemptIndex, randomSeed);
     }
 }

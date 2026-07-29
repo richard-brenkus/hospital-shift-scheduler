@@ -46,11 +46,6 @@ public class UserTransactionalCreator {
         userRepository.save(user);
         entityManager.flush();
 
-        activityPublisher.publishSuccess(
-                ActivityType.USER_CREATED,
-                "User",
-                String.valueOf(user.getId()),
-                "Created user '" + user.getUsername() + "'"
-        );
+        activityPublisher.publishSuccess(ActivityType.USER_CREATED, "User", String.valueOf(user.getId()), "Created user '" + user.getUsername() + "'");
     }
 }

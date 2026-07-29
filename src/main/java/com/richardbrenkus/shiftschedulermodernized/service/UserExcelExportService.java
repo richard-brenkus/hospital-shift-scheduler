@@ -35,14 +35,7 @@ public class UserExcelExportService {
     }
 
     private UserExportRecord toExportRecord(User user) {
-        return new UserExportRecord(
-                user.getId(),
-                nullToEmpty(user.getEmail()),
-                nullToEmpty(user.getName()),
-                nullToEmpty(user.getUsername()),
-                user.getRole() == null ? "" : user.getRole().name(),
-                user.isEnabled()
-        );
+        return new UserExportRecord(user.getId(), nullToEmpty(user.getEmail()), nullToEmpty(user.getName()), nullToEmpty(user.getUsername()), user.getRole() == null ? "" : user.getRole().name(), user.isEnabled());
     }
 
     private String nullToEmpty(String value) {

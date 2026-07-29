@@ -29,9 +29,7 @@ public class ReminderEmailOutboxClaimService {
         validateArguments(outboxId, workerId, now);
         validateMaximumAttempts();
 
-        ReminderEmailOutbox outbox = repository
-                .findByIdForUpdate(outboxId)
-                .orElse(null);
+        ReminderEmailOutbox outbox = repository.findByIdForUpdate(outboxId).orElse(null);
 
         if (!isDispatchable(outbox, now)) {
             return Optional.empty();
@@ -52,34 +50,17 @@ public class ReminderEmailOutboxClaimService {
         outbox.claim(workerId, claimToken, now);
         repository.saveAndFlush(outbox);
 
-        return Optional.of(new ClaimedReminderEmailJob(
-                outbox.getId(),
-                claimToken,
-                outbox.getRecipientUserId(),
-                outbox.getRecipientEmail(),
-                outbox.getRecipientDisplayName(),
-                outbox.getFinalSubmissionDay(),
-                outbox.getIdempotencyKey(),
-                outbox.getAttemptCount()
-        ));
+        return Optional.of(new ClaimedReminderEmailJob(outbox.getId(), claimToken, outbox.getRecipientUserId(), outbox.getRecipientEmail(), outbox.getRecipientDisplayName(), outbox.getFinalSubmissionDay(), outbox.getIdempotencyKey(), outbox.getAttemptCount()));
     }
 
-    private boolean isDispatchable(
-            ReminderEmailOutbox outbox,
-            Instant now
-    ) {
+    private boolean isDispatchable(ReminderEmailOutbox outbox, Instant now) {
         if (outbox == null) {
             return false;
         }
 
-        boolean dispatchableStatus =
-                outbox.getStatus() == ReminderEmailOutboxStatus.PENDING
-                        || outbox.getStatus()
-                        == ReminderEmailOutboxStatus.FAILED;
+        boolean dispatchableStatus = outbox.getStatus() == ReminderEmailOutboxStatus.PENDING || outbox.getStatus() == ReminderEmailOutboxStatus.FAILED;
 
-        return dispatchableStatus
-                && outbox.getNextAttemptAt() != null
-                && !outbox.getNextAttemptAt().isAfter(now);
+        return dispatchableStatus && outbox.getNextAttemptAt() != null && !outbox.getNextAttemptAt().isAfter(now);
     }
 
     private void validateArguments(Long outboxId, String workerId, Instant now) {
@@ -102,16 +83,8 @@ public class ReminderEmailOutboxClaimService {
         }
     }
 
-    public record ClaimedReminderEmailJob(
-            Long outboxId,
-            String claimToken,
-            Long recipientUserId,
-            String recipientEmail,
-            String recipientDisplayName,
-            LocalDate finalSubmissionDay,
-            String idempotencyKey,
-            int attemptNumber
-    ) {
+    public record ClaimedReminderEmailJob(Long outboxId, String claimToken, Long recipientUserId, String recipientEmail, String recipientDisplayName, LocalDate finalSubmissionDay,
+                                          String idempotencyKey, int attemptNumber) {
         public ClaimedReminderEmailJob {
             if (outboxId == null) {
                 throw new IllegalArgumentException("outboxId must not be null");

@@ -1,4 +1,3 @@
-
 package com.richardbrenkus.shiftschedulermodernized.service;
 
 import com.richardbrenkus.shiftschedulermodernized.activity.ActivityPublisher;
@@ -77,8 +76,7 @@ class UserTransactionalUpdaterTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
 
-        assertThatThrownBy(() -> updater.update(form))
-                .isInstanceOf(ObjectOptimisticLockingFailureException.class);
+        assertThatThrownBy(() -> updater.update(form)).isInstanceOf(ObjectOptimisticLockingFailureException.class);
 
         verify(entityManager, never()).flush();
     }
@@ -90,8 +88,6 @@ class UserTransactionalUpdaterTest {
 
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> updater.update(form))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("999");
+        assertThatThrownBy(() -> updater.update(form)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("999");
     }
 }
