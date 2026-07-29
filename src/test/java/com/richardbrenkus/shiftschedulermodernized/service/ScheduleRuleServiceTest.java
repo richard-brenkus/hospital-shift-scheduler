@@ -1,11 +1,16 @@
 package com.richardbrenkus.shiftschedulermodernized.service;
 
 import com.richardbrenkus.shiftschedulermodernized.algorithm.CalculationCounters;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleDay;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ScheduleMonth;
+import com.richardbrenkus.shiftschedulermodernized.algorithm.ShiftAssignment;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.record.CalculatedScheduleDay;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.record.CalculatedScheduleMonth;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.record.CalculatedShiftAssignment;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.record.ShiftPreferenceCalculationData;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.record.UserCalculationData;
+import com.richardbrenkus.shiftschedulermodernized.entity.StoredScheduleDay;
+import com.richardbrenkus.shiftschedulermodernized.entity.StoredUserSnapshot;
 import com.richardbrenkus.shiftschedulermodernized.repository.StoredScheduleDayRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +26,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /*
  * NOTE: The original generated tests were structurally obsolete after
@@ -332,6 +339,402 @@ class ScheduleRuleServiceTest {
                 user,
                 AUGUST_2026
         )).isTrue();
+    }
+
+    @Test
+    void respectsMinimalGap_shouldReturnTrue_whenRequiredArgumentIsMissing() {
+        LocalDate date = LocalDate.of(2026, 8, 10);
+        UserCalculationData validUser =
+                calculationUser(1L, Map.of(), Set.of(), true);
+        ScheduleMonth scheduleMonth = mock(ScheduleMonth.class);
+
+        UserCalculationData userWithoutId =
+                mock(UserCalculationData.class);
+        when(userWithoutId.userId()).thenReturn(null);
+
+        assertThat(service.respectsMinimalGap(null, 2, validUser, scheduleMonth, 1)).isTrue();
+        assertThat(service.respectsMinimalGap(date, 2, null, scheduleMonth, 1)).isTrue();
+        assertThat(service.respectsMinimalGap(date, 2, userWithoutId, scheduleMonth, 1)).isTrue();
+        assertThat(service.respectsMinimalGap(date, 2, validUser, scheduleMonth, 1)).isTrue();
+    }
+
+    @Test
+    void respectsMinimalGap_shouldSkipInvalidDaysAndAssignments() {
+        LocalDate candidateDate = LocalDate.of(2026, 8, 10);
+        UserCalculationData user =
+                calculationUser(1L, Map.of(), Set.of(), true);
+
+        ScheduleDay dayWithoutDate = mock(ScheduleDay.class);
+        when(dayWithoutDate.getDate()).thenReturn(null);
+
+        ScheduleDay dayWithoutAssignments = mock(ScheduleDay.class);
+        when(dayWithoutAssignments.getDate()).thenReturn(candidateDate);
+        when(dayWithoutAssignments.getAssignments()).thenReturn(null);
+
+        ShiftAssignment assignmentWithoutUser =
+                mock(ShiftAssignment.class);
+        when(assignmentWithoutUser.getUserCalculationData()).thenReturn(null);
+
+        ScheduleDay dayWithInvalidAssignments =
+                mock(ScheduleDay.class);
+        when(dayWithInvalidAssignments.getDate())
+                .thenReturn(candidateDate.minusDays(1));
+
+        List<ShiftAssignment> invalidAssignments = new ArrayList<>();
+        invalidAssignments.add(null);
+        invalidAssignments.add(assignmentWithoutUser);
+        when(dayWithInvalidAssignments.getAssignments())
+                .thenReturn(invalidAssignments);
+
+        List<ScheduleDay> days = new ArrayList<>();
+        days.add(null);
+        days.add(dayWithoutDate);
+        days.add(dayWithoutAssignments);
+        days.add(dayWithInvalidAssignments);
+
+        ScheduleMonth scheduleMonth = mock(ScheduleMonth.class);
+        when(scheduleMonth.getDays()).thenReturn(days);
+
+        assertThat(service.respectsMinimalGap(
+                candidateDate, 2, user, scheduleMonth, 1
+        )).isTrue();
+    }
+
+    @Test
+    void respectsMinimalGap_shouldIgnoreAssignmentsOutsideGapWindow() {
+        LocalDate candidateDate = LocalDate.of(2026, 8, 10);
+        UserCalculationData user =
+                calculationUser(1L, Map.of(), Set.of(), true);
+
+        ShiftAssignment sameUserBeforeWindow =
+                mock(ShiftAssignment.class);
+        //when(sameUserBeforeWindow.getUserCalculationData()).thenReturn(user);
+
+        ShiftAssignment sameUserAfterWindow =
+                mock(ShiftAssignment.class);
+        //when(sameUserAfterWindow.getUserCalculationData()).thenReturn(user);
+
+        ScheduleDay dayBeforeWindow = mock(ScheduleDay.class);
+        when(dayBeforeWindow.getDate())
+                .thenReturn(candidateDate.minusDays(3));
+        when(dayBeforeWindow.getAssignments())
+                .thenReturn(List.of(sameUserBeforeWindow));
+
+        ScheduleDay dayAfterWindow = mock(ScheduleDay.class);
+        when(dayAfterWindow.getDate())
+                .thenReturn(candidateDate.plusDays(3));
+        when(dayAfterWindow.getAssignments())
+                .thenReturn(List.of(sameUserAfterWindow));
+
+        ScheduleMonth scheduleMonth = mock(ScheduleMonth.class);
+        when(scheduleMonth.getDays())
+                .thenReturn(List.of(dayBeforeWindow, dayAfterWindow));
+
+        assertThat(service.respectsMinimalGap(
+                candidateDate, 2, user, scheduleMonth, 1
+        )).isTrue();
+    }
+
+    @Test
+    void respectsMinimalGap_shouldIgnoreSameSlotAndAssignmentOfDifferentUser() {
+        LocalDate candidateDate = LocalDate.of(2026, 8, 10);
+        UserCalculationData user =
+                calculationUser(1L, Map.of(), Set.of(), true);
+        UserCalculationData differentUser =
+                calculationUser(2L, Map.of(), Set.of(), true);
+
+        ShiftAssignment sameSlotAssignment =
+                mock(ShiftAssignment.class);
+        when(sameSlotAssignment.getShiftType()).thenReturn(1);
+        when(sameSlotAssignment.getUserCalculationData())
+                .thenReturn(user);
+
+        ShiftAssignment differentUserAssignment =
+                mock(ShiftAssignment.class);
+        //when(differentUserAssignment.getShiftType()).thenReturn(2);
+        //when(differentUserAssignment.getUserCalculationData()).thenReturn(differentUser);
+
+        ScheduleDay sameDay = mock(ScheduleDay.class);
+        when(sameDay.getDate()).thenReturn(candidateDate);
+        when(sameDay.getAssignments())
+                .thenReturn(List.of(sameSlotAssignment));
+
+        ScheduleDay nearbyDay = mock(ScheduleDay.class);
+        when(nearbyDay.getDate())
+                .thenReturn(candidateDate.plusDays(1));
+        when(nearbyDay.getAssignments())
+                .thenReturn(List.of(differentUserAssignment));
+
+        ScheduleMonth scheduleMonth = mock(ScheduleMonth.class);
+        when(scheduleMonth.getDays())
+                .thenReturn(List.of(sameDay, nearbyDay));
+
+        assertThat(service.respectsMinimalGap(
+                candidateDate, 2, user, scheduleMonth, 1
+        )).isTrue();
+    }
+
+    @Test
+    void respectsMinimalGap_shouldReturnFalse_whenSameUserHasAssignmentInsideGap() {
+        LocalDate candidateDate = LocalDate.of(2026, 8, 10);
+        UserCalculationData user = calculationUser(1L, Map.of(), Set.of(), true);
+
+        ShiftAssignment nearbyAssignment = mock(ShiftAssignment.class);
+        when(nearbyAssignment.getShiftType()).thenReturn(2);
+        when(nearbyAssignment.getUserCalculationData()).thenReturn(user);
+
+        ScheduleDay nearbyDay = mock(ScheduleDay.class);
+        when(nearbyDay.getDate()).thenReturn(candidateDate.minusDays(1));
+        when(nearbyDay.getAssignments()).thenReturn(List.of(nearbyAssignment));
+
+        ScheduleMonth scheduleMonth = mock(ScheduleMonth.class);
+        when(scheduleMonth.getDays()).thenReturn(List.of(nearbyDay));
+
+        assertThat(service.respectsMinimalGap(candidateDate, 2, user, scheduleMonth, 1)).isFalse();
+    }
+
+    @Test
+    void respectsPreviousMonthGap_shouldReturnTrue_whenRequiredArgumentIsMissing() {
+        LocalDate date = LocalDate.of(2026, 8, 1);
+        UserCalculationData validUser =
+                calculationUser(1L, Map.of(), Set.of(), true);
+
+        UserCalculationData userWithoutUsername =
+                mock(UserCalculationData.class);
+        when(userWithoutUsername.username()).thenReturn(null);
+
+        assertThat(service.respectsPreviousMonthGap(null, 2, date, validUser)).isTrue();
+        assertThat(service.respectsPreviousMonthGap(Map.of(), null, date, validUser)).isTrue();
+        assertThat(service.respectsPreviousMonthGap(Map.of(), 2, null, validUser)).isTrue();
+        assertThat(service.respectsPreviousMonthGap(Map.of(), 2, date, null)).isTrue();
+        assertThat(service.respectsPreviousMonthGap(
+                Map.of(), 2, date, userWithoutUsername
+        )).isTrue();
+    }
+
+    @Test
+    void respectsPreviousMonthGap_shouldReturnTrue_whenDateIsOutsideBoundaryWindow() {
+        UserCalculationData user =
+                calculationUser(1L, Map.of(), Set.of(), true);
+
+        assertThat(service.respectsPreviousMonthGap(
+                Map.of(),
+                2,
+                LocalDate.of(2026, 8, 3),
+                user
+        )).isTrue();
+    }
+
+    @Test
+    void respectsPreviousMonthGap_shouldSkipMissingDaysNullSnapshotsAndOtherUsers() {
+        UserCalculationData user =
+                calculationUser(1L, Map.of(), Set.of(), true);
+
+        StoredUserSnapshot otherUserSnapshot =
+                mock(StoredUserSnapshot.class);
+        when(otherUserSnapshot.getUsername())
+                .thenReturn("different-user");
+
+        StoredScheduleDay previousMonthDay =
+                mock(StoredScheduleDay.class);
+
+        Map<Integer, StoredUserSnapshot> assignments = new java.util.HashMap<>();
+        assignments.put(1, null);
+        assignments.put(2, otherUserSnapshot);
+
+        when(previousMonthDay.getAssignmentsByShiftType())
+                .thenReturn(assignments);
+
+        Map<Integer, StoredScheduleDay> previousDays = new java.util.HashMap<>();
+        previousDays.put(-1, previousMonthDay);
+
+        assertThat(service.respectsPreviousMonthGap(
+                previousDays,
+                2,
+                LocalDate.of(2026, 8, 1),
+                user
+        )).isTrue();
+    }
+
+    @Test
+    void respectsPreviousMonthGap_shouldReturnFalse_whenUserWorkedInsidePreviousMonthGap() {
+        UserCalculationData user =
+                calculationUser(1L, Map.of(), Set.of(), true);
+
+        StoredUserSnapshot matchingSnapshot =
+                mock(StoredUserSnapshot.class);
+        when(matchingSnapshot.getUsername())
+                .thenReturn(user.username());
+
+        StoredScheduleDay previousMonthDay =
+                mock(StoredScheduleDay.class);
+        when(previousMonthDay.getAssignmentsByShiftType())
+                .thenReturn(Map.of(1, matchingSnapshot));
+
+        assertThat(service.respectsPreviousMonthGap(
+                Map.of(-1, previousMonthDay),
+                2,
+                LocalDate.of(2026, 8, 1),
+                user
+        )).isFalse();
+    }
+
+    @Test
+    void isValidWithinTotalShiftLimit_shouldReturnFalse_whenUserIsNullOrHasNoRequest() {
+        UserCalculationData userWithoutRequest =
+                calculationUser(1L, Map.of(), Set.of(), false);
+        CalculationCounters counters = new CalculationCounters();
+
+        assertThat(service.isValidWithinTotalShiftLimit(
+                2, null, counters
+        )).isFalse();
+
+        assertThat(service.isValidWithinTotalShiftLimit(
+                2, userWithoutRequest, counters
+        )).isFalse();
+    }
+
+    @Test
+    void isValidWithinTotalShiftLimit_shouldReturnTrue_whenCapIsNull() {
+        UserCalculationData user =
+                calculationUser(1L, Map.of(), Set.of(), true);
+        CalculationCounters counters = new CalculationCounters();
+
+        counters.incrementWeekday(user.userId(), 1);
+        counters.incrementWeekend(user.userId(), 1);
+
+        assertThat(service.isValidWithinTotalShiftLimit(
+                null, user, counters
+        )).isTrue();
+    }
+
+    @Test
+    void isValidWithinTotalShiftLimit_shouldAcceptEqualCountAndRejectCountAboveCap() {
+        UserCalculationData user =
+                calculationUser(1L, Map.of(), Set.of(), true);
+        CalculationCounters counters = new CalculationCounters();
+
+        counters.incrementWeekday(user.userId(), 1);
+        counters.incrementWeekend(user.userId(), 2);
+
+        assertThat(service.isValidWithinTotalShiftLimit(
+                2, user, counters
+        )).isTrue();
+
+        counters.incrementWeekday(user.userId(), 2);
+
+        assertThat(service.isValidWithinTotalShiftLimit(
+                2, user, counters
+        )).isFalse();
+    }
+
+    @Test
+    void isValidWithinRequestedWeekendLimit_shouldReturnFalse_whenUserIsNullOrHasNoRequest() {
+        UserCalculationData userWithoutRequest =
+                calculationUser(1L, Map.of(), Set.of(), false);
+        CalculationCounters counters = new CalculationCounters();
+
+        assertThat(service.isValidWithinRequestedWeekendLimit(
+                null, 1, counters
+        )).isFalse();
+
+        assertThat(service.isValidWithinRequestedWeekendLimit(
+                userWithoutRequest, 1, counters
+        )).isFalse();
+    }
+
+    @Test
+    void isValidWithinRequestedWeekendLimit_shouldUseZero_whenPreferenceIsMissing() {
+        UserCalculationData user =
+                calculationUser(1L, Map.of(), Set.of(), true);
+        CalculationCounters counters = new CalculationCounters();
+
+        assertThat(service.isValidWithinRequestedWeekendLimit(
+                user, 1, counters
+        )).isTrue();
+
+        counters.incrementWeekend(user.userId(), 1);
+
+        assertThat(service.isValidWithinRequestedWeekendLimit(
+                user, 1, counters
+        )).isFalse();
+    }
+
+    @Test
+    void isValidWithinRequestedWeekendLimit_shouldAcceptEqualCountAndRejectCountAboveRequest() {
+        UserCalculationData user = calculationUser(
+                1L,
+                Map.of(1, preferenceData(1, 0, 1)),
+                Set.of(),
+                true
+        );
+        CalculationCounters counters = new CalculationCounters();
+
+        counters.incrementWeekend(user.userId(), 1);
+
+        assertThat(service.isValidWithinRequestedWeekendLimit(
+                user, 1, counters
+        )).isTrue();
+
+        counters.incrementWeekend(user.userId(), 1);
+
+        assertThat(service.isValidWithinRequestedWeekendLimit(
+                user, 1, counters
+        )).isFalse();
+    }
+
+    @Test
+    void isValidWithinRequestedWeekdayLimit_shouldReturnFalse_whenUserIsNullOrHasNoRequest() {
+        UserCalculationData userWithoutRequest =
+                calculationUser(1L, Map.of(), Set.of(), false);
+        CalculationCounters counters = new CalculationCounters();
+
+        assertThat(service.isValidWithinRequestedWeekdayLimit(
+                null, 1, counters
+        )).isFalse();
+
+        assertThat(service.isValidWithinRequestedWeekdayLimit(
+                userWithoutRequest, 1, counters
+        )).isFalse();
+    }
+
+    @Test
+    void isValidWithinRequestedWeekdayLimit_shouldUseZero_whenPreferenceIsMissing() {
+        UserCalculationData user =  calculationUser(1L, Map.of(), Set.of(), true);
+        CalculationCounters counters = new CalculationCounters();
+
+        assertThat(service.isValidWithinRequestedWeekdayLimit(
+                user, 1, counters
+        )).isTrue();
+
+        counters.incrementWeekday(user.userId(), 1);
+
+        assertThat(service.isValidWithinRequestedWeekdayLimit(
+                user, 1, counters
+        )).isFalse();
+    }
+
+    @Test
+    void isValidWithinRequestedWeekdayLimit_shouldAcceptEqualCountAndRejectCountAboveRequest() {
+        UserCalculationData user = calculationUser(
+                1L,
+                Map.of(1, preferenceData(1, 1, 0)),
+                Set.of(),
+                true
+        );
+        CalculationCounters counters = new CalculationCounters();
+
+        counters.incrementWeekday(user.userId(), 1);
+
+        assertThat(service.isValidWithinRequestedWeekdayLimit(
+                user, 1, counters
+        )).isTrue();
+
+        counters.incrementWeekday(user.userId(), 1);
+
+        assertThat(service.isValidWithinRequestedWeekdayLimit(
+                user, 1, counters
+        )).isFalse();
     }
 
     private UserCalculationData calculationUser(

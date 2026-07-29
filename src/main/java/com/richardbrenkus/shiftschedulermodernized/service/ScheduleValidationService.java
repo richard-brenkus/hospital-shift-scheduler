@@ -230,6 +230,10 @@ public class ScheduleValidationService {
             }
 
             for (ShiftAssignment assignment : day.getAssignments()) {
+
+                if(assignment == null)
+                    continue;
+
                 UserCalculationData userCalculationData = assignment.getUserCalculationData();
 
                 if (userCalculationData == null || userCalculationData.userId() == null) {

@@ -21,7 +21,10 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_METHOD;
 
-@Sql(scripts = "/sql/user-with-shift-request.sql", executionPhase = BEFORE_TEST_METHOD)
+@Sql(scripts =
+        {"/sql/cleanup.sql",
+        "/sql/user-with-shift-request.sql"},
+        executionPhase = BEFORE_TEST_METHOD)
 class ShiftRequestServiceIT extends AbstractMySqlContainerTest {
 
     @Autowired

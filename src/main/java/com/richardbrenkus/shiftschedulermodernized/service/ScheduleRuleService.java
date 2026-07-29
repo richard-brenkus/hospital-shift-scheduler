@@ -6,7 +6,6 @@ import com.richardbrenkus.shiftschedulermodernized.algorithm.record.CalculatedSc
 import com.richardbrenkus.shiftschedulermodernized.algorithm.record.ShiftPreferenceCalculationData;
 import com.richardbrenkus.shiftschedulermodernized.algorithm.record.UserCalculationData;
 import com.richardbrenkus.shiftschedulermodernized.entity.StoredScheduleDay;
-import com.richardbrenkus.shiftschedulermodernized.entity.User;
 import com.richardbrenkus.shiftschedulermodernized.repository.StoredScheduleDayRepository;
 import com.richardbrenkus.shiftschedulermodernized.util.CalendarDateIdUtils;
 import lombok.RequiredArgsConstructor;
@@ -22,41 +21,6 @@ import java.util.stream.IntStream;
 public class ScheduleRuleService {
 
     private final StoredScheduleDayRepository storedScheduleDayRepository;
-
-    boolean isWithinTotalShiftLimit(Integer shiftCountCap, User user, CalculationCounters counters) {
-
-        if (shiftCountCap == null) {
-            return true;
-        }
-
-        int shiftCountTotal = getTotalShiftCount(user, counters);
-
-        if (shiftCountTotal == 0) {
-            return true;
-        }
-
-        return shiftCountTotal < shiftCountCap;
-    }
-
-    private int getTotalShiftCount(User user, CalculationCounters counters) {
-        Map<Integer, Integer> userShiftCounters =
-                counters.getWeekdayCounters().getOrDefault(user.getId(), Map.of());
-
-        Map<Integer, Integer> userWeekendCounters =
-                counters.getWeekendCounters().getOrDefault(user.getId(), Map.of());
-
-        int weekdayTotal = userShiftCounters.values()
-                .stream()
-                .mapToInt(Integer::intValue)
-                .sum();
-
-        int weekendTotal = userWeekendCounters.values()
-                .stream()
-                .mapToInt(Integer::intValue)
-                .sum();
-
-        return weekdayTotal + weekendTotal;
-    }
 
     boolean isWithinRequestedWeekdayLimit(UserCalculationData userCalculationData, int shiftType, CalculationCounters counters) {
 
@@ -153,12 +117,7 @@ public class ScheduleRuleService {
         return true;
     }
 
-    public boolean respectsPreviousMonthGap(
-            Map<Integer, StoredScheduleDay> previousMonthStoredScheduleDays,
-            Integer minimalGap,
-            LocalDate date,
-            UserCalculationData userCalculationData
-    ) {
+    public boolean respectsPreviousMonthGap(Map<Integer, StoredScheduleDay> previousMonthStoredScheduleDays, Integer minimalGap, LocalDate date, UserCalculationData userCalculationData) {
         if (previousMonthStoredScheduleDays == null
                 || minimalGap == null
                 || date == null
@@ -179,8 +138,7 @@ public class ScheduleRuleService {
                 continue;
             }
 
-            boolean userWorkedPreviousMonthDay =
-                    previousMonthDay.getAssignmentsByShiftType()
+            boolean userWorkedPreviousMonthDay = previousMonthDay.getAssignmentsByShiftType()
                             .values()
                             .stream()
                             .anyMatch(snapshot ->
@@ -245,10 +203,7 @@ public class ScheduleRuleService {
         return assignedWeekdayCount <= requestedWeekdayCount;
     }
 
-    public Map<Integer, StoredScheduleDay> loadPreviousStoredScheduleDays(
-            LocalDate adminDate,
-            int minimalGap
-    ) {
+    public Map<Integer, StoredScheduleDay> loadPreviousStoredScheduleDays(LocalDate adminDate, int minimalGap) {
         List<LocalDate> previousMonthDates = createPreviousMonthDatesToCheck(adminDate, minimalGap);
 
         Map<Integer, StoredScheduleDay> previousMonthStoredScheduleDays= new HashMap<>();
@@ -270,10 +225,7 @@ public class ScheduleRuleService {
         return previousMonthStoredScheduleDays;
     }
 
-    private static List<LocalDate> createPreviousMonthDatesToCheck(
-            LocalDate adminDate,
-            int minimalGap
-    ) {
+    private static List<LocalDate> createPreviousMonthDatesToCheck(LocalDate adminDate, int minimalGap) {
         LocalDate firstDayOfAdminMonth = adminDate.withDayOfMonth(1);
 
         return IntStream.rangeClosed(1, minimalGap)
@@ -282,8 +234,7 @@ public class ScheduleRuleService {
     }
 
     // Overloaded methods for multithreading:
-    boolean isWithinTotalShiftLimit(
-            Integer shiftCountCap,
+    boolean isWithinTotalShiftLimit(Integer shiftCountCap,
             UserCalculationData user,
             CalculationCounters counters
     ) {

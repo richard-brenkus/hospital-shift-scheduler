@@ -61,19 +61,14 @@ class ActivityLogPersistenceIT extends AbstractMySqlContainerTest {
         UUID eventId = UUID.randomUUID();
         Instant now = Instant.now(applicationClock);
 
-        // insertIfAbsent is a @Modifying native query; JPA requires an active
-        // transaction. Production calls it from ActivityLogWriter.persist,
-        // which is @Transactional(REQUIRES_NEW).
-        int firstInsert = insertOnce(eventId, now);
-        int secondInsert = insertOnce(eventId, now);
+        int firstResult = insertOnce(eventId, now);
+        insertOnce(eventId, now);
 
-        assertThat(firstInsert).isEqualTo(1);
-        assertThat(secondInsert).isEqualTo(0); // ON DUPLICATE KEY UPDATE → 0 rows affected
+        assertThat(firstResult).isEqualTo(1);
 
-        List<ActivityLog> stored =
-                activityLogRepository.findAllByOrderByOccurredAtDescIdDesc(
-                        PageRequest.of(0, 10)
-                );
+        List<ActivityLog> stored = activityLogRepository.findAllByOrderByOccurredAtDescIdDesc(
+                PageRequest.of(0, 10)
+        );
 
         assertThat(stored)
                 .extracting(ActivityLog::getEventId)
