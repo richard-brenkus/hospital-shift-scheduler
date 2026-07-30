@@ -9,10 +9,10 @@
         <relativePath/>
     </parent>
     <groupId>com.richardbrenkus</groupId>
-    <artifactId>shift-scheduler-modernized</artifactId>
+    <artifactId>hospital-shift-scheduler</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>shift-scheduler-modernized</name>
-    <description>shift-scheduler-modernized</description>
+    <name>hospital-shift-scheduler</name>
+    <description>hospital-shift-scheduler</description>
     <url/>
     <licenses>
         <license/>
