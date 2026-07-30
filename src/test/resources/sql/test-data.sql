@@ -1465,7 +1465,7 @@ INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5227, '2026-08-28');
 INSERT INTO shift_preference_dates_yes (shift_preference_id, dates_yes) VALUES (5227, '2026-08-29');
 
-INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, version, shift_request_id) VALUES (1061, 'Alajos', 'alajos@alajosmail.ala', 'alajos@alajosmail.ala', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-04 10:47:00', '1967-01-24', 'psychiatrist', 'MUDr.', TRUE, 'ADMIN', 0, null);
+INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, version, shift_request_id) VALUES (1061, 'Alajos', 'alajos', 'alajos@alajosmail.ala', '$2a$10$kcStmlbCJ/U9OO/0DFGeL.Tl1Tw9pOar0MqBnyMLDQ2aiQ7GWOqGG', 'Synthetic test user with valid shift request', '2026-07-04 10:47:00', '1967-01-24', 'psychiatrist', 'MUDr.', TRUE, 'ADMIN', 0, null);
 INSERT INTO user_allowed_shift_types (user_id, shift_type) VALUES (1061, 1);
 
 INSERT INTO users (user_id, name, username, email, password, note, creation_date, birthday, profession, title, enabled, role, version, shift_request_id) VALUES (1062, 'Antal', 'antal@antalmail.ant', 'antal@antalmail.ant', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiY6Pz/5N4qpx3vP.f4LyOmdx4Mq2Fy', 'Synthetic test user with valid shift request', '2026-07-04 10:47:00', '1967-01-24', 'psychiatrist', 'MUDr.', TRUE, 'USER', 0, null);
