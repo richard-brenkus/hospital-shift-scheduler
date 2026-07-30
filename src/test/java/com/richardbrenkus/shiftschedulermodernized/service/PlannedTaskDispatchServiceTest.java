@@ -112,7 +112,10 @@ class PlannedTaskDispatchServiceTest {
 
     @Test
     void createReminderOutboxJobsIfDue_shouldReturnEarlyWhenTaskInactive() {
-        SendReminderTask task = SendReminderTask.builder().id(SendReminderTask.SINGLETON_ID).isActive(false).build();
+        SendReminderTask task = new SendReminderTask();
+        task.setId(SendReminderTask.SINGLETON_ID);
+        task.setActive(false);
+
         when(sendReminderTaskRepository.findByIdForUpdate(SendReminderTask.SINGLETON_ID)).thenReturn(Optional.of(task));
 
         service.createReminderOutboxJobsIfDue(NOW);
@@ -142,6 +145,15 @@ class PlannedTaskDispatchServiceTest {
     }
 
     private static SendReminderTask dueTask() {
-        return SendReminderTask.builder().id(SendReminderTask.SINGLETON_ID).isActive(true).startSendingTime(NOW).finalRequestSubmissionDate(LocalDate.of(2026, 8, 20)).repetitions(3).frequencyInDays(2).counter(0).build();
+        SendReminderTask sendReminderTask = new SendReminderTask();
+        sendReminderTask.setId(SendReminderTask.SINGLETON_ID);
+        sendReminderTask.setActive(true);
+        sendReminderTask.setStartSendingTime(NOW);
+        sendReminderTask.setFinalRequestSubmissionDate(LocalDate.of(2026, 8, 20));
+        sendReminderTask.setRepetitions(3);
+        sendReminderTask.setFrequencyInDays(2);
+        sendReminderTask.setCounter(0);
+
+        return sendReminderTask;
     }
 }

@@ -20,9 +20,9 @@ public class ShiftPreferenceForm {
     private int weekdayCount;
     private int weekendCount;
 
+    @Builder.Default
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private List<LocalDate> datesYes = new ArrayList<>();
-
 
     public String toString(){
         return "ShiftPreferenceForm{" +

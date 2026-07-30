@@ -28,6 +28,7 @@ public class ShiftPreference {
     private boolean noShiftRequested;
     private boolean anyDateSelected;
 
+    @Builder.Default
     @ElementCollection
     private List<LocalDate> datesYes = new ArrayList<>();
 

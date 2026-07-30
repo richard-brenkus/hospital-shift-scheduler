@@ -11,7 +11,6 @@ import java.time.Instant;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
 public class CleanupTask {
 
     public static final Long SINGLETON_ID = 1L;

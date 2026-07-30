@@ -107,7 +107,15 @@ class CalculatedScheduleConverterTest {
     }
 
     private User user(Long id, String name) {
-        return User.builder().id(id).name(name).username(name.toLowerCase().replace(" ", ".")).email(name.toLowerCase().replace(" ", ".") + "@test.local").password("encoded").enabled(true).build();
+        User user = new User();
+        user.setId(id);
+        user.setName(name);
+        user.setUsername(name.toLowerCase().replace(" ", "."));
+        user.setEmail(name.toLowerCase().replace(" ", ".") + "@test.local");
+        user.setPassword("encoded");
+        user.setEnabled(true);
+
+        return user;
     }
 
     private UserCalculationData calculationData(long id) {

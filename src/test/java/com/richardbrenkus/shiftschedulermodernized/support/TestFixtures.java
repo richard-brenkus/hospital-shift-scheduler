@@ -50,11 +50,15 @@ public final class TestFixtures {
     }
 
     public static ShiftPreference preference(int shiftType, int priority, int weekdayCount, int weekendCount, boolean anyDateSelected, List<LocalDate> datesYes) {
-        return ShiftPreference.builder().shiftType(shiftType).priority(priority).weekdayCount(weekdayCount).weekendCount(weekendCount).anyDateSelected(anyDateSelected).datesYes(new ArrayList<>(datesYes)).noShiftRequested(false).build();
-    }
-
-    public static ShiftPreference noShiftPreference(int shiftType, int priority) {
-        return ShiftPreference.builder().shiftType(shiftType).priority(priority).weekdayCount(0).weekendCount(0).anyDateSelected(false).noShiftRequested(true).datesYes(new ArrayList<>()).build();
+        return ShiftPreference.builder()
+                .shiftType(shiftType)
+                .priority(priority)
+                .weekdayCount(weekdayCount)
+                .weekendCount(weekendCount)
+                .anyDateSelected(anyDateSelected)
+                .datesYes(new ArrayList<>(datesYes))
+                .noShiftRequested(false)
+                .build();
     }
 
     public static void attachRequest(User user, List<LocalDate> datesNo, ShiftPreference... preferences) {

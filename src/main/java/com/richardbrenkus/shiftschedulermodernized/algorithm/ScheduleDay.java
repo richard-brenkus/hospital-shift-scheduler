@@ -16,5 +16,6 @@ public class ScheduleDay {
     private LocalDate date;
     private boolean weekendOrHoliday;
 
+    @Builder.Default
     private List<ShiftAssignment> assignments = new ArrayList<>();
 }

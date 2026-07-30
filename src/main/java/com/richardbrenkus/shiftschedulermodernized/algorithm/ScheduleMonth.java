@@ -16,6 +16,7 @@ public class ScheduleMonth {
     private YearMonth month;
     private int hitCounter;
 
+    @Builder.Default
     private List<ScheduleDay> days = new ArrayList<>();
 
     private CalculationProfileForm calculationProfile;

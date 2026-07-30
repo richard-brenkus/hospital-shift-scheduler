@@ -12,7 +12,6 @@ import java.time.LocalDate;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
 public class SendReminderTask {
 
     public static final Long SINGLETON_ID = 1L;
