@@ -79,11 +79,13 @@ public class SmtpEmailReminderService implements EmailReminderService {
         return """
                 Hello %s,
                 
-                this is a reminder to submit your shift request.
+                this is an automated reminder to submit your shift request.
                 
                 Please submit your request by day %d of the month.
                 
                 Thank you.
+                
+                Hospital Shift Scheduler
                 """.formatted(name, finalSubmissionDate.getDayOfMonth());
     }
 
