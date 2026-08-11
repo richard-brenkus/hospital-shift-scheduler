@@ -26,6 +26,7 @@ public class User {
     private Long id;
 
     @Version
+    @Column(nullable = false)
     private Long version;
 
     @NotBlank(message = "{user.name.NotBlank}")
@@ -45,6 +46,7 @@ public class User {
 
     @NotBlank(message = "{user.password.NotBlank}")
     @Size(min = ValidationConstants.PASSWORD_MIN_LENGTH, max = ValidationConstants.PASSWORD_MAX_LENGTH, message = "{user.password.size}")
+    @Column(nullable = false, length = ValidationConstants.PASSWORD_MAX_LENGTH)
     private String password;
 
     private String note;

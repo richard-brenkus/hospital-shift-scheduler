@@ -17,6 +17,7 @@ public class ShiftRequest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "shift_request_id", nullable = false, updatable = false)
     private Long shiftRequestId;
 
     @OneToMany(mappedBy = "shiftRequest", cascade = CascadeType.ALL, orphanRemoval = true)
