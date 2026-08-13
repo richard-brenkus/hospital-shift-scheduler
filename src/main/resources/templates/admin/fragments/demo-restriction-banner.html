@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<body>
+
+<div th:fragment="demoRestrictionBanner(message)"
+     class="demo-restriction-banner"
+     role="status">
+
+    <span class="demo-restriction-banner-title"
+          data-th-text="#{demo.restricted.title}">
+        Administrator-only functionality
+    </span>
+
+    <span class="demo-restriction-banner-message"
+          th:text="${message}">
+        This functionality is available to full administrator accounts only.
+    </span>
+
+</div>
+
+</body>
+</html>

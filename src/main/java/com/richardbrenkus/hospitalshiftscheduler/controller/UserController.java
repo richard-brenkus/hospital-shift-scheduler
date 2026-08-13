@@ -13,6 +13,7 @@ import com.richardbrenkus.hospitalshiftscheduler.mapper.ShiftRequestMapper;
 import com.richardbrenkus.hospitalshiftscheduler.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -180,6 +181,7 @@ public class UserController {
         return "user/shift_request_summary";
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PostMapping("/user/delete_shift_request")
     public String deleteShiftRequest(@RequestParam(name = ModelAttributeName.USERNAME_PASSED) String username, Authentication authentication, Model model) {
 
@@ -205,6 +207,6 @@ public class UserController {
     }
 
     private boolean isAdmin(Authentication authentication) {
-        return authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(Role.ADMIN.asAuthority()));
+        return authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(Role.ADMIN.asAuthority()) || a.getAuthority().equals(Role.DEMO_ADMIN.asAuthority()));
     }
 }

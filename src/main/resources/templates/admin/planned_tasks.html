@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
 
 <head>
     <meta charset="UTF-8">
@@ -256,15 +256,21 @@
                     </td>
                 </tr>
 
-                <tr>
+                <tr sec:authorize="hasRole('ADMIN')">
                     <td colspan="2" class="centered">
-                        <button type="submit" class="table-button button-green" data-th-text="#{button.save}">
+                        <button type="submit"
+                                class="table-button button-green"
+                                data-th-text="#{button.save}">
                             Save
                         </button>
                     </td>
                 </tr>
                 </tbody>
             </table>
+            <div sec:authorize="hasRole('DEMO_ADMIN') and !hasRole('ADMIN')"
+                 th:replace="~{admin/fragments/demo-restriction-banner
+                  :: demoRestrictionBanner(#{demo.restricted.reminderSchedule})}">
+            </div>
 
         </form>
 
@@ -406,15 +412,22 @@
                     </td>
                 </tr>
 
-                <tr>
+                <tr sec:authorize="hasRole('ADMIN')">
                     <td colspan="2" class="centered">
-                        <button type="submit" class="table-button button-green" data-th-text="#{button.save}">
+                        <button type="submit"
+                                class="table-button button-green"
+                                data-th-text="#{button.save}">
                             Save
                         </button>
                     </td>
                 </tr>
                 </tbody>
             </table>
+
+            <div sec:authorize="hasRole('DEMO_ADMIN') and !hasRole('ADMIN')"
+                 th:replace="~{admin/fragments/demo-restriction-banner
+                  :: demoRestrictionBanner(#{demo.restricted.cleanupSchedule})}">
+            </div>
 
         </form>
 

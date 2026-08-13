@@ -1,8 +1,3 @@
-/* ============================================================
-   main.css cleaned and deduplicated
-   ============================================================ */
-
-
 body {
     background-color: #2f3338;
     color: #f2f2f2;
@@ -2634,4 +2629,34 @@ button:disabled {
     margin-bottom: 1.5rem;
     font-weight: 600;
     text-align: center;
+}
+
+.demo-restriction-banner {
+    width: min(620px, 100%);
+    box-sizing: border-box;
+    margin: 1.5rem auto;
+    padding: 1rem 1.25rem;
+
+    text-align: center;
+
+    background-color: #3b4047;
+    color: #f2f2f2;
+
+    border: 1px solid #8a919c;
+    border-left: 4px solid #aeb4bd;
+    border-radius: 5px;
+}
+
+.demo-restriction-banner-title {
+    display: block;
+    margin-bottom: 0.4rem;
+
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.demo-restriction-banner-message {
+    display: block;
+    line-height: 1.4;
+    color: #cfd4da;
 }

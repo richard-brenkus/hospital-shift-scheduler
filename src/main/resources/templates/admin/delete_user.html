@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -24,47 +24,51 @@
 
     <section class="page-section">
 
-        <form th:action="@{/admin/delete_user}"
+        <!-- Full functionality for real administrators -->
+        <form sec:authorize="hasRole('ADMIN')"
+              th:action="@{/admin/delete_shift_request}"
               method="post"
-              class="delete-user-form">
+              th:object="${updatedUser}"
+              class="delete-shift-request-form">
 
-            <table class="table-no-lines delete-user-table">
+            <table class="table-no-lines delete-shift-request-table">
 
                 <tbody>
 
                 <tr>
-                    <td class="td-no-lines delete-user-cell">
-                        <label for="userId"
-                               data-th-text="#{deleteUser.select}">
-                            Select user
+                    <td class="td-no-lines delete-shift-request-cell">
+                        <label for="requestSelect"
+                               data-th-text="#{deleteShiftRequest.select}">
+                            Select a shift request
                         </label>
                     </td>
                 </tr>
 
                 <tr>
-                    <td class="td-no-lines delete-user-cell">
-                        <select id="userId" name="userId" required>
+                    <td class="td-no-lines delete-shift-request-cell">
+                        <select id="requestSelect"
+                                th:field="*{id}">
+
                             <option value=""
-                                    data-th-text="#{deleteUser.select}">
-                                Select user
+                                    data-th-text="#{deleteShiftRequest.select}">
+                                Select shift request
                             </option>
 
                             <option th:each="user : ${users}"
                                     th:value="${user.id}"
-                                    th:text="${user.name + ' (' + user.username + ')'}">
+                                    th:text="${user.name}">
                                 User name
                             </option>
+
                         </select>
                     </td>
                 </tr>
 
                 <tr>
-                    <td class="td-no-lines delete-user-cell">
+                    <td class="td-no-lines delete-shift-request-cell">
                         <button type="submit"
                                 class="standard-button button-orange"
-                                data-th-text="#{button.delete}"
-                                th:data-confirm-message="#{userTable.confirmDelete}"
-                                onclick="return confirm(this.dataset.confirmMessage);">
+                                data-th-text="#{button.delete}">
                             Delete
                         </button>
                     </td>
@@ -75,6 +79,12 @@
             </table>
 
         </form>
+
+        <!-- Informational replacement for the public demo administrator -->
+        <div sec:authorize="hasRole('DEMO_ADMIN') and !hasRole('ADMIN')"
+             th:replace="~{admin/fragments/demo-restriction-banner
+                  :: demoRestrictionBanner(#{demo.restricted.userDeletion})}">
+        </div>
 
     </section>
 

@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -110,6 +111,7 @@ public class AdminController {
         return "admin/delete_user";
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/delete_user")
     public String deleteUser(@RequestParam Long userId) {
         User user = userService.getUserById(userId);
@@ -136,6 +138,7 @@ public class AdminController {
 
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(path = "/admin/delete_shift_request")
     public String deleteRequest(@RequestParam(name = "id") long userId, Authentication authentication) {
 
@@ -279,6 +282,7 @@ public class AdminController {
         return "admin/change_user_password";
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/change_user_password")
     public String changeUserPasswordByAdmin(@RequestParam("userId") Long userId, @Valid @ModelAttribute("passwordChangeForm") PasswordChangeForm passwordChangeForm, BindingResult bindingResult, Model model) {
         UserViewRecord selectedUser = userService.findUserViewById(userId);

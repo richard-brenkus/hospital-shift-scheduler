@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -24,7 +24,9 @@
 
     <section class="page-section">
 
-        <form th:action="@{/admin/delete_shift_request}"
+        <!-- Full functionality for ADMIN -->
+        <form sec:authorize="hasRole('ADMIN')"
+              th:action="@{/admin/delete_shift_request}"
               method="post"
               th:object="${updatedUser}"
               class="delete-shift-request-form">
@@ -44,7 +46,9 @@
 
                 <tr>
                     <td class="td-no-lines delete-shift-request-cell">
-                        <select id="requestSelect" th:field="*{id}">
+                        <select id="requestSelect"
+                                th:field="*{id}">
+
                             <option value=""
                                     data-th-text="#{deleteShiftRequest.select}">
                                 Select shift request
@@ -55,6 +59,7 @@
                                     th:text="${user.name}">
                                 User name
                             </option>
+
                         </select>
                     </td>
                 </tr>
@@ -74,6 +79,12 @@
             </table>
 
         </form>
+
+        <!-- Replacement for DEMO_ADMIN -->
+        <div sec:authorize="hasRole('DEMO_ADMIN') and !hasRole('ADMIN')"
+             th:replace="~{admin/fragments/demo-restriction-banner
+                      :: demoRestrictionBanner(#{demo.restricted.shiftRequestDeletion})}">
+        </div>
 
     </section>
 
