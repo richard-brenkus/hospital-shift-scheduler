@@ -19,7 +19,6 @@ import com.richardbrenkus.hospitalshiftscheduler.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,7 +78,6 @@ public class UserService {
         return encoder.passwordEncoder().matches(oldPassword, user.getPassword());
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void changeUserPassword(String username, String newPassword) {
 
@@ -165,7 +163,6 @@ public class UserService {
         return userRepository.findById(userId).map(User::getUsername).orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + userId));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void deleteUser(User user) {
 

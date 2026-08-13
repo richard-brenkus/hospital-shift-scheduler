@@ -5,7 +5,6 @@ import com.richardbrenkus.hospitalshiftscheduler.algorithm.ScheduleValidationRes
 import com.richardbrenkus.hospitalshiftscheduler.config.constants.ApplicationConstants;
 import com.richardbrenkus.hospitalshiftscheduler.config.constants.ModelAttributeName;
 import com.richardbrenkus.hospitalshiftscheduler.config.constants.Profession;
-import com.richardbrenkus.hospitalshiftscheduler.config.constants.Role;
 import com.richardbrenkus.hospitalshiftscheduler.dto.form.*;
 import com.richardbrenkus.hospitalshiftscheduler.dto.view.*;
 import com.richardbrenkus.hospitalshiftscheduler.entity.User;

@@ -11,6 +11,7 @@ import com.richardbrenkus.hospitalshiftscheduler.repository.UserRepository;
 import com.richardbrenkus.hospitalshiftscheduler.service.ShiftRequestService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
