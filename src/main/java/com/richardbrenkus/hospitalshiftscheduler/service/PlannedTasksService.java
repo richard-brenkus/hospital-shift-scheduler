@@ -12,6 +12,7 @@ import com.richardbrenkus.hospitalshiftscheduler.mapper.PlannedTaskMapper;
 import com.richardbrenkus.hospitalshiftscheduler.repository.CleanupTaskRepository;
 import com.richardbrenkus.hospitalshiftscheduler.repository.SendReminderTaskRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,7 @@ public class PlannedTasksService {
     private final Clock applicationClock;
     private final ZoneId applicationZoneId;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void saveCleanupTask(CleanupTaskForm form, Instant now) {
         Objects.requireNonNull(form, "form must not be null");
@@ -60,6 +62,7 @@ public class PlannedTasksService {
         activityPublisher.publishSuccess(ActivityType.ADMIN_SETTINGS_CHANGED, "CleanupTask", String.valueOf(task.getId()), "Cleanup task configuration updated");
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void saveSendReminderTask(SendReminderTaskForm form, Instant now) {
         Objects.requireNonNull(form, "form must not be null");

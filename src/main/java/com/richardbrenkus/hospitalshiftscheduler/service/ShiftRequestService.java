@@ -13,6 +13,7 @@ import com.richardbrenkus.hospitalshiftscheduler.mapper.ShiftRequestMapper;
 import com.richardbrenkus.hospitalshiftscheduler.repository.UserRepository;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -92,6 +93,7 @@ public class ShiftRequestService {
         return savedRequest;
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Transactional
     public void deleteShiftRequest(long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("Invalid user Id: " + userId));
@@ -99,6 +101,7 @@ public class ShiftRequestService {
         this.deleteShiftRequest(user);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Transactional
     public void deleteShiftRequest(String username) {
         Optional<User> userOptional = userRepository.findByUsername(username);

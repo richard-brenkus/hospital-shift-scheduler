@@ -140,15 +140,11 @@ public class AdminController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(path = "/admin/delete_shift_request")
-    public String deleteRequest(@RequestParam(name = "id") long userId, Authentication authentication) {
+    public String deleteRequest(@RequestParam(name = "id") long userId) {
 
-        if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(Role.ADMIN.asAuthority()))) {
-            shiftRequestService.deleteShiftRequest(userId);
+        shiftRequestService.deleteShiftRequest(userId);
 
-            return "redirect:/admin/adminIndex";
-        }
-
-        return "redirect:/403";
+        return "redirect:/admin/adminIndex";
     }
 
     @GetMapping(path = "/admin/update_user")
