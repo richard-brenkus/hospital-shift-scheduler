@@ -12,7 +12,6 @@ import com.richardbrenkus.hospitalshiftscheduler.mapper.PlannedTaskMapper;
 import com.richardbrenkus.hospitalshiftscheduler.repository.CleanupTaskRepository;
 import com.richardbrenkus.hospitalshiftscheduler.repository.SendReminderTaskRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
