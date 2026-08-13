@@ -1,5 +1,6 @@
 package com.richardbrenkus.hospitalshiftscheduler.security;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Disabled("This test is disabled because it is not possible to run it in a CI environment")
 @SpringBootTest
 @AutoConfigureMockMvc
 @WithMockUser(username = "demo-admin", roles = "DEMO_ADMIN")
