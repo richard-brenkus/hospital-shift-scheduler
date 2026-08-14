@@ -74,11 +74,11 @@
                 </tbody>
 
             </table>
-            <div sec:authorize="hasRole('DEMO_ADMIN') and !hasRole('ADMIN')"
-                 th:replace="~{admin/fragments/demo-restriction-banner
-                  :: demoRestrictionBanner(#{demo.restricted.userDeletion})}">
-            </div>
         </form>
+        <div sec:authorize="hasRole('DEMO_ADMIN') and !hasRole('ADMIN')"
+             th:replace="~{admin/fragments/demo-restriction-banner
+                  :: demoRestrictionBanner(#{demo.restricted.userDeletion})}">
+        </div>
 
     </section>
 

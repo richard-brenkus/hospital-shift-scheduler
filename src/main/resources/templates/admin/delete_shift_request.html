@@ -24,7 +24,6 @@
 
     <section class="page-section">
 
-        <!-- Full functionality for ADMIN -->
         <form sec:authorize="hasRole('ADMIN')"
               th:action="@{/admin/delete_shift_request}"
               method="post"
@@ -80,7 +79,6 @@
 
         </form>
 
-        <!-- Replacement for DEMO_ADMIN -->
         <div sec:authorize="hasRole('DEMO_ADMIN') and !hasRole('ADMIN')"
              th:replace="~{admin/fragments/demo-restriction-banner
                       :: demoRestrictionBanner(#{demo.restricted.shiftRequestDeletion})}">
