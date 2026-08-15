@@ -2660,3 +2660,51 @@ button:disabled {
     line-height: 1.4;
     color: #cfd4da;
 }
+
+.login-project-link {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #d8dde3;
+}
+
+.github-project-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+
+    padding: 0.55rem 0.9rem;
+
+    color: #3f4852;
+    background-color: transparent;
+    border: 1px solid #aeb6bf;
+    border-radius: 6px;
+
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+
+    transition:
+            background-color 0.15s ease,
+            border-color 0.15s ease,
+            color 0.15s ease;
+}
+
+.github-project-button:hover,
+.github-project-button:focus-visible {
+    color: #1f252b;
+    background-color: #f4f5f6;
+    border-color: #7d8791;
+}
+
+.github-project-button:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+}
+
+.github-project-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+    flex-shrink: 0;
+}
