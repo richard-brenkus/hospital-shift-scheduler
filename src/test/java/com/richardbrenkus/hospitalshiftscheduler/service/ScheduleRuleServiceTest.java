@@ -309,8 +309,6 @@ class ScheduleRuleServiceTest {
         when(sameSlotAssignment.getUserCalculationData()).thenReturn(user);
 
         ShiftAssignment differentUserAssignment = mock(ShiftAssignment.class);
-        //when(differentUserAssignment.getShiftType()).thenReturn(2);
-        //when(differentUserAssignment.getUserCalculationData()).thenReturn(differentUser);
 
         ScheduleDay sameDay = mock(ScheduleDay.class);
         when(sameDay.getDate()).thenReturn(candidateDate);

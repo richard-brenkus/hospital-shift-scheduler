@@ -6,7 +6,7 @@ import java.util.UUID;
 /**
  * Stable Kafka payload representing an activity event.
  * Enum values are deliberately converted to strings before publishing. This
- * keeps the transport DTO independent from the application's enum classes and
+ * keeps the transport DTO independent of the application's enum classes and
  * makes the serialized contract explicit.
  */
 public record ActivityKafkaMessage(
