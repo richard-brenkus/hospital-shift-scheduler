@@ -17,9 +17,12 @@
 
     <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.js"></script>
 
+    <th:block th:replace="~{admin/fragments/datatables-language :: dataTablesLanguage}"></th:block>
     <script>
         $(document).ready(function () {
-            $("#myTable").DataTable();
+            $("#myTable").DataTable({
+                language: window.dataTablesLanguage
+            });
         });
     </script>
 </head>

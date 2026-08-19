@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:fragment="dataTablesLanguage">
+
+    <script th:inline="javascript">
+        window.dataTablesLanguage = {
+            emptyTable: /*[[#{datatable.emptyTable}]]*/ 'No data available in table',
+            info: /*[[#{datatable.info}]]*/ 'Showing _START_ to _END_ of _TOTAL_ entries',
+            infoEmpty: /*[[#{datatable.infoEmpty}]]*/ 'Showing 0 to 0 of 0 entries',
+            infoFiltered: /*[[#{datatable.infoFiltered}]]*/ '(filtered from _MAX_ total entries)',
+            lengthMenu: /*[[#{datatable.lengthMenu}]]*/ 'Show _MENU_ entries',
+            loadingRecords: /*[[#{datatable.loadingRecords}]]*/ 'Loading...',
+            processing: /*[[#{datatable.processing}]]*/ 'Processing...',
+            search: /*[[#{datatable.search}]]*/ 'Search:',
+            zeroRecords: /*[[#{datatable.zeroRecords}]]*/ 'No matching records found',
+
+            paginate: {
+                first: /*[[#{datatable.paginate.first}]]*/ 'First',
+                last: /*[[#{datatable.paginate.last}]]*/ 'Last',
+                next: /*[[#{datatable.paginate.next}]]*/ 'Next',
+                previous: /*[[#{datatable.paginate.previous}]]*/ 'Previous'
+            },
+
+            aria: {
+                sortAscending: /*[[#{datatable.aria.sortAscending}]]*/ ': activate to sort column ascending',
+                sortDescending: /*[[#{datatable.aria.sortDescending}]]*/ ': activate to sort column descending'
+            }
+        };
+    </script>
+
+</th:block>
+
+</html>
