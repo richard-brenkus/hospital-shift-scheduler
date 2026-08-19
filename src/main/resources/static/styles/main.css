@@ -319,11 +319,6 @@ img.flag {
 }
 
 
-.col-5 {
-    width: 5%;
-}
-
-
 .col-7 {
     width: 7%;
 }
@@ -369,18 +364,8 @@ img.flag {
 }
 
 
-.col-25 {
-    width: 25%;
-}
-
-
 .col-28 {
     width: 28%;
-}
-
-
-.col-30 {
-    width: 30%;
 }
 
 
@@ -788,6 +773,24 @@ img.flag {
 
 .full-stats-table td {
     vertical-align: middle;
+}
+
+.full-stats-table th,
+.users-list-table th {
+    white-space: normal;
+    overflow-wrap: normal;
+    word-wrap: normal;
+    word-break: normal;
+    hyphens: none;
+}
+
+.full-stats-table col:nth-child(2),
+.full-stats-table col:nth-child(3) {
+    width: 14%;
+}
+
+.full-stats-table col:last-child {
+    width: 7%;
 }
 
 
