@@ -11,37 +11,7 @@ import java.time.*;
 import java.util.UUID;
 
 @Entity
-@Table(
-        name = "reminder_email_outbox",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_reminder_email_outbox_event_id",
-                        columnNames = "event_id"
-                ),
-                @UniqueConstraint(
-                        name = "uk_reminder_email_outbox_idempotency_key",
-                        columnNames = "idempotency_key"
-                ),
-                @UniqueConstraint(
-                        name = "uk_reminder_email_outbox_occurrence_recipient",
-                        columnNames = {
-                                "source_task_id",
-                                "scheduled_execution_time",
-                                "recipient_user_id"
-                        }
-                )
-        },
-        indexes = {
-                @Index(
-                        name = "idx_reminder_email_outbox_dispatch",
-                        columnList = "status,next_attempt_at"
-                ),
-                @Index(
-                        name = "idx_reminder_email_outbox_claim",
-                        columnList = "status,claimed_at"
-                )
-        }
-)
+@Table(name = "reminder_email_outbox", uniqueConstraints = {@UniqueConstraint(name = "uk_reminder_email_outbox_event_id", columnNames = "event_id"), @UniqueConstraint(name = "uk_reminder_email_outbox_idempotency_key", columnNames = "idempotency_key"), @UniqueConstraint(name = "uk_reminder_email_outbox_occurrence_recipient", columnNames = {"source_task_id", "scheduled_execution_time", "recipient_user_id"})}, indexes = {@Index(name = "idx_reminder_email_outbox_dispatch", columnList = "status,next_attempt_at"), @Index(name = "idx_reminder_email_outbox_claim", columnList = "status,claimed_at")})
 @Check(constraints = "attempt_count >= 0")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -116,16 +86,7 @@ public class ReminderEmailOutbox {
     @Column(name = "version", nullable = false)
     private Long version;
 
-    public static ReminderEmailOutbox pending(
-            Long sourceTaskId,
-            Instant scheduledExecutionTime,
-            LocalDate finalSubmissionDay,
-            Instant finalSubmissionDeadline,
-            Long recipientUserId,
-            String recipientEmail,
-            String recipientDisplayName,
-            Instant now
-    ) {
+    public static ReminderEmailOutbox pending(Long sourceTaskId, Instant scheduledExecutionTime, LocalDate finalSubmissionDay, Instant finalSubmissionDeadline, Long recipientUserId, String recipientEmail, String recipientDisplayName, Instant now) {
         requireNonNull(sourceTaskId, "sourceTaskId");
         requireNonNull(scheduledExecutionTime, "scheduledExecutionTime");
         requireNonNull(finalSubmissionDay, "finalSubmissionDay");
@@ -183,16 +144,10 @@ public class ReminderEmailOutbox {
     }
 
     public boolean isOwnedByClaim(String expectedClaimToken) {
-        return status == ReminderEmailOutboxStatus.PROCESSING
-                && expectedClaimToken != null
-                && !expectedClaimToken.isBlank()
-                && expectedClaimToken.equals(claimToken);
+        return status == ReminderEmailOutboxStatus.PROCESSING && expectedClaimToken != null && !expectedClaimToken.isBlank() && expectedClaimToken.equals(claimToken);
     }
 
-    public void markSent(
-            String expectedClaimToken,
-            Instant now
-    ) {
+    public void markSent(String expectedClaimToken, Instant now) {
         requireNonNegativeAttemptCount();
         requireNonNull(now, "now");
         requireCurrentClaim(expectedClaimToken);
@@ -205,11 +160,7 @@ public class ReminderEmailOutbox {
         lastFailureReason = null;
     }
 
-    public void markFailed(
-            String expectedClaimToken,
-            String safeFailureReason,
-            Instant retryAt
-    ) {
+    public void markFailed(String expectedClaimToken, String safeFailureReason, Instant retryAt) {
         requireNonNegativeAttemptCount();
         requireNonNull(retryAt, "retryAt");
         requireCurrentClaim(expectedClaimToken);
@@ -223,11 +174,7 @@ public class ReminderEmailOutbox {
         clearClaim();
     }
 
-    public void markDead(
-            String expectedClaimToken,
-            String safeFailureReason,
-            Instant now
-    ) {
+    public void markDead(String expectedClaimToken, String safeFailureReason, Instant now) {
         requireNonNegativeAttemptCount();
         requireNonNull(now, "now");
         requireCurrentClaim(expectedClaimToken);
@@ -246,18 +193,12 @@ public class ReminderEmailOutbox {
      * This closes the stale-claim recovery edge case in which a row has
      * already reached the configured maximum number of attempts.
      */
-    public void markDeadFromDispatchableState(
-            String safeFailureReason,
-            Instant now
-    ) {
+    public void markDeadFromDispatchableState(String safeFailureReason, Instant now) {
         requireNonNegativeAttemptCount();
         requireNonNull(now, "now");
 
-        if (status != ReminderEmailOutboxStatus.PENDING
-                && status != ReminderEmailOutboxStatus.FAILED) {
-            throw new IllegalStateException(
-                    "Only PENDING or FAILED jobs can be terminated without a claim"
-            );
+        if (status != ReminderEmailOutboxStatus.PENDING && status != ReminderEmailOutboxStatus.FAILED) {
+            throw new IllegalStateException("Only PENDING or FAILED jobs can be terminated without a claim");
         }
 
         status = ReminderEmailOutboxStatus.DEAD;
@@ -268,10 +209,7 @@ public class ReminderEmailOutbox {
         clearClaim();
     }
 
-    public void releaseStaleClaim(
-            String safeFailureReason,
-            Instant retryAt
-    ) {
+    public void releaseStaleClaim(String safeFailureReason, Instant retryAt) {
         requireNonNegativeAttemptCount();
         requireNonNull(retryAt, "retryAt");
 
@@ -291,28 +229,19 @@ public class ReminderEmailOutbox {
 
     private void requireCurrentClaim(String expectedClaimToken) {
         if (!isOwnedByClaim(expectedClaimToken)) {
-            throw new IllegalStateException(
-                    "The outbox job is not owned by the supplied claim token"
-            );
+            throw new IllegalStateException("The outbox job is not owned by the supplied claim token");
         }
     }
 
-    private void requireNotBeforeClaim(
-            Instant value,
-            String valueDescription
-    ) {
+    private void requireNotBeforeClaim(Instant value, String valueDescription) {
         if (claimedAt != null && value.isBefore(claimedAt)) {
-            throw new IllegalArgumentException(
-                    valueDescription + " must not precede claim time"
-            );
+            throw new IllegalArgumentException(valueDescription + " must not precede claim time");
         }
     }
 
     private void requireNonNegativeAttemptCount() {
         if (attemptCount < 0) {
-            throw new IllegalStateException(
-                    "attemptCount must not be negative"
-            );
+            throw new IllegalStateException("attemptCount must not be negative");
         }
     }
 
@@ -324,31 +253,21 @@ public class ReminderEmailOutbox {
 
     private static String normalizeRequiredEmail(String recipientEmail) {
         if (recipientEmail == null || recipientEmail.isBlank()) {
-            throw new IllegalArgumentException(
-                    "recipientEmail must not be blank"
-            );
+            throw new IllegalArgumentException("recipientEmail must not be blank");
         }
 
         String normalizedEmail = recipientEmail.trim();
 
         if (normalizedEmail.length() > MAXIMUM_EMAIL_LENGTH) {
-            throw new IllegalArgumentException(
-                    "recipientEmail must not exceed 320 characters"
-            );
+            throw new IllegalArgumentException("recipientEmail must not exceed 320 characters");
         }
 
         return normalizedEmail;
     }
 
-    private static String truncateRequiredIdentifier(
-            String value,
-            int maximumLength,
-            String fieldName
-    ) {
+    private static String truncateRequiredIdentifier(String value, int maximumLength, String fieldName) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(
-                    fieldName + " must not be blank"
-            );
+            throw new IllegalArgumentException(fieldName + " must not be blank");
         }
 
         return truncateTrimmed(value, maximumLength);
@@ -373,16 +292,12 @@ public class ReminderEmailOutbox {
     private static String truncateTrimmed(String value, int maximumLength) {
         String trimmed = value.trim();
 
-        return trimmed.length() <= maximumLength
-                ? trimmed
-                : trimmed.substring(0, maximumLength);
+        return trimmed.length() <= maximumLength ? trimmed : trimmed.substring(0, maximumLength);
     }
 
     private static void requireNonNull(Object value, String fieldName) {
         if (value == null) {
-            throw new IllegalArgumentException(
-                    fieldName + " must not be null"
-            );
+            throw new IllegalArgumentException(fieldName + " must not be null");
         }
     }
 }
