@@ -10,6 +10,7 @@ import com.richardbrenkus.hospitalshiftscheduler.entity.CleanupTask;
 import com.richardbrenkus.hospitalshiftscheduler.entity.SendReminderTask;
 import com.richardbrenkus.hospitalshiftscheduler.mapper.PlannedTaskMapper;
 import com.richardbrenkus.hospitalshiftscheduler.repository.CleanupTaskRepository;
+import com.richardbrenkus.hospitalshiftscheduler.repository.ReminderEmailOutboxRepository;
 import com.richardbrenkus.hospitalshiftscheduler.repository.SendReminderTaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class PlannedTasksService {
 
     private final CleanupTaskRepository cleanupTaskRepository;
     private final SendReminderTaskRepository sendReminderTaskRepository;
+    private final ReminderEmailOutboxRepository reminderEmailOutboxRepository;
     private final ActivityPublisher activityPublisher;
     private final PlannedTaskMapper plannedTaskMapper;
     private final Clock applicationClock;
@@ -71,7 +73,13 @@ public class PlannedTasksService {
             if (task.isActive()) {
                 task.setActive(false);
 
+                int canceledCount = reminderEmailOutboxRepository.deleteDispatchableBySourceTaskId(task.getId());
+
                 activityPublisher.publishSuccess(ActivityType.ADMIN_SETTINGS_CHANGED, "SendReminderTask", String.valueOf(task.getId()), "Reminder task disabled");
+
+                if (canceledCount > 0) {
+                    activityPublisher.publishSuccess(ActivityType.REMINDER_EMAIL_JOBS_CANCELED, "ReminderEmailOutbox", String.valueOf(task.getId()), "Cancelled " + canceledCount + " pending reminder email job(s) after admin disabled reminders");
+                }
             }
             return;
         }

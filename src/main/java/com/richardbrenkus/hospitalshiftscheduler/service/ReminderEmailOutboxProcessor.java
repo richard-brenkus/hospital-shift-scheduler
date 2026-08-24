@@ -4,9 +4,11 @@ import com.richardbrenkus.hospitalshiftscheduler.activity.ActivityPublisher;
 import com.richardbrenkus.hospitalshiftscheduler.activity.RequestMetadata;
 import com.richardbrenkus.hospitalshiftscheduler.config.constants.ActivityType;
 import com.richardbrenkus.hospitalshiftscheduler.config.constants.ReminderEmailOutboxStatus;
+import com.richardbrenkus.hospitalshiftscheduler.entity.SendReminderTask;
 import com.richardbrenkus.hospitalshiftscheduler.exception.PermanentEmailDeliveryException;
 import com.richardbrenkus.hospitalshiftscheduler.exception.TransientEmailDeliveryException;
 import com.richardbrenkus.hospitalshiftscheduler.repository.ReminderEmailOutboxRepository;
+import com.richardbrenkus.hospitalshiftscheduler.repository.SendReminderTaskRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +36,7 @@ public class ReminderEmailOutboxProcessor {
     private final ReminderEmailOutboxClaimService claimService;
     private final ReminderEmailOutboxCompletionService completionService;
     private final EmailReminderService emailReminderService;
+    private final SendReminderTaskRepository sendReminderTaskRepository;
     private final ActivityPublisher activityPublisher;
     private final Clock applicationClock;
 
@@ -71,6 +74,11 @@ public class ReminderEmailOutboxProcessor {
     }
 
     private void processClaimedJob(ReminderEmailOutboxClaimService.ClaimedReminderEmailJob job) {
+        if (isReminderTaskInactive()) {
+            cancelJobBecauseTaskInactive(job);
+            return;
+        }
+
         try {
             emailReminderService.sendShiftRequestReminderEmail(job.recipientEmail(), job.recipientDisplayName(), job.finalSubmissionDay(), job.idempotencyKey());
         } catch (TransientEmailDeliveryException exception) {
@@ -155,6 +163,24 @@ public class ReminderEmailOutboxProcessor {
     private void validateBatchSize() {
         if (batchSize <= 0) {
             throw new IllegalStateException("planned-tasks.outbox.batch-size must be greater than zero");
+        }
+    }
+
+    private boolean isReminderTaskInactive() {
+        return sendReminderTaskRepository.findById(SendReminderTask.SINGLETON_ID).map(SendReminderTask::isActive).map(active -> !active).orElse(false);
+    }
+
+    private void cancelJobBecauseTaskInactive(ReminderEmailOutboxClaimService.ClaimedReminderEmailJob job) {
+        try {
+            boolean canceled = completionService.cancelClaimedJob(job.outboxId(), job.claimToken());
+
+            if (canceled) {
+                log.info("Reminder outbox job {} cancelled after admin disabled reminders; SMTP send skipped.", job.outboxId());
+            } else {
+                log.warn("Reminder outbox job {} could not be cancelled after admin disabled reminders; claim token no longer owns the row.", job.outboxId());
+            }
+        } catch (RuntimeException exception) {
+            log.error("Reminder outbox job {} could not be cancelled after admin disabled reminders. The row will remain PROCESSING for stale-claim recovery.", job.outboxId(), exception);
         }
     }
 }

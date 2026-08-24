@@ -398,6 +398,26 @@ cause that logical email to be sent again. The stable message
 identifiers can assist downstream duplicate recognition, but SMTP does
 not guarantee deduplication.
 
+### Cancellation When the Task Is Disabled
+
+When an administrator disables the reminder task in the GUI,
+`PlannedTasksService.saveSendReminderTask` bulk-deletes all `PENDING`
+and `FAILED` outbox rows for that task within the same transaction that
+sets `is_active = false`, and publishes a single aggregate
+`REMINDER_EMAIL_JOBS_CANCELED` activity event carrying the deleted-row
+count. Rows currently in `PROCESSING` are left in place so an in-flight
+SMTP send can drain.
+
+For any row that was `PROCESSING` at the moment of the toggle, or that
+stale-claim recovery later releases back to `FAILED`,
+`ReminderEmailOutboxProcessor` performs a pre-SMTP check on the next
+claim: if the singleton `SendReminderTask` is inactive it calls
+`ReminderEmailOutboxCompletionService.cancelClaimedJob(...)`, which
+verifies the claim token and deletes the row instead of attempting
+delivery. Because canceled rows are removed rather than kept in a
+terminal status, the natural-key uniqueness constraint does not block
+fresh enqueues when the task is re-enabled.
+
 ---
 
 ## Scheduled Tasks

@@ -64,6 +64,33 @@ public class ReminderEmailOutboxCompletionService {
         return FailureCompletionResult.RETRY_SCHEDULED;
     }
 
+    /**
+     * Deletes a currently-claimed outbox row without attempting delivery.
+     * Callers use this when policy (for example, the admin disabling reminders)
+     * dictates that no further SMTP send should happen for this row.
+     */
+    @Transactional
+    public boolean cancelClaimedJob(Long outboxId, String claimToken) {
+        if (outboxId == null) {
+            throw new IllegalArgumentException("outboxId must not be null");
+        }
+
+        if (claimToken == null || claimToken.isBlank()) {
+            throw new IllegalArgumentException("claimToken must not be blank");
+        }
+
+        ReminderEmailOutbox outbox = repository.findByIdForUpdate(outboxId).orElse(null);
+
+        if (outbox == null || !outbox.isOwnedByClaim(claimToken)) {
+            return false;
+        }
+
+        repository.delete(outbox);
+        repository.flush();
+
+        return true;
+    }
+
     @Transactional
     public FailureCompletionResult markPermanentFailure(Long outboxId, String claimToken, Instant now, String safeFailureReason) {
         validateRequiredArguments(outboxId, claimToken, now);

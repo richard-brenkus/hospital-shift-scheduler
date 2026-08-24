@@ -143,6 +143,29 @@ class ReminderEmailOutboxCompletionServiceTest {
         assertThatThrownBy(() -> service.markSent(1L, CLAIM_TOKEN, null)).isInstanceOf(IllegalArgumentException.class);
     }
 
+    @Test
+    void cancelClaimedJob_shouldDeleteRowAndReturnTrue_whenClaimTokenMatches() {
+        ReminderEmailOutbox job = claimedJob();
+        when(repository.findByIdForUpdate(1L)).thenReturn(Optional.of(job));
+
+        boolean canceled = service.cancelClaimedJob(1L, CLAIM_TOKEN);
+
+        assertThat(canceled).isTrue();
+        verify(repository).delete(job);
+        verify(repository).flush();
+    }
+
+    @Test
+    void cancelClaimedJob_shouldReturnFalseAndNotDelete_whenClaimTokenMismatch() {
+        ReminderEmailOutbox job = claimedJob();
+        when(repository.findByIdForUpdate(1L)).thenReturn(Optional.of(job));
+
+        boolean canceled = service.cancelClaimedJob(1L, "wrong-token");
+
+        assertThat(canceled).isFalse();
+        verify(repository, never()).delete(any());
+    }
+
     private static ReminderEmailOutbox claimedJob() {
         ReminderEmailOutbox job = ReminderEmailOutbox.pending(1L, NOW, FINAL_DAY, DEADLINE, 99L, "alice@example.test", "Alice", NOW);
         ReflectionTestUtils.setField(job, "id", 1L);

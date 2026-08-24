@@ -2,9 +2,11 @@ package com.richardbrenkus.hospitalshiftscheduler.service;
 
 import com.richardbrenkus.hospitalshiftscheduler.activity.ActivityPublisher;
 import com.richardbrenkus.hospitalshiftscheduler.config.constants.ActivityType;
+import com.richardbrenkus.hospitalshiftscheduler.entity.SendReminderTask;
 import com.richardbrenkus.hospitalshiftscheduler.exception.PermanentEmailDeliveryException;
 import com.richardbrenkus.hospitalshiftscheduler.exception.TransientEmailDeliveryException;
 import com.richardbrenkus.hospitalshiftscheduler.repository.ReminderEmailOutboxRepository;
+import com.richardbrenkus.hospitalshiftscheduler.repository.SendReminderTaskRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,12 +41,19 @@ class ReminderEmailOutboxProcessorTest {
 
     @Mock
     private ReminderEmailOutboxRepository repository;
+
     @Mock
     private ReminderEmailOutboxClaimService claimService;
+
     @Mock
     private ReminderEmailOutboxCompletionService completionService;
+
     @Mock
     private EmailReminderService emailReminderService;
+
+    @Mock
+    private SendReminderTaskRepository sendReminderTaskRepository;
+
     @Mock
     private ActivityPublisher activityPublisher;
 
@@ -52,7 +61,7 @@ class ReminderEmailOutboxProcessorTest {
 
     @BeforeEach
     void setUp() {
-        processor = new ReminderEmailOutboxProcessor(repository, claimService, completionService, emailReminderService, activityPublisher, FIXED_CLOCK);
+        processor = new ReminderEmailOutboxProcessor(repository, claimService, completionService, emailReminderService, sendReminderTaskRepository, activityPublisher, FIXED_CLOCK);
         ReflectionTestUtils.setField(processor, "batchSize", 20);
     }
 
@@ -133,6 +142,28 @@ class ReminderEmailOutboxProcessorTest {
         ReflectionTestUtils.setField(processor, "batchSize", 0);
 
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> processor.processPendingReminderJobs()).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void processPendingReminderJobs_shouldSkipSmtpAndCancelClaim_whenReminderTaskIsInactive() {
+        when(repository.findDispatchableIds(anyList(), eq(NOW), any(Pageable.class))).thenReturn(List.of(1L));
+        var job = claimedJob(1L, 1);
+        when(claimService.claim(eq(1L), any(String.class), eq(NOW))).thenReturn(Optional.of(job));
+
+        SendReminderTask inactiveTask = new SendReminderTask();
+        inactiveTask.setActive(false);
+        when(sendReminderTaskRepository.findById(SendReminderTask.SINGLETON_ID)).thenReturn(Optional.of(inactiveTask));
+
+        when(completionService.cancelClaimedJob(eq(1L), eq("claim-token-1"))).thenReturn(true);
+
+        processor.processPendingReminderJobs();
+
+        verifyNoInteractions(emailReminderService);
+        verify(completionService).cancelClaimedJob(1L, "claim-token-1");
+        verify(completionService, never()).markSent(any(), any(), any());
+        verify(completionService, never()).markTransientFailure(any(), any(), any(), any());
+        verify(completionService, never()).markPermanentFailure(any(), any(), any(), any());
+        verifyNoInteractions(activityPublisher);
     }
 
     private static ReminderEmailOutboxClaimService.ClaimedReminderEmailJob claimedJob(long id, int attempt) {

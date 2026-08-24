@@ -6,6 +6,7 @@ import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -47,6 +48,22 @@ public interface ReminderEmailOutboxRepository
             where outbox.id = :id
             """)
     Optional<ReminderEmailOutbox> findByIdForUpdate(@Param("id") Long id);
+
+    /**
+     * Deletes dispatchable outbox rows for a task in a single statement.
+     * Callers use this to cancel pending work when an admin disables the task;
+     * PROCESSING rows are left untouched so an in-flight SMTP send can drain.
+     */
+    @Modifying
+    @Query("""
+            delete from ReminderEmailOutbox outbox
+            where outbox.sourceTaskId = :sourceTaskId
+              and outbox.status in (
+                  com.richardbrenkus.hospitalshiftscheduler.config.constants.ReminderEmailOutboxStatus.PENDING,
+                  com.richardbrenkus.hospitalshiftscheduler.config.constants.ReminderEmailOutboxStatus.FAILED
+              )
+            """)
+    int deleteDispatchableBySourceTaskId(@Param("sourceTaskId") Long sourceTaskId);
 
     /**
      * Finds PROCESSING jobs whose worker likely crashed.

@@ -36,9 +36,7 @@ public class PlannedTaskDispatchService {
             throw new IllegalArgumentException("now must not be null");
         }
 
-        SendReminderTask task = sendReminderTaskRepository
-                .findByIdForUpdate(SendReminderTask.SINGLETON_ID)
-                .orElseThrow(() -> new IllegalStateException("Required singleton row with ID " + SendReminderTask.SINGLETON_ID + " is missing from send_reminder_task"));
+        SendReminderTask task = sendReminderTaskRepository.findByIdForUpdate(SendReminderTask.SINGLETON_ID).orElseThrow(() -> new IllegalStateException("Required singleton row with ID " + SendReminderTask.SINGLETON_ID + " is missing from send_reminder_task"));
 
         if (!isDue(task, now)) {
             return;
@@ -58,19 +56,10 @@ public class PlannedTaskDispatchService {
     }
 
     private boolean isDue(SendReminderTask task, Instant now) {
-        return task.isActive()
-                && task.getStartSendingTime() != null
-                && task.getFinalRequestSubmissionDate() != null
-                && !task.getStartSendingTime().isAfter(now);
+        return task.isActive() && task.getStartSendingTime() != null && task.getFinalRequestSubmissionDate() != null && !task.getStartSendingTime().isAfter(now);
     }
 
-    private int createRecipientOutboxJobs(
-            SendReminderTask task,
-            Instant scheduledOccurrence,
-            LocalDate finalSubmissionDay,
-            List<User> recipients,
-            Instant now
-    ) {
+    private int createRecipientOutboxJobs(SendReminderTask task, Instant scheduledOccurrence, LocalDate finalSubmissionDay, List<User> recipients, Instant now) {
         if (recipients == null || recipients.isEmpty()) {
             return 0;
         }
@@ -82,8 +71,7 @@ public class PlannedTaskDispatchService {
                 continue;
             }
 
-            boolean alreadyQueued =
-                    reminderEmailOutboxRepository.existsBySourceTaskIdAndScheduledExecutionTimeAndRecipientUserId(task.getId(), scheduledOccurrence, user.getId());
+            boolean alreadyQueued = reminderEmailOutboxRepository.existsBySourceTaskIdAndScheduledExecutionTimeAndRecipientUserId(task.getId(), scheduledOccurrence, user.getId());
 
             if (alreadyQueued) {
                 continue;
@@ -91,17 +79,7 @@ public class PlannedTaskDispatchService {
 
             Instant finalSubmissionDeadline = finalSubmissionDay.atTime(LocalTime.MAX).atZone(applicationZoneId).toInstant();
 
-            ReminderEmailOutbox outbox =
-                    ReminderEmailOutbox.pending(
-                            task.getId(),
-                            scheduledOccurrence,
-                            finalSubmissionDay,
-                            finalSubmissionDeadline,
-                            user.getId(),
-                            user.getEmail(),
-                            resolveDisplayName(user),
-                            now
-                    );
+            ReminderEmailOutbox outbox = ReminderEmailOutbox.pending(task.getId(), scheduledOccurrence, finalSubmissionDay, finalSubmissionDeadline, user.getId(), user.getEmail(), resolveDisplayName(user), now);
 
             reminderEmailOutboxRepository.save(outbox);
             createdJobCount++;
@@ -116,13 +94,11 @@ public class PlannedTaskDispatchService {
 
     private String resolveDisplayName(User user) {
 
-        if (user.getName() != null
-                && !user.getName().isBlank()) {
+        if (user.getName() != null && !user.getName().isBlank()) {
             return user.getName();
         }
 
-        if (user.getUsername() != null
-                && !user.getUsername().isBlank()) {
+        if (user.getUsername() != null && !user.getUsername().isBlank()) {
             return user.getUsername();
         }
 
