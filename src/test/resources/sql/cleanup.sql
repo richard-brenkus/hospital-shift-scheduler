@@ -2,7 +2,6 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 DELETE FROM activity_log;
 DELETE FROM cleanup_task;
-DELETE FROM email_log;
 DELETE FROM reminder_email_outbox;
 DELETE FROM scheduled_events_profile;
 DELETE FROM send_reminder_task;
