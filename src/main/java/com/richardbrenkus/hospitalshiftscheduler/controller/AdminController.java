@@ -64,8 +64,8 @@ public class AdminController {
         model.addAttribute(ModelAttributeName.SHIFT_REQUEST_COUNT, landingPageRecord.shiftRequestCount());
         model.addAttribute(ModelAttributeName.PERCENTAGE, landingPageRecord.percentage());
 
-        model.addAttribute("sendReminderTaskRecord", plannedTasksService.getSendReminderTaskRecord());
-        model.addAttribute("cleanupTaskRecord", plannedTasksService.getCleanupTaskRecord());
+        model.addAttribute(ModelAttributeName.SEND_REMINDER_TASK_RECORD, plannedTasksService.getSendReminderTaskRecord());
+        model.addAttribute(ModelAttributeName.CLEANUP_TASK_RECORD, plannedTasksService.getCleanupTaskRecord());
 
         return "admin/adminIndex";
     }
@@ -287,7 +287,7 @@ public class AdminController {
         }
 
         if (bindingResult.hasErrors()) {
-            model.addAttribute("selectedUser", selectedUser);
+            model.addAttribute(ModelAttributeName.SELECTED_USER, selectedUser);
             return "admin/change_user_password";
         }
 
@@ -312,8 +312,8 @@ public class AdminController {
 
         if (calculationProfileForm.getCalculationMonth() == null) {
             prepareModelService.prepareCalculateScheduleModel(model);
-            model.addAttribute("calculationProfileForm", calculationProfileForm);
-            model.addAttribute("calculationErrorCode", "error.calculationMonthRequired");
+            model.addAttribute(ModelAttributeName.CALCULATION_PROFILE_FORM, calculationProfileForm);
+            model.addAttribute(ModelAttributeName.CALCULATION_ERROR_CODE, "error.calculationMonthRequired");
 
             return "admin/calculate_schedule_select";
         }
@@ -323,9 +323,9 @@ public class AdminController {
 
         if (storedScheduleExists && !confirmed) {
             prepareModelService.prepareCalculateScheduleModel(model);
-            model.addAttribute("calculationProfileForm", calculationProfileForm);
-            model.addAttribute("showExistingScheduleConfirmation", true);
-            model.addAttribute("existingScheduleMonth", calculationProfileForm.getCalculationMonth());
+            model.addAttribute(ModelAttributeName.CALCULATION_PROFILE_FORM, calculationProfileForm);
+            model.addAttribute(ModelAttributeName.SHOW_EXISTING_SCHEDULE_CONFIRMATION, true);
+            model.addAttribute(ModelAttributeName.EXISTING_SCHEDULE_MONTH, calculationProfileForm.getCalculationMonth());
 
             return "admin/calculate_schedule_select";
         }
@@ -374,12 +374,12 @@ public class AdminController {
     public String showStoredFullStatistics(Model model, @RequestParam("selectedMonth") YearMonth selectedMonth) {
         Map<Integer, Set<UserStatViewRecord>> stats = userStatisticService.findViewRecordsByYearMonth(selectedMonth);
 
-        model.addAttribute("fullUserStatsByShiftType", stats);
-        model.addAttribute("shiftTypes", shiftTypeService.getShiftTypes());
-        model.addAttribute("statsExist", stats.values().stream().anyMatch(set -> set != null && !set.isEmpty()));
-        model.addAttribute("month", selectedMonth);
-        model.addAttribute("year", selectedMonth.getYear());
-        model.addAttribute("monthInt", selectedMonth.getMonthValue());
+        model.addAttribute(ModelAttributeName.FULL_USER_STATS_BY_SHIFT_TYPE, stats);
+        model.addAttribute(ModelAttributeName.SHIFT_TYPES, shiftTypeService.getShiftTypes());
+        model.addAttribute(ModelAttributeName.STATS_EXIST, stats.values().stream().anyMatch(set -> set != null && !set.isEmpty()));
+        model.addAttribute(ModelAttributeName.MONTH, selectedMonth);
+        model.addAttribute(ModelAttributeName.YEAR, selectedMonth.getYear());
+        model.addAttribute(ModelAttributeName.MONTH_INT, selectedMonth.getMonthValue());
 
         return "admin/full_monthly_statistics";
     }
@@ -401,9 +401,9 @@ public class AdminController {
             userStatisticService.storeFullStatisticsInSession(session, validationResult, scheduleEditForm);
             addScheduleTableAttributes(model, scheduleEditForm, validationResult);
 
-            model.addAttribute("scheduleEditForm", scheduleEditForm);
-            model.addAttribute("existingScheduleMonth", scheduleEditForm.getMonth());
-            model.addAttribute("showExistingScheduleSaveConfirmation", true);
+            model.addAttribute(ModelAttributeName.SCHEDULE_EDIT_FORM, scheduleEditForm);
+            model.addAttribute(ModelAttributeName.EXISTING_SCHEDULE_MONTH, scheduleEditForm.getMonth());
+            model.addAttribute(ModelAttributeName.SHOW_EXISTING_SCHEDULE_SAVE_CONFIRMATION, true);
 
             return "admin/schedule_table";
         }
@@ -444,13 +444,13 @@ public class AdminController {
 
         SavedScheduleView savedScheduleView = storedScheduleService.loadSavedScheduleView(selectedMonth);
 
-        model.addAttribute("savedSchedule", savedScheduleView);
-        model.addAttribute("month", selectedMonth);
-        model.addAttribute("year", selectedMonth.getYear());
-        model.addAttribute("monthInt", selectedMonth.getMonthValue());
-        model.addAttribute("monthDaysList", savedScheduleView.monthDaysList());
-        model.addAttribute("weekendsAndHolidays", savedScheduleView.weekendsAndHolidays());
-        model.addAttribute("shiftTypes", shiftTypeService.getShiftTypes());
+        model.addAttribute(ModelAttributeName.SAVED_SCHEDULE, savedScheduleView);
+        model.addAttribute(ModelAttributeName.MONTH, selectedMonth);
+        model.addAttribute(ModelAttributeName.YEAR, selectedMonth.getYear());
+        model.addAttribute(ModelAttributeName.MONTH_INT, selectedMonth.getMonthValue());
+        model.addAttribute(ModelAttributeName.MONTH_DAYS_LIST, savedScheduleView.monthDaysList());
+        model.addAttribute(ModelAttributeName.WEEKENDS_AND_HOLIDAYS, savedScheduleView.weekendsAndHolidays());
+        model.addAttribute(ModelAttributeName.SHIFT_TYPES, shiftTypeService.getShiftTypes());
 
         return "admin/schedule_table_saved";
     }
@@ -493,28 +493,28 @@ public class AdminController {
     }
 
     private void addSavedScheduleSelectionAttributes(Model model, SavedScheduleSelectionForm form, boolean scheduleExists) {
-        model.addAttribute("savedScheduleSelectionForm", form);
-        model.addAttribute("monthOptions", storedScheduleService.getSelectableMonthOptions());
-        model.addAttribute("scheduleExists", scheduleExists);
+        model.addAttribute(ModelAttributeName.SAVED_SCHEDULE_SELECTION_FORM, form);
+        model.addAttribute(ModelAttributeName.MONTH_OPTIONS, storedScheduleService.getSelectableMonthOptions());
+        model.addAttribute(ModelAttributeName.SCHEDULE_EXISTS, scheduleExists);
     }
 
     private void addScheduleTableAttributes(Model model, ScheduleEditForm scheduleEditForm, ScheduleValidationResult scheduleValidationResult) {
-        model.addAttribute("scheduleEditForm", scheduleEditForm);
-        model.addAttribute("scheduleValidationResult", scheduleValidationResult);
-        model.addAttribute("shiftTypes", shiftTypeService.getShiftTypes());
-        model.addAttribute("users", userService.findAllUsersForSelectionByNameAsc());
+        model.addAttribute(ModelAttributeName.SCHEDULE_EDIT_FORM, scheduleEditForm);
+        model.addAttribute(ModelAttributeName.SCHEDULE_VALIDATION_RESULT, scheduleValidationResult);
+        model.addAttribute(ModelAttributeName.SHIFT_TYPES, shiftTypeService.getShiftTypes());
+        model.addAttribute(ModelAttributeName.USERS, userService.findAllUsersForSelectionByNameAsc());
 
         List<String> usersWithNoRequest = userStatisticService.returnUsersWithNoRequest();
 
-        model.addAttribute("usersWithNoRequest", usersWithNoRequest);
-        model.addAttribute("usersWithNoRequestString", String.join(", ", usersWithNoRequest));
+        model.addAttribute(ModelAttributeName.USERS_WITH_NO_REQUEST, usersWithNoRequest);
+        model.addAttribute(ModelAttributeName.USERS_WITH_NO_REQUEST_STRING, String.join(", ", usersWithNoRequest));
     }
 
     @ExceptionHandler(CalculationAlreadyRunningException.class)
     public String handleCalculationAlreadyRunning(Model model) {
         prepareModelService.prepareCalculateScheduleModel(model);
 
-        model.addAttribute("calculationErrorCode", "error.calculationAlreadyRunning");
+        model.addAttribute(ModelAttributeName.CALCULATION_ERROR_CODE, "error.calculationAlreadyRunning");
 
         return "admin/calculate_schedule_select";
     }

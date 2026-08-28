@@ -1,6 +1,7 @@
 package com.richardbrenkus.hospitalshiftscheduler.controller;
 
 import com.richardbrenkus.hospitalshiftscheduler.config.SelectionLists;
+import com.richardbrenkus.hospitalshiftscheduler.config.constants.ModelAttributeName;
 import com.richardbrenkus.hospitalshiftscheduler.dto.form.CleanupTaskForm;
 import com.richardbrenkus.hospitalshiftscheduler.dto.form.SendReminderTaskForm;
 import com.richardbrenkus.hospitalshiftscheduler.service.PlannedTasksService;
@@ -89,35 +90,35 @@ public class PlannedTasksController {
     }
 
     private void prefillPage(Model model) {
-        model.addAttribute("cleanupTaskRecord", plannedTasksService.getCleanupTaskRecord());
-        model.addAttribute("sendReminderTaskRecord", plannedTasksService.getSendReminderTaskRecord());
-        model.addAttribute("cleanupTaskForm", plannedTasksService.getCleanupTaskForm());
-        model.addAttribute("sendReminderTaskForm", plannedTasksService.getSendReminderTaskForm());
+        model.addAttribute(ModelAttributeName.CLEANUP_TASK_RECORD, plannedTasksService.getCleanupTaskRecord());
+        model.addAttribute(ModelAttributeName.SEND_REMINDER_TASK_RECORD, plannedTasksService.getSendReminderTaskRecord());
+        model.addAttribute(ModelAttributeName.CLEANUP_TASK_FORM, plannedTasksService.getCleanupTaskForm());
+        model.addAttribute(ModelAttributeName.SEND_REMINDER_TASK_FORM, plannedTasksService.getSendReminderTaskForm());
 
         addSelectionLists(model);
     }
 
     private void prefillPage(Model model, boolean preserveCleanupForm, boolean preserveReminderForm) {
-        model.addAttribute("cleanupTaskRecord", plannedTasksService.getCleanupTaskRecord());
-        model.addAttribute("sendReminderTaskRecord", plannedTasksService.getSendReminderTaskRecord());
+        model.addAttribute(ModelAttributeName.CLEANUP_TASK_RECORD, plannedTasksService.getCleanupTaskRecord());
+        model.addAttribute(ModelAttributeName.SEND_REMINDER_TASK_RECORD, plannedTasksService.getSendReminderTaskRecord());
 
         if (!preserveCleanupForm) {
-            model.addAttribute("cleanupTaskForm", plannedTasksService.getCleanupTaskForm());
+            model.addAttribute(ModelAttributeName.CLEANUP_TASK_FORM, plannedTasksService.getCleanupTaskForm());
         }
 
         if (!preserveReminderForm) {
-            model.addAttribute("sendReminderTaskForm", plannedTasksService.getSendReminderTaskForm());
+            model.addAttribute(ModelAttributeName.SEND_REMINDER_TASK_FORM, plannedTasksService.getSendReminderTaskForm());
         }
 
         addSelectionLists(model);
     }
 
     private void addSelectionLists(Model model) {
-        model.addAttribute("daysList", IntStream.rangeClosed(1, YearMonth.now(applicationClock).lengthOfMonth()).boxed().toList());
-        model.addAttribute("hoursList", IntStream.rangeClosed(0, 23).boxed().toList());
-        model.addAttribute("minutesList", IntStream.rangeClosed(0, 59).boxed().toList());
-        model.addAttribute("repetitionsList", SelectionLists.GENERIC_ONE_TO_TEN_LIST);
-        model.addAttribute("frequencyList", IntStream.rangeClosed(0, 10).boxed().toList());
-        model.addAttribute("finalSubmissionDaysList", IntStream.rangeClosed(1, YearMonth.now(applicationClock).lengthOfMonth()).boxed().toList());
+        model.addAttribute(ModelAttributeName.DAYS_LIST, IntStream.rangeClosed(1, YearMonth.now(applicationClock).lengthOfMonth()).boxed().toList());
+        model.addAttribute(ModelAttributeName.HOURS_LIST, IntStream.rangeClosed(0, 23).boxed().toList());
+        model.addAttribute(ModelAttributeName.MINUTES_LIST, IntStream.rangeClosed(0, 59).boxed().toList());
+        model.addAttribute(ModelAttributeName.REPETITIONS_LIST, SelectionLists.GENERIC_ONE_TO_TEN_LIST);
+        model.addAttribute(ModelAttributeName.FREQUENCY_LIST, IntStream.rangeClosed(0, 10).boxed().toList());
+        model.addAttribute(ModelAttributeName.FINAL_SUBMISSION_DAYS_LIST, IntStream.rangeClosed(1, YearMonth.now(applicationClock).lengthOfMonth()).boxed().toList());
     }
 }
