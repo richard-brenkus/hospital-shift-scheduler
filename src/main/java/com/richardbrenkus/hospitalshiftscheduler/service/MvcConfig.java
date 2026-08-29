@@ -25,7 +25,7 @@ public class MvcConfig implements WebMvcConfigurer {
     @Bean
     public LocaleResolver localeResolver() {
         SessionLocaleResolver localeResolver = new SessionLocaleResolver();
-        localeResolver.setDefaultLocale(Locale.of("cs", "CZ"));
+        localeResolver.setDefaultLocale(Locale.of("cs"));
         localeResolver.setLocaleAttributeName("session.current.locale");
         localeResolver.setTimeZoneAttributeName("session.current.timezone");
         return localeResolver;
@@ -48,6 +48,7 @@ public class MvcConfig implements WebMvcConfigurer {
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
         messageSource.setBasenames("language/messages", "ValidationMessages");
         messageSource.setDefaultEncoding("UTF-8");
+        messageSource.setFallbackToSystemLocale(false);
         return messageSource;
     }
 

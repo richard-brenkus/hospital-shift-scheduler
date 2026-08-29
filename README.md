@@ -15,7 +15,7 @@ manually edit the generated schedule, validate it against user requests
 and calculation constraints, and persist the final result.
 
 Originally designed for a hospital environment, the scheduling model is
-not hard-coded to a particular organisation: the number of shift types
+not hard-coded to a particular organization: the number of shift types
 is configurable at application level.
 
 ## Live Demo
@@ -88,7 +88,7 @@ multiple administrators from starting schedule calculations
 simultaneously within the running application instance.
 * **Persistent email outbox:** reminder emails use durable outbox
 rows, retry scheduling, claim tokens, stale-claim recovery, and
-failure categorisation.
+failure categorization.
 * **Role-based security:** Spring Security combines URL-level access
 control with method-level `@PreAuthorize` checks for sensitive
 demo-admin operations.
@@ -139,7 +139,7 @@ same user
   * `forceFillShiftTypes` --- shift types that may be filled even
 when the specific date was not requested
   * `sortByDatesAmount` --- whether users with fewer requested dates
-are prioritised first
+are prioritized first
 * **Public holidays** for the month
 * **Shift-type processing order**
 * **Priority passes**
@@ -503,7 +503,7 @@ application's dedicated access-denied page.
 
 ## Database and Persistence
 
-The schema is managed by Flyway through `V1__initial_schema.sql`.
+Flyway manages the schema through `V1__initial_schema.sql`.
 
 Hibernate DDL mode is `validate`, so Hibernate checks the schema but
 does not modify it at runtime. `spring.jpa.open-in-view` is disabled.
@@ -561,8 +561,8 @@ The application supports four languages:
 
 | Code | Language |
 |---|---|
-| `cs` / `cs_CZ` | Czech (default locale: `cs_CZ`) |
-| `en` / `en_US` | English |
+| `cs` | Czech (default locale) |
+| `en` | English |
 | `de` | German |
 | `hu` | Hungarian |
 
@@ -742,7 +742,7 @@ With Docker running:
 
 * Calculation threads operate on immutable records rather than JPA
 entities.
-* The calculation engine is isolated from Hibernate session state.
+* The calculation engine is isolated from the Hibernate session state.
 * Candidate generation combines controlled randomness with repeatable
 per-attempt seeds when the same calculation input is supplied.
 * Parallel workers explore independent candidates and a comparator
@@ -776,5 +776,5 @@ deployment.
 Although the original domain is hospital shift planning, the underlying
 workflow --- collecting employee availability and preferences,
 calculating candidate schedules, allowing administrative review, and
-validating the result --- can also apply to other organisations that
+validating the result --- can also apply to other organizations that
 manage recurring staff scheduling.
