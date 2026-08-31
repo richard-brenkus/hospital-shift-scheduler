@@ -301,6 +301,36 @@ can save a schedule even when validation issues remain.
 
 ---
 
+## Scheduled Tasks
+
+### Email Reminder Task
+
+Administrators can configure:
+
+* active/inactive status
+* start day, hour, and minute
+* sending frequency in days
+* number of repetitions
+* final submission day
+
+When the task becomes due, it creates outbox rows for users who have not
+submitted a current shift request. Email delivery is handled
+asynchronously by the outbox processor.
+
+### Shift-Request Cleanup Task
+
+Administrators can configure a recurring cleanup task with a day, hour,
+and minute. The configuration is persisted in the database and executed
+by `CleanupTaskExecutionService`.
+
+### Task Dispatch
+
+`PlannedTaskExecutorService` evaluates the persisted task configuration
+every 60 seconds by default and triggers tasks whose configured
+execution time has been reached.
+
+---
+
 ## Concurrency and Data Integrity
 
 ### Multi-threaded Schedule Calculation
@@ -417,36 +447,6 @@ verifies the claim token and deletes the row instead of attempting
 delivery. Because canceled rows are removed rather than kept in a
 terminal status, the natural-key uniqueness constraint does not block
 fresh enqueues when the task is re-enabled.
-
----
-
-## Scheduled Tasks
-
-### Email Reminder Task
-
-Administrators can configure:
-
-* active/inactive status
-* start day, hour, and minute
-* sending frequency in days
-* number of repetitions
-* final submission day
-
-When the task becomes due, it creates outbox rows for users who have not
-submitted a current shift request. Email delivery is handled
-asynchronously by the outbox processor.
-
-### Shift-Request Cleanup Task
-
-Administrators can configure a recurring cleanup task with a day, hour,
-and minute. The configuration is persisted in the database and executed
-by `CleanupTaskExecutionService`.
-
-### Task Dispatch
-
-`PlannedTaskExecutorService` evaluates the persisted task configuration
-every 60 seconds by default and triggers tasks whose configured
-execution time has been reached.
 
 ---
 
